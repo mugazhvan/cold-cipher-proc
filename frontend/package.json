@@ -1,0 +1,9 @@
+{
+  "name": "kisanflow-frontend",
+  "private": true,
+  "workspaces": [
+    "farmer-app",
+    "management-app",
+    "shared"
+  ]
+}

@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: kisanflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d kisanflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:password@db:5432/kisanflow
+      - JWT_SECRET_KEY=kisanflow_super_secret_sih_2024
+      - JWT_ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=1440
+      - FRONTEND_URLS=http://localhost:3000,http://localhost:3001
+      - DEBUG=True
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "alembic upgrade head && 
+             python database/seed/seed_basic.py && 
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+  farmer-app:
+    build:
+      context: ./frontend
+      dockerfile: farmer-app/Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  management-app:
+    build:
+      context: ./frontend
+      dockerfile: management-app/Dockerfile
+    ports:
+      - "3001:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
