@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+@media print {
+  header, nav, aside {
+    display: none !important;
+  }
+}
+
+/* ── html5-qrcode library overrides for proper scanner alignment ── */
+
+/* Force the scanner container to fill its parent */
+#operator-qr-reader-portal {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+}
+
+/* Make video fill the container without gaps */
+#operator-qr-reader-portal video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 0 !important;
+}
+
+/* Hide the library's default shaded region borders — we render our own corners */
+#operator-qr-reader-portal #qr-shaded-region {
+  border-color: transparent !important;
+}
+
+/* Hide library default scan region and dashboard text */
+#operator-qr-reader-portal img[alt="Info icon"],
+#operator-qr-reader-portal span,
+#operator-qr-reader-portal br {
+  display: none !important;
+}
+
+/* The inner scan region should be transparent, not black */
+#operator-qr-reader-portal > div {
+  border: none !important;
+}
+

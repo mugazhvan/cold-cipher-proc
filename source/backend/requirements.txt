@@ -13,3 +13,5 @@ pytest>=8.0.0
 pytest-asyncio>=0.23.5
 ruff>=0.3.0
 alembic
+fpdf2>=2.7.7
+qrcode[pil]>=7.4.2

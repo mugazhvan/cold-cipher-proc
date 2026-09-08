@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
+    # Cryptography
+    QR_SECRET_KEY: str = "kisanflow_qr_secret_key_change_in_production_2026"
+
     # Mock settings
     OTP_MODE: str = "mock"
     MOCK_OTP_CODE: str = "123456"

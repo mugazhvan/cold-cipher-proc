@@ -6,10 +6,10 @@ from datetime import time
 class CentreBase(BaseModel):
     name: str
     code: str
-    address: str
-    village: str
-    district: str
-    state: str
+    address: Optional[str] = None
+    village: Optional[str] = None
+    district: Optional[str] = None
+    state: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     opening_time: Optional[time] = None

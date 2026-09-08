@@ -27,3 +27,7 @@ class BookingResponse(BookingBase):
     crop_type: Optional[CropTypeResponse] = None
     
     model_config = ConfigDict(from_attributes=True)
+
+class QRVerifyRequest(BaseModel):
+    payload: Optional[str] = None
+    qr_data: Optional[str] = None

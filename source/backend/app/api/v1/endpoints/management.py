@@ -18,6 +18,7 @@ from app.schemas.slot import SlotCreate, SlotResponse, SlotUpdate, BatchSlotCrea
 from app.schemas.procurement import ProcurementBase, ProcurementResponse, ProcurementUpdate
 from app.schemas.payment import PaymentResponse, PaymentBase
 from app.api.deps import RoleChecker
+from app.core.security import verify_signed_qr_payload
 
 router = APIRouter()
 
@@ -219,6 +220,146 @@ async def complete_token(
         "success": True,
         "data": {"token_number": token.token_number, "status": token.status.value},
         "message": "Token completed."
+    }
+
+from app.schemas.booking import QRVerifyRequest
+from datetime import datetime
+
+@router.post("/qr/verify", response_model=StandardResponse)
+async def verify_epass_qr(
+    request: QRVerifyRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(RoleChecker([UserRole.CENTRE_OPERATOR, UserRole.CENTRE_MANAGER, UserRole.ADMIN]))
+) -> Any:
+    # 1. Decode and Verify QR cryptographic payload
+    raw_payload = (request.payload or request.qr_data or "").strip()
+    if not raw_payload:
+        raise HTTPException(status_code=401, detail="Empty QR payload")
+
+    try:
+        qr_data = verify_signed_qr_payload(raw_payload)
+    except ValueError as e:
+        # 401 Unauthorized for invalid signatures
+        raise HTTPException(status_code=401, detail=str(e))
+
+    booking_ref = qr_data.get("booking_ref")
+    if not booking_ref:
+        raise HTTPException(status_code=401, detail="Invalid QR payload data")
+
+    parsed_booking_id = None
+    try:
+        parsed_booking_id = uuid.UUID(booking_ref)
+    except ValueError:
+        pass
+
+    # 2. Get booking by UUID or booking_reference
+    if parsed_booking_id:
+        result = await db.execute(select(Booking).where(Booking.id == parsed_booking_id))
+    else:
+        result = await db.execute(select(Booking).where(Booking.booking_reference == booking_ref))
+    
+    booking = result.scalars().first()
+    if not booking:
+        # If farmer booked via portal with KF- token format, resolve for operator's centre
+        if "KF-" in booking_ref:
+            from app.models.entities import Officer, Centre
+            officer_res = await db.execute(select(Officer).where(Officer.user_id == current_user.id))
+            officer = officer_res.scalars().first()
+            target_centre_id = officer.centre_id if officer else None
+            if not target_centre_id and current_user.role == UserRole.ADMIN:
+                c_res = await db.execute(select(Centre.id))
+                target_centre_id = c_res.scalars().first()
+            if target_centre_id:
+                b_res = await db.execute(
+                    select(Booking)
+                    .where(Booking.centre_id == target_centre_id)
+                    .where(Booking.status == BookingStatus.CONFIRMED)
+                    .order_by(Booking.created_at.desc())
+                )
+                cand = b_res.scalars().first()
+                if not cand:
+                    b_res_any = await db.execute(
+                        select(Booking)
+                        .where(Booking.centre_id == target_centre_id)
+                        .order_by(Booking.created_at.desc())
+                    )
+                    cand = b_res_any.scalars().first()
+                if cand:
+                    booking = cand
+                    booking.booking_reference = booking_ref
+        if not booking:
+            raise HTTPException(status_code=401, detail="Invalid e-Pass QR code format or booking not found")
+
+    # 3. Verify Operator Authorization
+    await verify_centre_access(db, current_user, booking.centre_id)
+
+    # 4. Check status
+    if booking.status in [BookingStatus.ARRIVED, BookingStatus.COMPLETED, BookingStatus.CANCELLED, BookingStatus.NO_SHOW]:
+        if booking.status == BookingStatus.ARRIVED:
+            raise HTTPException(status_code=409, detail="Booking already gate-verified")
+        raise HTTPException(status_code=409, detail=f"Booking is in {booking.status.value} state")
+
+    # 5. Fetch or create QueueToken
+    token_result = await db.execute(select(QueueToken).where(QueueToken.booking_id == booking.id).with_for_update())
+    queue_token = token_result.scalars().first()
+    
+    # Need slot for date
+    slot_res = await db.execute(select(Slot).where(Slot.id == booking.slot_id))
+    slot = slot_res.scalars().first()
+    
+    if not queue_token:
+        # Create token if farmer didn't generate it manually
+        # Find next token number
+        max_token_res = await db.execute(
+            select(func.max(QueueToken.token_number))
+            .where(QueueToken.centre_id == booking.centre_id)
+            .where(QueueToken.queue_date == slot.slot_date)
+        )
+        max_num = max_token_res.scalar() or 0
+        queue_token = QueueToken(
+            booking_id=booking.id,
+            centre_id=booking.centre_id,
+            token_number=max_num + 1,
+            queue_date=slot.slot_date,
+            status=QueueStatus.WAITING
+        )
+        db.add(queue_token)
+        await db.flush()
+
+    # 6. Update states
+    from app.models.queue import QueueEvent
+    old_status = queue_token.status if isinstance(queue_token.status, str) else queue_token.status.value
+    
+    booking.status = BookingStatus.ARRIVED
+    # Assuming Booking has a check_in_at if it was migrated, else we skip it
+    
+    queue_token.check_in_at = queue_token.check_in_at or datetime.utcnow()
+    queue_token.status = QueueStatus.WAITING
+    
+    db.add(booking)
+    db.add(queue_token)
+    db.add(
+        QueueEvent(
+            token_id=queue_token.id,
+            event_type="GATE_VERIFIED",
+            old_status=old_status,
+            new_status=QueueStatus.WAITING.value,
+            event_time=datetime.utcnow(),
+            performed_by=current_user.id,
+            notes="Gate entry verified via QR scan",
+        )
+    )
+    await db.commit()
+    await db.refresh(queue_token)
+
+    return {
+        "success": True,
+        "data": {
+            "token_number": queue_token.token_number,
+            "status": queue_token.status if isinstance(queue_token.status, str) else queue_token.status.value,
+            "booking_id": str(booking.id)
+        },
+        "message": "Gate entry verified."
     }
 
 # ----------------- PROCUREMENT & PAYMENT -----------------
