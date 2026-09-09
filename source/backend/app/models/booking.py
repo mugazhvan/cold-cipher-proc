@@ -2,7 +2,7 @@ import enum
 import uuid
 from datetime import date, time, datetime
 from typing import Optional
-from sqlalchemy import String, Integer, Numeric, Date, Time, DateTime, ForeignKey, Index
+from sqlalchemy import String, Integer, Numeric, Date, Time, DateTime, ForeignKey, Index, CheckConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 from .base import BaseModel
@@ -37,6 +37,7 @@ class Slot(BaseModel):
 
     __table_args__ = (
         Index('idx_slots_centre_date_time', 'centre_id', 'slot_date', 'start_time'),
+        CheckConstraint('booked_count <= capacity', name='check_booked_count_capacity'),
     )
 
 class Booking(BaseModel):
@@ -59,4 +60,6 @@ class Booking(BaseModel):
     __table_args__ = (
         Index('idx_bookings_farmer_status', 'farmer_id', 'status'),
         Index('idx_bookings_centre_slot', 'centre_id', 'slot_id'),
+        Index('idx_unique_active_booking_per_slot', 'farmer_id', 'slot_id', unique=True, postgresql_where=text("status != 'CANCELLED'")),
     )
+

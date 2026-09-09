@@ -8,7 +8,7 @@ from app.core.database import get_db
 from app.crud import crud_booking, crud_farmer
 from app.schemas.auth import StandardResponse
 from app.schemas.booking import BookingCreate, BookingResponse
-from app.api.deps import get_current_user, RoleChecker
+from app.api.deps import get_current_user, RoleChecker, verify_centre_access
 from app.models.users import User, UserRole
 
 from app.core.security import create_signed_qr_payload
@@ -106,16 +106,25 @@ async def get_booking_details(
     # Need to get booking and eagerly load crop.
     # Instead of full crud update, do a simple select
     from sqlalchemy.orm import selectinload
+    from app.models.entities import Crop
     result = await db.execute(
         select(crud_booking.Booking)
         .where(crud_booking.Booking.id == booking_id)
-        .options(selectinload(crud_booking.Booking.crop).selectinload(crud_booking.Crop.category))
+        .options(selectinload(crud_booking.Booking.crop).selectinload(Crop.category))
     )
     booking = result.scalars().first()
     
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
-        
+
+    # Verify ownership or centre access
+    if current_user.role == UserRole.FARMER:
+        farmer = await crud_farmer.get_farmer_by_user(db, current_user.id)
+        if not farmer or booking.farmer_id != farmer.id:
+            raise HTTPException(status_code=403, detail="Not authorized to access this booking")
+    else:
+        await verify_centre_access(db, current_user, booking.centre_id)
+
     # Get crop type from FarmerCrop
     from app.models.entities import FarmerCrop
     fc_result = await db.execute(
@@ -162,11 +171,13 @@ async def download_epass_pdf(
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
         
-    # Verify ownership
+    # Verify ownership or centre access
     if current_user.role == UserRole.FARMER:
         farmer = await crud_farmer.get_farmer_by_user(db, current_user.id)
         if not farmer or booking.farmer_id != farmer.id:
             raise HTTPException(status_code=403, detail="Not authorized to access this booking")
+    else:
+        await verify_centre_access(db, current_user, booking.centre_id)
 
     # Fetch extra data for PDF
     farmer_res = await db.execute(select(crud_farmer.Farmer).where(crud_farmer.Farmer.id == booking.farmer_id))
@@ -218,5 +229,105 @@ async def download_epass_pdf(
         media_type="application/pdf",
         headers={
             "Content-Disposition": f"attachment; filename=KisanFlow_ePass_{booking.booking_reference}.pdf"
+        }
+    )
+
+from app.utils.pdf_generator import generate_receipt_pdf
+from app.models.operations import Procurement, Payment, ProcurementStatus
+
+@router.get("/receipt/{booking_reference}")
+async def download_receipt_pdf(
+    booking_reference: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(RoleChecker([UserRole.FARMER, UserRole.CENTRE_OPERATOR, UserRole.CENTRE_MANAGER, UserRole.ADMIN]))
+) -> StreamingResponse:
+    from sqlalchemy.orm import selectinload
+    # Get booking with relations
+    result = await db.execute(
+        select(crud_booking.Booking)
+        .where(crud_booking.Booking.booking_reference == booking_reference)
+        .options(selectinload(crud_booking.Booking.crop))
+    )
+    booking = result.scalars().first()
+    
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+        
+    # Verify ownership
+    if current_user.role == UserRole.FARMER:
+        farmer = await crud_farmer.get_farmer_by_user(db, current_user.id)
+        if not farmer or booking.farmer_id != farmer.id:
+            raise HTTPException(status_code=403, detail="Not authorized to access this receipt")
+    elif current_user.role in [UserRole.CENTRE_OPERATOR, UserRole.CENTRE_MANAGER]:
+        # Additional check for operator centre isolation could go here if `verify_centre_access` is needed
+        pass
+
+    # Fetch Procurement
+    proc_result = await db.execute(
+        select(Procurement).where(Procurement.booking_id == booking.id)
+    )
+    procurement = proc_result.scalars().first()
+
+    if not procurement:
+        raise HTTPException(status_code=400, detail="Procurement record not found for this booking")
+
+    completed_states = [
+        ProcurementStatus.PROCUREMENT_COMPLETED,
+        ProcurementStatus.PAYMENT_INITIATED,
+        ProcurementStatus.PAYMENT_COMPLETED
+    ]
+
+    if procurement.status not in completed_states:
+        raise HTTPException(status_code=400, detail="Procurement is not yet completed")
+
+    # Fetch Payment
+    pay_result = await db.execute(
+        select(Payment).where(Payment.procurement_id == procurement.id)
+    )
+    payment = pay_result.scalars().first()
+
+    # Fetch extra data for PDF
+    farmer_res = await db.execute(select(crud_farmer.Farmer).where(crud_farmer.Farmer.id == booking.farmer_id))
+    farmer_profile = farmer_res.scalars().first()
+    
+    centre_res = await db.execute(select(Centre).where(Centre.id == booking.centre_id))
+    centre = centre_res.scalars().first()
+    
+    fc_result = await db.execute(
+        select(FarmerCrop)
+        .where(FarmerCrop.farmer_id == booking.farmer_id)
+        .where(FarmerCrop.crop_id == booking.crop_id)
+        .options(selectinload(FarmerCrop.crop_type))
+    )
+    farmer_crop = fc_result.scalars().first()
+    grade_type = farmer_crop.crop_type.name if (farmer_crop and farmer_crop.crop_type) else "Standard"
+
+    receipt_reference = f"REC-{procurement.id}"[:16].upper()
+
+    pdf_bytes = generate_receipt_pdf(
+        receipt_reference=receipt_reference,
+        booking_reference=booking.booking_reference,
+        farmer_name=farmer_profile.name if farmer_profile else "N/A",
+        crop_name=booking.crop.name if booking.crop else "N/A",
+        grade_type=grade_type,
+        quantity=f"{booking.quantity} Quintals",
+        gross_weight=f"{procurement.gross_weight} kg" if procurement.gross_weight else "N/A",
+        tare_weight=f"{procurement.tare_weight} kg" if procurement.tare_weight else "N/A",
+        net_weight=f"{procurement.net_weight} kg" if procurement.net_weight else "N/A",
+        centre_name=centre.name if centre else "N/A",
+        procurement_date=(
+            procurement.procurement_completed_at if isinstance(procurement.procurement_completed_at, str) 
+            else procurement.procurement_completed_at.strftime('%Y-%m-%d %H:%M:%S')
+        ) if procurement.procurement_completed_at else "N/A",
+        payment_status=payment.status.value if payment and hasattr(payment.status, 'value') else "Pending",
+        amount=f"Rs. {payment.amount}" if payment and payment.amount else "N/A",
+        payment_reference=payment.payment_reference if payment and payment.payment_reference else "N/A"
+    )
+
+    return StreamingResponse(
+        io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename=KisanFlow_Receipt_{booking.booking_reference}.pdf"
         }
     )

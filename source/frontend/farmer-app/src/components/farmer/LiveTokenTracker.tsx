@@ -20,12 +20,12 @@ import {
 } from 'lucide-react';
 
 interface LiveTokenTrackerProps {
-  onViewJForm: () => void;
+  onViewReceipt: () => void;
   onBookNewSlot: () => void;
 }
 
 export const LiveTokenTracker: React.FC<LiveTokenTrackerProps> = ({
-  onViewJForm,
+  onViewReceipt,
   onBookNewSlot,
 }) => {
   const {
@@ -85,12 +85,7 @@ export const LiveTokenTracker: React.FC<LiveTokenTrackerProps> = ({
       const token = localStorage.getItem('kisanflow_token');
       const backendUrl = (import.meta as any).env.VITE_API_URL || 'http://localhost:8000/api/v1';
       
-      // The currentToken.id in FarmerApp might be the booking ID or token ID.
-      // Actually, KisanFlow token object might just be mock data in Context.
-      // If it's real data, we use currentToken.id as booking_id for now.
-      const bookingId = currentToken.id; 
-      
-      const res = await fetch(`${backendUrl}/bookings/${bookingId}/epass`, {
+      const res = await fetch(`${backendUrl}/bookings/epass/${currentToken.tokenNumber}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -580,12 +575,12 @@ export const LiveTokenTracker: React.FC<LiveTokenTrackerProps> = ({
 
               <div className="flex flex-wrap items-center gap-2">
                 <button
-                  id="view-jform-btn"
-                  onClick={onViewJForm}
+                  id="view-receipt-btn"
+                  onClick={onViewReceipt}
                   className="px-3.5 py-2.5 bg-white hover:bg-slate-100 text-emerald-900 font-extrabold text-xs rounded-xl shadow-md flex items-center justify-center space-x-1.5 transition cursor-pointer"
                 >
                   <FileText className="w-4 h-4 text-emerald-700" />
-                  <span>View J-Form & Print Receipt</span>
+                  <span>View & Print Procurement Receipt</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>

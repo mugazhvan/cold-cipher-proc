@@ -55,7 +55,7 @@ export const OperatorConsole: React.FC = () => {
 
       // Fetch live bookings for queue if available
       try {
-        const bookingsRes = await axios.get(`${baseURL}/bookings`, { headers });
+        const bookingsRes = await axios.get(`${baseURL}/centres/${selectedCentreId}/bookings`, { headers });
         const bItems = bookingsRes.data?.data?.items || (Array.isArray(bookingsRes.data?.data) ? bookingsRes.data?.data : []);
         if (bItems && bItems.length > 0) {
           const mappedTokens: TokenRecord[] = bItems.map((b: any) => ({

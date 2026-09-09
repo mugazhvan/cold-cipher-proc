@@ -91,7 +91,7 @@ export const INITIAL_CENTRES: ProcurementCentre[] = [
     weatherCondition: 'Clear Sky • 28°C',
     rainRiskPercent: 10,
     isAiRecommended: true,
-    recommendedReason: 'AI Recommended: Fast turnaround (18 mins wait), covered bays & lowest yard congestion.',
+    recommendedReason: 'System Recommended: Fast turnaround (18 mins wait), covered bays & lowest yard congestion.',
   },
   {
     id: 'centre-khanna',

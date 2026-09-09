@@ -25,7 +25,7 @@ export const NearbyMandiBoard: React.FC<NearbyMandiBoardProps> = ({
         <div>
           <div className="flex items-center space-x-2 text-sky-300 text-xs font-bold uppercase tracking-wider mb-1">
             <Sparkles className="w-4 h-4 text-amber-400" />
-            <span>AI Dynamic Traffic & Yard Balancer</span>
+            <span>Smart Dynamic Traffic & Yard Balancer</span>
           </div>
           <h2 className="text-base sm:text-lg font-bold">
             Real-Time Mandi Congestion & Yard Waiting Times
@@ -36,59 +36,58 @@ export const NearbyMandiBoard: React.FC<NearbyMandiBoardProps> = ({
         </div>
 
         <div className="bg-white/10 backdrop-blur-xs border border-white/20 px-4 py-2 rounded-xl text-center">
-          <div className="text-[10px] uppercase tracking-wider text-sky-300 font-semibold">
-            Total Active Trolleys in District
+          <div className="flex items-center space-x-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-200">
+            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            <span>Smart Dynamic Traffic & Yard Balancer</span>
           </div>
-          <div className="text-xl font-extrabold font-mono text-white">54 Vehicles</div>
         </div>
       </div>
 
-      {/* Grid of Centres */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* List of Mandis */}
+      <div className="space-y-4">
         {centres.map((centre) => {
+          // Find current Wait Status
           const isHighCongestion = centre.yardCapacityPercent >= 80;
           const isModerate = centre.yardCapacityPercent >= 50 && centre.yardCapacityPercent < 80;
 
           return (
             <div
               key={centre.id}
-              className={`bg-white rounded-2xl border p-5 shadow-xs transition hover:shadow-md flex flex-col justify-between ${
+              className={`relative bg-white rounded-2xl border p-4 shadow-xs transition-all ${
                 centre.isAiRecommended
-                  ? 'border-amber-400/80 ring-2 ring-amber-400/20'
-                  : isHighCongestion
-                  ? 'border-red-200'
+                  ? 'border-emerald-300 ring-2 ring-emerald-500/10'
                   : 'border-slate-200'
               }`}
             >
-              <div>
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <div className="flex items-center space-x-2">
+              {/* Header: Name and Distance */}
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <h4 className="font-bold text-slate-900 flex items-center space-x-2">
                     <Building2
                       className={`w-5 h-5 ${
                         centre.isAiRecommended ? 'text-amber-500' : 'text-slate-600'
                       }`}
                     />
-                    <h3 className="font-bold text-sm text-slate-900">{centre.name}</h3>
-                  </div>
-
-                  {centre.isAiRecommended && (
-                    <span className="bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-extrabold text-[10px] px-2.5 py-0.5 rounded-full shadow-xs whitespace-nowrap">
-                      ★ AI RECOMMENDED
+                    <span>{centre.name}</span>
+                  </h4>
+                  <div className="flex items-center space-x-4 text-xs text-slate-500 mb-4 mt-2">
+                    <span className="flex items-center space-x-1">
+                      <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                      <span>{centre.distanceKm} km away</span>
                     </span>
-                  )}
+                    <span>Code: {centre.code}</span>
+                    <span className="flex items-center space-x-1 text-slate-600">
+                      <CloudRain className="w-3.5 h-3.5 text-sky-500" />
+                      <span>{centre.weatherCondition}</span>
+                    </span>
+                  </div>
                 </div>
-
-                <div className="flex items-center space-x-4 text-xs text-slate-500 mb-4">
-                  <span className="flex items-center space-x-1">
-                    <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{centre.distanceKm} km away</span>
-                  </span>
-                  <span>Code: {centre.code}</span>
-                  <span className="flex items-center space-x-1 text-slate-600">
-                    <CloudRain className="w-3.5 h-3.5 text-sky-500" />
-                    <span>{centre.weatherCondition}</span>
-                  </span>
-                </div>
+                {centre.isAiRecommended && (
+                  <div className="bg-amber-500 text-white text-[10px] font-extrabold px-2 py-1 rounded-bl-lg rounded-tr-lg absolute top-0 right-0 shadow-xs">
+                    ★ BEST RECOMMENDATION
+                  </div>
+                )}
+              </div>
 
                 {/* Meter Bars */}
                 <div className="space-y-3 bg-slate-50 p-3.5 rounded-xl border border-slate-100 mb-4">
@@ -147,8 +146,7 @@ export const NearbyMandiBoard: React.FC<NearbyMandiBoardProps> = ({
                     </span>
                   </div>
                 )}
-              </div>
-
+              {/* Meter bars and button wrapper */}
               <button
                 onClick={() => onSelectCentreToBook(centre.id)}
                 className={`w-full py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 cursor-pointer ${

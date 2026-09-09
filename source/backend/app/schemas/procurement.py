@@ -11,6 +11,14 @@ class ProcurementBase(BaseModel):
     quality_remarks: Optional[str] = None
     status: str
 
+class WeighingCreate(BaseModel):
+    gross_weight: float
+    tare_weight: float
+
+class QualityCreate(BaseModel):
+    quality_status: str
+    quality_remarks: Optional[str] = None
+
 class ProcurementUpdate(BaseModel):
     gross_weight: Optional[float] = None
     tare_weight: Optional[float] = None

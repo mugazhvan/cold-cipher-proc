@@ -15,8 +15,8 @@ export const SimulationModal: React.FC = () => {
   const stepsInfo = [
     {
       step: 1,
-      title: '1. AI Smart Mandi Recommendation',
-      desc: 'System compares nearby procurement centres. Khanna has 85m queue while Samrala has only 18m wait. AI recommends Samrala to prevent yard congestion.',
+      title: '1. Smart Mandi Recommendation',
+      desc: 'System compares nearby procurement centres. Khanna has 85m queue while Samrala has only 18m wait. System recommends Samrala to prevent yard congestion.',
       targetRole: 'Farmer View',
       actionPrompt: 'Click Next to book 48 Quintals of Wheat at Samrala Depot.',
     },

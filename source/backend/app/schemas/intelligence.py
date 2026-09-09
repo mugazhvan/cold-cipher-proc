@@ -30,7 +30,14 @@ class RecommendedSlot(BaseModel):
     end_time: str
     estimated_wait_minutes: int
     congestion_level: str
-    reason: str
+    reason: str  # Kept for backwards compatibility
+    # Transparency fields added in M5
+    capacity: int
+    booked_count: int
+    remaining_capacity: int
+    utilization: float
+    score: float
+    reasons: List[str]
 
 class SlotRecommendationResponse(BaseModel):
     recommended_slots: List[RecommendedSlot]

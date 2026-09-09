@@ -85,21 +85,21 @@ export const DepartmentAnalytics: React.FC = () => {
 
         <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
           <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
-            AI Load Balancing Efficiency
+            Smart Load Balancing Efficiency
           </span>
           <div className="text-2xl font-black text-amber-600 font-mono mt-1">94.8%</div>
           <span className="text-xs text-slate-500 mt-1 block">38 trolleys auto-diverted today</span>
         </div>
       </div>
 
-      {/* SIH AI Load Balancing & Congestion Prevention Matrix */}
+      {/* SIH Smart Load Balancing & Congestion Prevention Matrix */}
       <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
         <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
           <div className="flex items-center space-x-2">
             <Sparkles className="w-5 h-5 text-amber-500" />
             <div>
               <h3 className="font-bold text-sm text-slate-900">
-                Predictive AI Yard Balancing & Diversion Engine
+                Algorithmic Yard Balancing & Diversion Engine
               </h3>
               <p className="text-xs text-slate-500">
                 Prevents bottlenecking at mega mandis by dynamically routing arrivals to low-load
@@ -123,7 +123,7 @@ export const DepartmentAnalytics: React.FC = () => {
               estimated wait time.
             </p>
             <div className="mt-3 text-xs bg-white p-2.5 rounded-lg border border-amber-200 text-slate-800 font-medium">
-              <strong>AI Action Taken:</strong> Subsidized route diversion activated. New slot bookings
+              <strong>System Action Taken:</strong> Subsidized route diversion activated. New slot bookings
               from Bija & Samrala tehsils defaulted to Samrala Depot (8.4 km, 18 min wait).
             </div>
           </div>

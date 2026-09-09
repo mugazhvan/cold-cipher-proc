@@ -44,7 +44,10 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
           quantity_kg: estimatedQuintals * 100,
           preferred_date: slotDate
         };
-        const res = await axios.post(`${baseURL}/intelligence/recommend-slots`, payload);
+        const token = localStorage.getItem('kisanflow_token');
+        const res = await axios.post(`${baseURL}/intelligence/recommend-slots`, payload, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
         if (res.data && res.data.data && res.data.data.recommended_slots) {
           setRecommendedSlots(res.data.data.recommended_slots);
           if (res.data.data.recommended_slots.length > 0) {
@@ -299,7 +302,7 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
                 </div>
                 <div className="flex items-center space-x-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full text-xs font-semibold">
                   <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  <span>AI Load Balancer Active</span>
+                  <span>Smart Load Balancer Active</span>
                 </div>
               </div>
 
@@ -409,20 +412,48 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
                     <select
                       value={slotTime}
                       onChange={(e) => setSlotTime(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                      disabled={recommendedSlots.length === 0}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
                     >
                       {recommendedSlots.length > 0 ? (
                         recommendedSlots.map((slot: any) => (
                           <option key={slot.slot_id} value={`${slot.start_time} - ${slot.end_time}`}>
-                            {slot.start_time} - {slot.end_time} ({slot.congestion_level}: {slot.reason})
+                            {slot.start_time} - {slot.end_time} ({slot.congestion_level})
                           </option>
                         ))
                       ) : (
-                        <option value="09:30 AM - 10:30 AM">09:30 AM - 10:30 AM (Fallback)</option>
+                        <option value="">No suitable slots available</option>
                       )}
                     </select>
                     <Clock className="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none" />
                   </div>
+                  
+                  {/* Why this slot? Section */}
+                  {recommendedSlots.length > 0 && (
+                    <div className="mt-3 bg-emerald-50/50 border border-emerald-100 rounded-lg p-3">
+                      <div className="text-[10px] uppercase font-bold text-emerald-800 mb-1.5 flex items-center space-x-1">
+                        <Sparkles className="w-3 h-3" />
+                        <span>Why this slot?</span>
+                      </div>
+                      <ul className="space-y-1">
+                        {recommendedSlots
+                          .find((s: any) => `${s.start_time} - ${s.end_time}` === slotTime)
+                          ?.reasons?.map((reason: string, idx: number) => (
+                            <li key={idx} className="text-xs text-slate-600 flex items-start space-x-1.5">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                              <span>{reason}</span>
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
+                  )}
+                  {recommendedSlots.length === 0 && (
+                     <div className="mt-3 bg-red-50/50 border border-red-100 rounded-lg p-3">
+                       <p className="text-xs text-red-700 font-medium">
+                         The requested quantity exceeds the remaining capacity of all open slots on this date.
+                       </p>
+                     </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -493,8 +524,8 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
               <button
                 type="submit"
                 id="submit-booking-btn"
-                disabled={isSubmitting}
-                className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-slate-950 font-extrabold text-sm rounded-xl transition shadow-md flex items-center justify-center space-x-2 cursor-pointer"
+                disabled={isSubmitting || recommendedSlots.length === 0}
+                className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:from-slate-400 disabled:to-slate-500 text-slate-950 disabled:text-slate-200 font-extrabold text-sm rounded-xl transition shadow-md flex items-center justify-center space-x-2 cursor-pointer disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <span>Generating Secure Pass...</span>

@@ -17,18 +17,10 @@ from app.schemas.auth import StandardResponse
 from app.schemas.slot import SlotCreate, SlotResponse, SlotUpdate, BatchSlotCreate
 from app.schemas.procurement import ProcurementBase, ProcurementResponse, ProcurementUpdate
 from app.schemas.payment import PaymentResponse, PaymentBase
-from app.api.deps import RoleChecker
+from app.api.deps import RoleChecker, verify_centre_access
 from app.core.security import verify_signed_qr_payload
 
 router = APIRouter()
-
-async def verify_centre_access(db: AsyncSession, current_user: User, target_centre_id: uuid.UUID):
-    if current_user.role == UserRole.ADMIN:
-        return
-    result = await db.execute(select(Officer).where(Officer.user_id == current_user.id))
-    officer = result.scalars().first()
-    if not officer or officer.centre_id != target_centre_id:
-        raise HTTPException(status_code=403, detail="Not authorized to access this centre")
 
 # ----------------- SLOTS -----------------
 
@@ -180,13 +172,16 @@ async def call_token(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(RoleChecker([UserRole.CENTRE_OPERATOR, UserRole.CENTRE_MANAGER]))
 ) -> Any:
-    result = await db.execute(select(QueueToken).where(QueueToken.id == token_id))
+    result = await db.execute(select(QueueToken).where(QueueToken.id == token_id).with_for_update())
     token = result.scalars().first()
     
     if not token:
         raise HTTPException(status_code=404, detail="Token not found")
         
     await verify_centre_access(db, current_user, token.centre_id)
+    
+    if token.status != QueueStatus.WAITING:
+        raise HTTPException(status_code=409, detail=f"Token is not WAITING, it is {token.status.value}")
         
     token.status = QueueStatus.CALLED
     db.add(token)
@@ -196,30 +191,6 @@ async def call_token(
         "success": True,
         "data": {"token_number": token.token_number, "status": token.status.value},
         "message": "Token called."
-    }
-
-@router.post("/queue/{token_id}/complete", response_model=StandardResponse)
-async def complete_token(
-    token_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(RoleChecker([UserRole.CENTRE_OPERATOR, UserRole.CENTRE_MANAGER]))
-) -> Any:
-    result = await db.execute(select(QueueToken).where(QueueToken.id == token_id))
-    token = result.scalars().first()
-    
-    if not token:
-        raise HTTPException(status_code=404, detail="Token not found")
-        
-    await verify_centre_access(db, current_user, token.centre_id)
-        
-    token.status = QueueStatus.COMPLETED
-    db.add(token)
-    await db.commit()
-    
-    return {
-        "success": True,
-        "data": {"token_number": token.token_number, "status": token.status.value},
-        "message": "Token completed."
     }
 
 from app.schemas.booking import QRVerifyRequest
@@ -364,46 +335,143 @@ async def verify_epass_qr(
 
 # ----------------- PROCUREMENT & PAYMENT -----------------
 
-@router.post("/bookings/{booking_id}/procurement", response_model=StandardResponse, status_code=201)
-async def create_procurement(
+from app.schemas.procurement import WeighingCreate, QualityCreate
+
+@router.post("/procurement/{booking_id}/start-weighing", response_model=StandardResponse, status_code=201)
+async def start_weighing(
     booking_id: uuid.UUID,
-    proc_in: ProcurementBase,
+    weighing_in: WeighingCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(RoleChecker([UserRole.CENTRE_OPERATOR, UserRole.CENTRE_MANAGER]))
 ) -> Any:
-    # We need to get the booking to know the centre_id
-    result = await db.execute(select(Booking).where(Booking.id == booking_id))
-    booking = result.scalars().first()
-    if not booking:
-        raise HTTPException(status_code=404, detail="Booking not found")
+    if weighing_in.gross_weight <= 0 or weighing_in.tare_weight <= 0:
+        raise HTTPException(status_code=400, detail="Weights must be positive")
+    if weighing_in.gross_weight <= weighing_in.tare_weight:
+        raise HTTPException(status_code=400, detail="Gross weight must be strictly greater than tare weight")
 
-    await verify_centre_access(db, current_user, booking.centre_id)
+    # Fetch QueueToken and Booking with locking
+    qt_res = await db.execute(select(QueueToken).where(QueueToken.booking_id == booking_id).with_for_update())
+    token = qt_res.scalars().first()
+    if not token:
+        raise HTTPException(status_code=404, detail="Queue token not found")
+
+    await verify_centre_access(db, current_user, token.centre_id)
+
+    if token.status != QueueStatus.CALLED:
+        raise HTTPException(status_code=409, detail=f"Cannot start weighing, token is {token.status.value}")
+
+    b_res = await db.execute(select(Booking).where(Booking.id == booking_id).with_for_update())
+    booking = b_res.scalars().first()
+    if booking.status not in [BookingStatus.ARRIVED, BookingStatus.PROCESSING]:
+        raise HTTPException(status_code=409, detail=f"Invalid booking status: {booking.status.value}")
+
+    # Check if procurement exists
+    p_res = await db.execute(select(Procurement).where(Procurement.booking_id == booking_id))
+    proc = p_res.scalars().first()
+    if proc:
+        raise HTTPException(status_code=409, detail="Procurement already started for this booking")
+
+    net_w = weighing_in.gross_weight - weighing_in.tare_weight
 
     proc = Procurement(
         booking_id=booking_id,
         centre_id=booking.centre_id,
-        gross_weight=proc_in.gross_weight,
-        tare_weight=proc_in.tare_weight,
-        net_weight=proc_in.net_weight,
-        quality_status=proc_in.quality_status,
-        quality_remarks=proc_in.quality_remarks,
-        status=ProcurementStatus[proc_in.status.upper()]
+        gross_weight=weighing_in.gross_weight,
+        tare_weight=weighing_in.tare_weight,
+        net_weight=net_w,
+        status=ProcurementStatus.WEIGHING
     )
-        
     db.add(proc)
-    
-    # Update booking status
+
+    token.status = QueueStatus.PROCESSING
+    db.add(token)
+
     booking.status = BookingStatus.PROCESSING
     db.add(booking)
-        
+
     await db.commit()
     await db.refresh(proc)
-    
+
     return {
         "success": True,
         "data": ProcurementResponse.model_validate(proc).model_dump(),
-        "message": "Procurement created."
+        "message": "Weighing started."
     }
+
+@router.post("/procurement/{procurement_id}/quality", response_model=StandardResponse)
+async def submit_quality(
+    procurement_id: uuid.UUID,
+    quality_in: QualityCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(RoleChecker([UserRole.CENTRE_OPERATOR, UserRole.CENTRE_MANAGER]))
+) -> Any:
+    p_res = await db.execute(select(Procurement).where(Procurement.id == procurement_id).with_for_update())
+    proc = p_res.scalars().first()
+    if not proc:
+        raise HTTPException(status_code=404, detail="Procurement not found")
+
+    await verify_centre_access(db, current_user, proc.centre_id)
+
+    if proc.status != ProcurementStatus.WEIGHING:
+        raise HTTPException(status_code=409, detail=f"Procurement is in {proc.status.value}, expected WEIGHING")
+
+    proc.quality_status = quality_in.quality_status
+    proc.quality_remarks = quality_in.quality_remarks
+    proc.status = ProcurementStatus.ACCEPTED
+    
+    db.add(proc)
+    await db.commit()
+    await db.refresh(proc)
+
+    return {
+        "success": True,
+        "data": ProcurementResponse.model_validate(proc).model_dump(),
+        "message": "Quality submitted and accepted."
+    }
+
+@router.post("/procurement/{procurement_id}/complete", response_model=StandardResponse)
+async def complete_procurement(
+    procurement_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(RoleChecker([UserRole.CENTRE_OPERATOR, UserRole.CENTRE_MANAGER]))
+) -> Any:
+    p_res = await db.execute(select(Procurement).where(Procurement.id == procurement_id).with_for_update())
+    proc = p_res.scalars().first()
+    if not proc:
+        raise HTTPException(status_code=404, detail="Procurement not found")
+
+    await verify_centre_access(db, current_user, proc.centre_id)
+
+    if proc.status != ProcurementStatus.ACCEPTED:
+        raise HTTPException(status_code=409, detail=f"Procurement is in {proc.status.value}, expected ACCEPTED")
+
+    b_res = await db.execute(select(Booking).where(Booking.id == proc.booking_id).with_for_update())
+    booking = b_res.scalars().first()
+
+    qt_res = await db.execute(select(QueueToken).where(QueueToken.booking_id == proc.booking_id).with_for_update())
+    token = qt_res.scalars().first()
+
+    proc.status = ProcurementStatus.PROCUREMENT_COMPLETED
+    proc.procurement_completed_at = datetime.utcnow()
+    db.add(proc)
+
+    if booking:
+        booking.status = BookingStatus.COMPLETED
+        db.add(booking)
+    
+    if token:
+        token.status = QueueStatus.COMPLETED
+        db.add(token)
+
+    await db.commit()
+    await db.refresh(proc)
+
+    return {
+        "success": True,
+        "data": ProcurementResponse.model_validate(proc).model_dump(),
+        "message": "Procurement completed."
+    }
+
 
 @router.post("/procurement/{procurement_id}/payment", response_model=StandardResponse, status_code=201)
 async def initiate_payment(

@@ -295,9 +295,7 @@ export const DigitalTokenPassModal: React.FC<DigitalTokenPassModalProps> = ({
     }
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
+
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">

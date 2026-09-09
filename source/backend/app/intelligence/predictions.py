@@ -96,19 +96,30 @@ async def recommend_slots(
         remaining_capacity = slot.capacity - slot.booked_count
         if quantity_kg <= remaining_capacity:
             utilization = slot.booked_count / slot.capacity if slot.capacity > 0 else 1
+            score = round((1.0 - utilization) * 100, 1)  # 100 is best, 0 is worst
+            
+            reasons = [
+                f"{remaining_capacity} capacity remaining",
+            ]
             
             if utilization > 0.8:
                 congestion = "HIGH"
                 wait = 60
                 reason = "Slot is nearly full, high wait time expected."
+                reasons.append("High current utilization")
+                reasons.append("Longer estimated wait time")
             elif utilization > 0.4:
                 congestion = "MEDIUM"
                 wait = 30
                 reason = "Moderate traffic expected."
+                reasons.append("Moderate current utilization")
+                reasons.append("Average estimated wait time")
             else:
                 congestion = "LOW"
                 wait = 10
                 reason = "Best time to visit, low traffic."
+                reasons.append("Low current utilization")
+                reasons.append("Short estimated wait time")
                 
             start_str = slot.start_time.strftime("%H:%M") if hasattr(slot.start_time, "strftime") else str(slot.start_time)[:5]
             end_str = slot.end_time.strftime("%H:%M") if hasattr(slot.end_time, "strftime") else str(slot.end_time)[:5]
@@ -121,12 +132,17 @@ async def recommend_slots(
                     end_time=end_str,
                     estimated_wait_minutes=wait,
                     congestion_level=congestion,
-                    reason=reason
+                    reason=reason,
+                    capacity=slot.capacity,
+                    booked_count=slot.booked_count,
+                    remaining_capacity=remaining_capacity,
+                    utilization=round(utilization, 2),
+                    score=score,
+                    reasons=reasons
                 )
             )
             
-    # Sort by congestion level (LOW first)
-    level_map = {"LOW": 1, "MEDIUM": 2, "HIGH": 3}
-    recommendations.sort(key=lambda x: level_map.get(x.congestion_level, 4))
+    # Sort by score descending (highest score is best)
+    recommendations.sort(key=lambda x: x.score, reverse=True)
     
     return recommendations

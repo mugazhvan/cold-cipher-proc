@@ -10,7 +10,7 @@ import { Calendar, Clock, FileText, Building2 } from 'lucide-react';
 export const FarmerPortal: React.FC = () => {
   const { language } = useKisanFlow();
   const t = TRANSLATIONS[language];
-  const [activeTab, setActiveTab] = useState<'booking' | 'tracker' | 'jform' | 'mandis'>('booking');
+  const [activeTab, setActiveTab] = useState<'booking' | 'tracker' | 'receipt' | 'mandis'>('booking');
 
   return (
     <div className="space-y-6">
@@ -43,10 +43,10 @@ export const FarmerPortal: React.FC = () => {
         </button>
 
         <button
-          id="farmer-tab-jform"
-          onClick={() => setActiveTab('jform')}
+          id="farmer-tab-receipt"
+          onClick={() => setActiveTab('receipt')}
           className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${
-            activeTab === 'jform'
+            activeTab === 'receipt'
               ? 'bg-emerald-600 text-white shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
@@ -75,11 +75,11 @@ export const FarmerPortal: React.FC = () => {
       )}
       {activeTab === 'tracker' && (
         <LiveTokenTracker
-          onViewJForm={() => setActiveTab('jform')}
+          onViewReceipt={() => setActiveTab('receipt')}
           onBookNewSlot={() => setActiveTab('booking')}
         />
       )}
-      {activeTab === 'jform' && <DigitalJForm />}
+      {activeTab === 'receipt' && <DigitalJForm />}
       {activeTab === 'mandis' && (
         <NearbyMandiBoard
           onSelectCentreToBook={() => {

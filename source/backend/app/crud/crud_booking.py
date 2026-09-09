@@ -33,6 +33,8 @@ async def create_booking(db: AsyncSession, farmer_id: uuid.UUID, booking_in: Boo
     if booking_in.quantity > remaining_capacity:
         raise HTTPException(status_code=409, detail="SLOT_FULL")
         
+    from sqlalchemy.exc import IntegrityError
+
     # 4. Create booking
     booking_ref = f"BK-{uuid.uuid4().hex[:8].upper()}"
     booking = Booking(
@@ -51,7 +53,16 @@ async def create_booking(db: AsyncSession, farmer_id: uuid.UUID, booking_in: Boo
     db.add(slot)
     
     # 6. Commit
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError as e:
+        await db.rollback()
+        error_msg = str(e.orig)
+        if "check_booked_count_capacity" in error_msg:
+            raise HTTPException(status_code=409, detail="SLOT_FULL")
+        elif "idx_unique_active_booking_per_slot" in error_msg:
+            raise HTTPException(status_code=409, detail="DUPLICATE_BOOKING")
+        raise HTTPException(status_code=400, detail="Booking validation failed")
     
     from sqlalchemy.orm import selectinload
     stmt = select(Booking).where(Booking.id == booking.id).options(selectinload(Booking.crop))
@@ -73,6 +84,19 @@ async def get_bookings_for_farmer(
     total = (await db.execute(count_query)).scalar_one()
     
     query = query.options(selectinload(Booking.crop)).order_by(Booking.created_at.desc()).offset(skip).limit(limit)
+    result = await db.execute(query)
+    
+    return result.scalars().all(), total
+
+async def get_bookings_for_centre(
+    db: AsyncSession, centre_id: uuid.UUID, skip: int = 0, limit: int = 20
+) -> Tuple[List[Booking], int]:
+    query = select(Booking).where(Booking.centre_id == centre_id)
+    
+    count_query = select(func.count()).select_from(query.subquery())
+    total = (await db.execute(count_query)).scalar_one()
+    
+    query = query.options(selectinload(Booking.crop)).order_by(Booking.created_at.asc()).offset(skip).limit(limit)
     result = await db.execute(query)
     
     return result.scalars().all(), total
