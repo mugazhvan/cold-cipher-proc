@@ -33,7 +33,7 @@ export const OperatorReceiptModal: React.FC<OperatorReceiptModalProps> = ({
     qualityDeductionsRs: 0,
     mandiFeesRs: 0,
     netPayableRs: 118300,
-    utrNumber: 'RBI-DBT-20260905-99812401',
+    utrNumber: 'SIM-DBT-20260905-99812401',
     paymentStatus: 'PAID_TO_BANK',
     paidAt: '09:35 AM',
     jFormNumber: 'JF-PB-SAM-2026-0814',
@@ -124,7 +124,7 @@ export const OperatorReceiptModal: React.FC<OperatorReceiptModalProps> = ({
       ctx.fillText(token.centreName, 600, 275);
       ctx.fillText(token.assignedBay || 'Bay 2 (North)', 600, 300);
       ctx.fillStyle = '#047857';
-      ctx.fillText('100% DBT SETTLED', 600, 325);
+      ctx.fillText('100% DBT SETTLED (SIMULATED)', 600, 325);
 
       // Weighment & Financial table
       ctx.fillStyle = '#f1f5f9';
@@ -162,7 +162,7 @@ export const OperatorReceiptModal: React.FC<OperatorReceiptModalProps> = ({
       drawRow('Government Minimum Support Price (MSP):', `₹${payment.mspRatePerQuintal.toLocaleString()} / Quintal`, 505);
       drawRow('Gross MSP Disbursal Amount:', `₹${payment.grossAmountRs.toLocaleString('en-IN')}`, 535);
       drawRow('Fair Average Quality (FAQ) Deductions:', '₹0.00 (Nil)', 565);
-      drawRow('Total Net Payout Credited via RBI-DBT:', `₹${payment.netPayableRs.toLocaleString('en-IN')}`, 595, true, true);
+      drawRow('Total Net Payout Credited via SIM-DBT:', `₹${payment.netPayableRs.toLocaleString('en-IN')}`, 595, true, true);
 
       // Bank UTR Settlement details
       ctx.fillStyle = '#ecfdf5';
@@ -286,7 +286,7 @@ export const OperatorReceiptModal: React.FC<OperatorReceiptModalProps> = ({
             <div className="bg-emerald-950/60 border border-emerald-800/60 rounded-xl p-3 text-emerald-200">
               <div className="flex items-center space-x-1.5 font-bold mb-1">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>RBI National Automated Clearing House (NACH-DBT)</span>
+                <span>Automated Clearing House (SIMULATED)</span>
               </div>
               <p className="text-[11px] font-mono text-emerald-300">
                 UTR: {payment.utrNumber}

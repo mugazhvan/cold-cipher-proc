@@ -220,7 +220,7 @@ export const INITIAL_TOKENS: TokenRecord[] = [
       qualityDeductionsRs: 0,
       mandiFeesRs: 0,
       netPayableRs: 118300,
-      utrNumber: 'RBI-DBT-20260905-99812401',
+      utrNumber: 'SIM-DBT-20260905-99812401',
       paymentStatus: 'PAID_TO_BANK',
       paidAt: '09:35 AM',
       jFormNumber: 'JF-PB-SAM-2026-0814',
@@ -232,7 +232,7 @@ export const INITIAL_TOKENS: TokenRecord[] = [
       {
         id: 'sms-02-1',
         timestamp: '09:35 AM',
-        text: 'KisanFlow: Digital J-Form #JF-PB-SAM-2026-0814 issued. MSP Payout of ₹1,18,300 transferred via DBT (UTR: RBI-DBT-20260905-99812401).',
+        text: 'KisanFlow: Digital J-Form #JF-PB-SAM-2026-0814 issued. MSP Payout of ₹1,18,300 transferred via DBT (UTR: SIM-DBT-20260905-99812401).',
         type: 'PAYMENT',
       },
     ],

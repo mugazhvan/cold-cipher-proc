@@ -455,7 +455,7 @@ export const KisanFlowProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           qualityDeductionsRs: deductions,
           mandiFeesRs: 0, // Govt exempted for farmers
           netPayableRs: netPayable,
-          utrNumber: `RBI-DBT-20260905-${utrSuffix}`,
+          utrNumber: `SIM-DBT-20260905-${utrSuffix}`,
           paymentStatus: 'PAID_TO_BANK',
           paidAt: timeNow,
           jFormNumber,

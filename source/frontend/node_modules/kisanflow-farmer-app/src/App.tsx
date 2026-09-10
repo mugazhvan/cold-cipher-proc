@@ -51,7 +51,7 @@ export const App: React.FC = () => {
               <span className="text-slate-300">|</span>
               <span className="flex items-center space-x-1 text-slate-700">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Direct Benefit Transfer (DBT) Protected</span>
+                <span>Direct Benefit Transfer (DBT) Protected (Simulated)</span>
               </span>
               <span className="text-slate-300">|</span>
               <span>SIH26032 • Department of Consumer Affairs, GoI</span>

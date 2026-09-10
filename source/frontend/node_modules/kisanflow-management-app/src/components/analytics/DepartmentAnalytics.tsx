@@ -191,7 +191,7 @@ export const DepartmentAnalytics: React.FC = () => {
               <span className="text-emerald-700 font-bold">[DBT_SETTLED]</span>
               <span className="text-zinc-800">
                 Token #KF-2026-0940 • Net: 52.0 Qtl Wheat • Payout: ₹1,18,300 • UTR:
-                RBI-DBT-20260905-99812401
+                SIM-DBT-20260905-99812401
               </span>
             </div>
             <span className="text-emerald-600 text-[10px] font-bold">VERIFIED</span>

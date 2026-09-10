@@ -181,7 +181,7 @@ async def call_token(
     await verify_centre_access(db, current_user, token.centre_id)
     
     if token.status != QueueStatus.WAITING:
-        raise HTTPException(status_code=409, detail=f"Token is not WAITING, it is {token.status.value}")
+        raise HTTPException(status_code=409, detail=f"Token is not WAITING, it is {token.status if isinstance(token.status, str) else getattr(token.status, 'value', str(token.status))}")
         
     token.status = QueueStatus.CALLED
     db.add(token)
@@ -189,7 +189,7 @@ async def call_token(
     
     return {
         "success": True,
-        "data": {"token_number": token.token_number, "status": token.status.value},
+        "data": {"token_number": token.token_number, "status": token.status if isinstance(token.status, str) else getattr(token.status, 'value', str(token.status))},
         "message": "Token called."
     }
 
@@ -268,7 +268,7 @@ async def verify_epass_qr(
     if booking.status in [BookingStatus.ARRIVED, BookingStatus.COMPLETED, BookingStatus.CANCELLED, BookingStatus.NO_SHOW]:
         if booking.status == BookingStatus.ARRIVED:
             raise HTTPException(status_code=409, detail="Booking already gate-verified")
-        raise HTTPException(status_code=409, detail=f"Booking is in {booking.status.value} state")
+        raise HTTPException(status_code=409, detail=f"Booking is in {booking.status if isinstance(booking.status, str) else getattr(booking.status, 'value', str(booking.status))} state")
 
     # 5. Fetch or create QueueToken
     token_result = await db.execute(select(QueueToken).where(QueueToken.booking_id == booking.id).with_for_update())
@@ -358,12 +358,12 @@ async def start_weighing(
     await verify_centre_access(db, current_user, token.centre_id)
 
     if token.status != QueueStatus.CALLED:
-        raise HTTPException(status_code=409, detail=f"Cannot start weighing, token is {token.status.value}")
+        raise HTTPException(status_code=409, detail=f"Cannot start weighing, token is {token.status if isinstance(token.status, str) else getattr(token.status, 'value', str(token.status))}")
 
     b_res = await db.execute(select(Booking).where(Booking.id == booking_id).with_for_update())
     booking = b_res.scalars().first()
     if booking.status not in [BookingStatus.ARRIVED, BookingStatus.PROCESSING]:
-        raise HTTPException(status_code=409, detail=f"Invalid booking status: {booking.status.value}")
+        raise HTTPException(status_code=409, detail=f"Invalid booking status: {booking.status if isinstance(booking.status, str) else getattr(booking.status, 'value', str(booking.status))}")
 
     # Check if procurement exists
     p_res = await db.execute(select(Procurement).where(Procurement.booking_id == booking_id))
@@ -413,7 +413,7 @@ async def submit_quality(
     await verify_centre_access(db, current_user, proc.centre_id)
 
     if proc.status != ProcurementStatus.WEIGHING:
-        raise HTTPException(status_code=409, detail=f"Procurement is in {proc.status.value}, expected WEIGHING")
+        raise HTTPException(status_code=409, detail=f"Procurement is in {proc.status if isinstance(proc.status, str) else getattr(proc.status, 'value', str(proc.status))}, expected WEIGHING")
 
     proc.quality_status = quality_in.quality_status
     proc.quality_remarks = quality_in.quality_remarks
@@ -443,7 +443,7 @@ async def complete_procurement(
     await verify_centre_access(db, current_user, proc.centre_id)
 
     if proc.status != ProcurementStatus.ACCEPTED:
-        raise HTTPException(status_code=409, detail=f"Procurement is in {proc.status.value}, expected ACCEPTED")
+        raise HTTPException(status_code=409, detail=f"Procurement is in {proc.status if isinstance(proc.status, str) else getattr(proc.status, 'value', str(proc.status))}, expected ACCEPTED")
 
     b_res = await db.execute(select(Booking).where(Booking.id == proc.booking_id).with_for_update())
     booking = b_res.scalars().first()

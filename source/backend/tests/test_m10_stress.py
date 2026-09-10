@@ -132,9 +132,11 @@ async def test_multi_operator_concurrency(client: AsyncClient):
     async with AsyncSessionLocal() as db:
         centre_id, crop_id, slot_id, farmers_data = await create_stress_test_data(db, 1)
         
-        # Setup 2 Operators for the same centre
-        opA_user = User(id=uuid.uuid4(), phone="9888888888", role=UserRole.CENTRE_OPERATOR, is_active=True)
-        opB_user = User(id=uuid.uuid4(), phone="9777777777", role=UserRole.CENTRE_OPERATOR, is_active=True)
+        # Setup 2 Operators
+        opA_phone = uuid.uuid4().hex[:10]
+        opB_phone = uuid.uuid4().hex[:10]
+        opA_user = User(id=uuid.uuid4(), phone=opA_phone, role=UserRole.CENTRE_OPERATOR, is_active=True)
+        opB_user = User(id=uuid.uuid4(), phone=opB_phone, role=UserRole.CENTRE_OPERATOR, is_active=True)
         db.add_all([opA_user, opB_user])
         await db.flush()
         
@@ -142,36 +144,59 @@ async def test_multi_operator_concurrency(client: AsyncClient):
         officerA = Officer(id=uuid.uuid4(), user_id=opA_user.id, centre_id=centre_id, name="Op A")
         officerB = Officer(id=uuid.uuid4(), user_id=opB_user.id, centre_id=centre_id, name="Op B")
         db.add_all([officerA, officerB])
-        
-        # Create a booking that is ARRIVED, ready to be called
-        booking = Booking(
-            id=uuid.uuid4(), farmer_id=farmers_data[0][0], centre_id=centre_id, slot_id=slot_id, crop_id=crop_id,
-            quantity=50.0, status="ARRIVED", booking_reference="REF-M10"
-        )
-        db.add(booking)
         await db.commit()
         
         tokenA = create_access_token(opA_user.id)
         tokenB = create_access_token(opB_user.id)
-        booking_id = booking.id
+        farmer_token = create_access_token(farmers_data[0][1])
 
-    # Both operators try to call the farmer simultaneously (transition ARRIVED -> QUEUED -> CALLED)
-    # The actual endpoint in management is /api/v1/management/queue/call/{booking_id}
+    # 1. Book
+    res_book = await client.post("/api/v1/bookings", json={
+        "centre_id": str(centre_id), "crop_id": str(crop_id), "slot_id": str(slot_id), "quantity": 50
+    }, headers={"Authorization": f"Bearer {farmer_token}"})
+    assert res_book.status_code == 201
+    booking_id = res_book.json()["data"]["id"]
+
+    # 2. Generate Token (Arrived) -> Simulate the operator scanning QR
+    from app.core.security import create_signed_qr_payload
+    from datetime import datetime, timezone
+    
+    # Get booking ref
+    async with AsyncSessionLocal() as db:
+        b = await db.get(Booking, booking_id)
+        booking_ref = b.booking_reference
+        
+    qr_payload = create_signed_qr_payload(
+        booking_ref=booking_ref,
+        centre_id=str(centre_id),
+        expiry_ts=int(datetime.now(timezone.utc).timestamp() + 3600)
+    )
+
+    res_gen = await client.post("/api/v1/management/qr/verify", json={"qr_data": qr_payload}, headers={"Authorization": f"Bearer {tokenA}"})
+    assert res_gen.status_code == 200, res_gen.text
+    
+    async with AsyncSessionLocal() as db:
+        from app.models.queue import QueueToken
+        import uuid as _uuid
+        qt_res = await db.execute(select(QueueToken).where(QueueToken.booking_id == _uuid.UUID(booking_id)))
+        queue_token = qt_res.scalars().first()
+        token_id = queue_token.id
+
+    # 3. Both operators call the farmer simultaneously
     headersA = {"Authorization": f"Bearer {tokenA}"}
     headersB = {"Authorization": f"Bearer {tokenB}"}
 
     async def op_call(headers):
-        return await client.post(f"/api/v1/management/queue/call/{booking_id}", headers=headers)
+        return await client.post(f"/api/v1/management/queue/{token_id}/call", headers=headers)
     
     responses = await asyncio.gather(op_call(headersA), op_call(headersB))
     status_codes = [r.status_code for r in responses]
     
-    # One should succeed, one should fail (or return the exact same idempotent response if implemented that way, but state shouldn't advance twice)
+    # One should succeed (200), one should fail (409/400/404) depending on how state machine catches the skip
     successes = status_codes.count(200)
-    conflicts = status_codes.count(409) + status_codes.count(404) + status_codes.count(400) # depending on state machine response
+    conflicts = len([s for s in status_codes if s != 200])
     
-    # Check DB state
-    async with AsyncSessionLocal() as db:
-        b = await db.get(Booking, booking_id)
-        assert b.status == "CALLED" # State should be precisely CALLED, not advanced further
+    assert successes == 1, f"Expected exactly 1 successful call, got {successes}. Statuses: {status_codes}"
+    assert conflicts == 1, f"Expected exactly 1 conflict/rejection, got {conflicts}. Statuses: {status_codes}"
+
 

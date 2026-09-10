@@ -51,14 +51,14 @@ export const SimulationModal: React.FC = () => {
     {
       step: 6,
       title: '6. Electronic Weighbridge & Direct Bank Transfer (DBT)',
-      desc: 'Gross: 7920 kg | Tare: 3120 kg | Net: 48.0 Quintals. At ₹2,275/qtl MSP, ₹1,09,200 is settled with Digital J-Form and RBI-DBT transfer.',
+      desc: 'Gross: 7920 kg | Tare: 3120 kg | Net: 48.0 Quintals. At ₹2,275/qtl MSP, ₹1,09,200 is settled with Digital J-Form and SIM-DBT transfer.',
       targetRole: 'Operator View',
       actionPrompt: 'Click Next to return to Farmer Portal and view the issued Digital J-Form & receipt.',
     },
     {
       step: 7,
       title: '7. Digital J-Form & Payout Receipt',
-      desc: 'Farmer receives official Government J-Form on phone with digital signature, eliminating middlemen and payment delays.',
+      desc: 'Farmer receives prototype J-Form on phone with digital signature, eliminating middlemen and payment delays.',
       targetRole: 'Farmer View',
       actionPrompt: 'Simulation Completed! Click Finish to explore freely.',
     },

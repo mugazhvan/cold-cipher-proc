@@ -106,7 +106,7 @@ def generate_epass_pdf(
     # Draw a box for QR
     pdf.set_font("helvetica", "B", 10)
     pdf.set_text_color(100, 116, 139)
-    pdf.cell(0, 10, "OFFICIAL SCAN CODE", border=0, ln=1, align="C")
+    pdf.cell(0, 10, "SCAN CODE", border=0, ln=1, align="C")
     
     # Embed QR Code into PDF
     # width is 50, center it (A4 is 210mm wide, so x = (210-50)/2 = 80)

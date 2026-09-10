@@ -4,7 +4,7 @@ export const INITIAL_NOTIFICATIONS: AppNotification[] = [
   {
     id: 'notif-01',
     title: 'MSP Payout Credited',
-    message: 'Digital Form J-1092 approved. ₹1,09,200 directly credited via RBI-DBT to Bank of Baroda account ending in 8841.',
+    message: 'Digital Form J-1092 approved. ₹1,09,200 directly credited via SIM-DBT to Bank of Baroda account ending in 8841.',
     type: 'PAYMENT_SETTLED',
     priority: 'HIGH',
     targetRole: 'farmer',

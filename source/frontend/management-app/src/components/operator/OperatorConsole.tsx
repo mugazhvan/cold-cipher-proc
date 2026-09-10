@@ -521,7 +521,7 @@ export const OperatorConsole: React.FC = () => {
                             <button
                               onClick={() => setReceiptToken(tok)}
                               className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-emerald-300 border border-emerald-500/40 rounded-lg text-xs font-bold transition flex items-center space-x-1 cursor-pointer"
-                              title="View & Download Official J-Form Receipt"
+                              title="View & Download Prototype J-Form Receipt"
                             >
                               <FileText className="w-3 h-3 text-emerald-400" />
                               <span>J-Form</span>
