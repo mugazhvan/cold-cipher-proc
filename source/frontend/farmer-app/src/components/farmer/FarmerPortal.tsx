@@ -599,7 +599,7 @@ export const FarmerPortal: React.FC = () => {
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-6">
               <div className="flex items-center space-x-4 border-b border-slate-100 pb-5">
                 <div className="w-16 h-16 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-extrabold text-xl shadow-sm">
-                  GS
+                  {farmer.name.split(' ').map(n => n[0]).join('').substring(0, 3)}
                 </div>
                 <div>
                   <div className="flex items-center space-x-2">

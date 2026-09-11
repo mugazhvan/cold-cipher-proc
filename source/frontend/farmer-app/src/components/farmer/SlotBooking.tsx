@@ -17,32 +17,32 @@ const DEFAULT_FALLBACK_SLOTS = [
     id: 'slot-morning-1',
     start_time: '09:30 AM',
     end_time: '10:30 AM',
-    max_capacity: 1000,
-    current_capacity: 120,
+    max_capacity: 50000,
+    current_capacity: 12000,
     is_active: true,
   },
   {
     id: 'slot-morning-2',
     start_time: '11:00 AM',
     end_time: '12:30 PM',
-    max_capacity: 1000,
-    current_capacity: 280,
+    max_capacity: 50000,
+    current_capacity: 28000,
     is_active: true,
   },
   {
     id: 'slot-afternoon-1',
     start_time: '02:00 PM',
     end_time: '03:30 PM',
-    max_capacity: 1000,
-    current_capacity: 210,
+    max_capacity: 50000,
+    current_capacity: 21000,
     is_active: true,
   },
   {
     id: 'slot-evening-1',
     start_time: '04:00 PM',
     end_time: '05:30 PM',
-    max_capacity: 1000,
-    current_capacity: 90,
+    max_capacity: 50000,
+    current_capacity: 9000,
     is_active: true,
   },
 ];
@@ -78,6 +78,25 @@ const formatSlotRange = (start: string, end: string) => {
   return `${s} - ${e}`;
 };
 
+const getLocalDateString = (offsetDays: number = 0) => {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const formatDateChip = (dateStr: string) => {
+  try {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    return dt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  } catch {
+    return dateStr;
+  }
+};
+
 interface SlotBookingProps {
   onSuccess: () => void;
 }
@@ -86,9 +105,9 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
   const { farmer, crops, centres, bookSlot, language } = useKisanFlow();
   const t = TRANSLATIONS[language];
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const tomorrowStr = new Date(Date.now() + 86400000).toISOString().split('T')[0];
-  const dayAfterStr = new Date(Date.now() + 172800000).toISOString().split('T')[0];
+  const todayStr = getLocalDateString(0);
+  const tomorrowStr = getLocalDateString(1);
+  const dayAfterStr = getLocalDateString(2);
 
   const [selectedCropId, setSelectedCropId] = useState(crops[0]?.id || 'crop-wheat');
   const [estimatedQuintals, setEstimatedQuintals] = useState<number>(45);
@@ -312,7 +331,7 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start space-x-3.5">
             <div className="w-12 h-12 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-lg shadow-sm">
-              GS
+              {farmer.name.split(' ').map(n => n[0]).join('').substring(0, 3)}
             </div>
             <div>
               <div className="flex items-center space-x-2">
@@ -629,7 +648,7 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
                         : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
-                    Today ({new Date(todayStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })})
+                    Today ({formatDateChip(todayStr)})
                   </button>
                   <button
                     type="button"
@@ -640,7 +659,7 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
                         : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
-                    Tomorrow ({new Date(tomorrowStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })})
+                    Tomorrow ({formatDateChip(tomorrowStr)})
                   </button>
                   <button
                     type="button"
@@ -651,7 +670,7 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
                         : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
-                    Day After ({new Date(dayAfterStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })})
+                    Day After ({formatDateChip(dayAfterStr)})
                   </button>
                 </div>
                 <div className="relative max-w-xs">
@@ -659,6 +678,7 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
                     type="date"
                     id="slot-date-input"
                     value={slotDate}
+                    min={todayStr}
                     onChange={(e) => setSlotDate(e.target.value)}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
                   />
@@ -679,10 +699,12 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
                       (rs) => rs.slot_id === slot.id || formatSlotRange(rs.start_time, rs.end_time) === slotValue
                     );
                     const isClosed = slot.is_active === false || slot.status === 'CLOSED';
-                    const maxCap = slot.max_capacity ?? slot.capacity ?? 1000;
+                    const maxCap = slot.max_capacity ?? slot.capacity ?? 50000;
                     const currentBooked = slot.current_capacity ?? slot.booked_count ?? 0;
-                    const remaining = maxCap - currentBooked;
-                    const isFull = remaining < estimatedQuintals * 100;
+                    const remaining = Math.max(0, maxCap - currentBooked);
+                    const isKgScale = maxCap > 2000;
+                    const requestedWeight = isKgScale ? Number(estimatedQuintals) * 100 : Number(estimatedQuintals);
+                    const isFull = maxCap > 0 && remaining < requestedWeight;
                     const isDisabled = isClosed || isFull;
 
                     return (
@@ -721,9 +743,13 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
                             {isClosed ? (
                               <span className="text-red-700 font-bold">Closed</span>
                             ) : isFull ? (
-                              <span className="text-red-700 font-bold">Full ({currentBooked}/{maxCap} kg)</span>
+                              <span className="text-red-700 font-bold">
+                                Full ({isKgScale ? `${Math.round(currentBooked / 100)}/${Math.round(maxCap / 100)} Qtl` : `${currentBooked}/${maxCap}`})
+                              </span>
                             ) : (
-                              <span className="text-emerald-700 font-medium">{remaining.toLocaleString('en-IN')} kg available</span>
+                              <span className="text-emerald-700 font-medium">
+                                {isKgScale ? `${Math.round(remaining / 100)} Qtl available` : `${remaining} spots available`}
+                              </span>
                             )}
                           </span>
                           <span

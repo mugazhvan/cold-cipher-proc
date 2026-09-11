@@ -75,7 +75,7 @@ interface KisanFlowContextType {
 
 const KisanFlowContext = createContext<KisanFlowContextType | undefined>(undefined);
 
-const STORAGE_KEY_TOKENS = 'kisanflow_tokens_v1';
+const STORAGE_KEY_TOKENS = 'kisanflow_tokens_v2';
 const STORAGE_KEY_ROLE = 'kisanflow_role_v1';
 const STORAGE_KEY_LANG = 'kisanflow_lang_v1';
 const STORAGE_KEY_AUTH = 'kisanflow_auth_v1';
@@ -102,10 +102,16 @@ export const KisanFlowProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [centres] = useState<ProcurementCentre[]>(INITIAL_CENTRES);
 
   const [tokens, setTokens] = useState<TokenRecord[]>(() => {
+    if (localStorage.getItem('kisanflow_tokens_v1')) {
+      localStorage.removeItem('kisanflow_tokens_v1');
+    }
     const saved = localStorage.getItem(STORAGE_KEY_TOKENS);
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.every(p => p.farmerName !== 'Gurpreet Singh Dhillon')) {
+          return parsed;
+        }
       } catch (e) {
         console.error('Failed to parse tokens from storage', e);
       }
@@ -125,7 +131,9 @@ export const KisanFlowProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return INITIAL_NOTIFICATIONS;
   });
 
-  const [activeTokenId, setActiveTokenId] = useState<string>('token-01');
+  const [activeTokenId, setActiveTokenId] = useState<string>(() => {
+    return tokens[0]?.id || '';
+  });
 
   // Simulation state
   const [simulationStep, setSimulationStep] = useState<number>(0);
@@ -507,10 +515,11 @@ export const KisanFlowProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const resetDemoData = () => {
     localStorage.removeItem(STORAGE_KEY_TOKENS);
+    localStorage.removeItem('kisanflow_tokens_v1');
     localStorage.removeItem(STORAGE_KEY_NOTIFS);
     setTokens(INITIAL_TOKENS);
     setNotifications(INITIAL_NOTIFICATIONS);
-    setActiveTokenId(INITIAL_TOKENS[0].id);
+    setActiveTokenId(INITIAL_TOKENS[0]?.id || '');
     setSimulationStep(0);
     setIsSimulating(false);
   };

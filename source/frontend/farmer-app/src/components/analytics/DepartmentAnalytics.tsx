@@ -224,7 +224,7 @@ export const DepartmentAnalytics: React.FC = () => {
               <span className="text-slate-400">07:15:08</span>
               <span className="text-slate-700 font-bold">[SLOT_BOOK]</span>
               <span className="text-slate-800">
-                Token #KF-2026-0942 issued to Gurpreet Singh Dhillon (PMK-2024-PB-99412)
+                Token #KF-2026-0071 issued to Mahendra Singh Dhoni (PMK-2026-PB-00007)
               </span>
             </div>
             <span className="text-slate-500 text-[10px] font-bold">CONFIRMED</span>
