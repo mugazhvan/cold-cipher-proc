@@ -45,30 +45,30 @@ export const OperatorHeader: React.FC = () => {
   }, []);
 
   return (
-    <header className="bg-zinc-900 border-b border-zinc-800 sticky top-0 z-40 shadow-lg text-zinc-100">
+    <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-lg text-slate-900">
       {/* Top Gov/Hackathon Ribbon */}
-      <div className="bg-zinc-950 text-zinc-400 text-xs px-4 py-1.5 flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800/80">
+      <div className="bg-slate-50 text-slate-500 text-xs px-4 py-1.5 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200">
         <div className="flex items-center space-x-2">
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-sky-950 text-sky-400 font-mono font-bold tracking-wider text-[10px] border border-sky-800">
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-sky-100 text-sky-700 font-mono font-bold tracking-wider text-[10px] border border-sky-200">
             STAFF TERMINAL
           </span>
-          <span className="font-medium text-zinc-200">
+          <span className="font-medium text-slate-800">
             Government of India • Department of Consumer Affairs
           </span>
-          <span className="hidden sm:inline text-zinc-600">|</span>
-          <span className="hidden sm:inline text-zinc-400">
+          <span className="hidden sm:inline text-slate-600">|</span>
+          <span className="hidden sm:inline text-slate-500">
             Mandi Operational Center & Quality Control Console
           </span>
         </div>
 
         <div className="flex items-center space-x-3 text-xs">
-          <div className="flex items-center space-x-1 text-sky-400">
+          <div className="flex items-center space-x-1 text-sky-700">
             <Radio className="w-3.5 h-3.5 animate-pulse" />
             <span className="font-mono text-[11px]">{timeStr} IST</span>
           </div>
 
-          <div className="flex items-center space-x-1 bg-zinc-800 px-2 py-0.5 rounded text-[11px] border border-zinc-700">
-            <Globe className="w-3 h-3 text-zinc-400" />
+          <div className="flex items-center space-x-1 bg-slate-100 px-2 py-0.5 rounded text-[11px] border border-slate-300">
+            <Globe className="w-3 h-3 text-slate-500" />
             {(['en', 'hi', 'pa'] as Language[]).map((lang) => (
               <button
                 key={lang}
@@ -77,7 +77,7 @@ export const OperatorHeader: React.FC = () => {
                 className={`px-1.5 py-0.5 rounded transition ${
                   language === lang
                     ? 'bg-sky-500 text-zinc-950 font-bold'
-                    : 'text-zinc-400 hover:text-white'
+                    : 'text-slate-500 hover:text-white'
                 }`}
               >
                 {lang === 'en' ? 'EN' : lang === 'hi' ? 'हिन्दी' : 'ਪੰਜਾਬੀ'}
@@ -96,14 +96,14 @@ export const OperatorHeader: React.FC = () => {
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-zinc-100">
+              <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900">
                 KisanFlow Mandi Command
               </h1>
-              <span className="bg-sky-950 text-sky-400 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border border-sky-800">
+              <span className="bg-sky-100 text-sky-700 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border border-sky-200">
                 OP-STATION
               </span>
             </div>
-            <p className="text-xs text-zinc-400 font-medium">
+            <p className="text-xs text-slate-500 font-medium">
               Weighbridge, FAQ Lab & Immediate DBT Payout Disbursal
             </p>
           </div>
@@ -111,14 +111,14 @@ export const OperatorHeader: React.FC = () => {
 
         {/* Operator Role Navigation Pill */}
         {isAuthenticated && (
-          <div className="flex items-center bg-zinc-800 p-1 rounded-xl border border-zinc-700">
+          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-300">
             <button
               id="operator-nav-console"
               onClick={() => setRole('operator')}
               className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                 role === 'operator'
                   ? 'bg-sky-600 text-white shadow-xs'
-                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700/60'
+                  : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/60'
               }`}
             >
               <Building2 className="w-4 h-4" />
@@ -131,7 +131,7 @@ export const OperatorHeader: React.FC = () => {
               className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                 role === 'analytics'
                   ? 'bg-amber-600 text-white shadow-xs'
-                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700/60'
+                  : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/60'
               }`}
             >
               <BarChart3 className="w-4 h-4" />
@@ -161,7 +161,7 @@ export const OperatorHeader: React.FC = () => {
           <button
             id="reset-demo-btn"
             onClick={resetDemoData}
-            className="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border border-zinc-700 transition"
+            className="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-300 transition"
             title="Reset to default demonstration records"
           >
             <RotateCcw className="w-3.5 h-3.5" />

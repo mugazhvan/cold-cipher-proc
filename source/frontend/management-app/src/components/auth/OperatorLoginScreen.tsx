@@ -22,17 +22,17 @@ export const OperatorLoginScreen: React.FC = () => {
 
   return (
     <div className="min-h-[80vh] flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md bg-zinc-800 rounded-3xl shadow-2xl border border-zinc-700 overflow-hidden text-zinc-100">
+      <div className="w-full max-w-md bg-slate-100 rounded-3xl shadow-2xl border border-slate-300 overflow-hidden text-slate-900">
         {/* Header Banner - Slate & Sky Theme */}
-        <div className="bg-zinc-900 p-8 text-center text-white relative overflow-hidden border-b border-zinc-700">
+        <div className="bg-white p-8 text-center text-white relative overflow-hidden border-b border-slate-300">
           <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
             <Building2 className="w-48 h-48" />
           </div>
           <div className="relative z-10 flex flex-col items-center">
-            <div className="bg-sky-500/20 text-sky-400 p-3 rounded-2xl border border-sky-400/30 shadow-sm mb-3">
+            <div className="bg-sky-500/20 text-sky-700 p-3 rounded-2xl border border-sky-400/30 shadow-sm mb-3">
               <Building2 className="w-8 h-8" />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight mb-1 text-zinc-100">
+            <h1 className="text-2xl font-bold tracking-tight mb-1 text-slate-900">
               Mandi Command Console
             </h1>
             <p className="text-sky-300 text-xs font-mono font-medium">
@@ -45,18 +45,18 @@ export const OperatorLoginScreen: React.FC = () => {
         <div className="p-8">
           <form onSubmit={handleOperatorSubmit} className="space-y-5">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-300">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-700">
                 Staff / Officer ID
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                  <Building2 className="h-4 w-4 text-zinc-400" />
+                  <Building2 className="h-4 w-4 text-slate-500" />
                 </div>
                 <input
                   type="text"
                   value={operatorId}
                   onChange={(e) => setOperatorId(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2.5 border border-zinc-700 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm bg-zinc-900/90 text-zinc-100 font-mono transition-colors"
+                  className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm bg-white/90 text-slate-900 font-mono transition-colors"
                   placeholder="e.g. OP-SAMRALA-802"
                   required
                 />
@@ -64,18 +64,18 @@ export const OperatorLoginScreen: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-300">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-700">
                 Secure Password
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                  <Lock className="h-4 w-4 text-zinc-400" />
+                  <Lock className="h-4 w-4 text-slate-500" />
                 </div>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2.5 border border-zinc-700 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm bg-zinc-900/90 text-zinc-100 font-mono transition-colors"
+                  className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm bg-white/90 text-slate-900 font-mono transition-colors"
                   placeholder="••••••••"
                   required
                 />
@@ -83,7 +83,7 @@ export const OperatorLoginScreen: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-300">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-700">
                 Access Workspace Role
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -93,7 +93,7 @@ export const OperatorLoginScreen: React.FC = () => {
                   className={`py-2 px-3 text-xs font-bold rounded-xl border transition ${
                     roleSelection === 'operator'
                       ? 'bg-sky-600 border-sky-500 text-white shadow-xs'
-                      : 'bg-zinc-900/60 border-zinc-700 text-zinc-400 hover:text-zinc-200'
+                      : 'bg-white/60 border-slate-300 text-slate-500 hover:text-slate-800'
                   }`}
                 >
                   Mandi Yard Operator
@@ -104,7 +104,7 @@ export const OperatorLoginScreen: React.FC = () => {
                   className={`py-2 px-3 text-xs font-bold rounded-xl border transition ${
                     roleSelection === 'analytics'
                       ? 'bg-amber-600 border-amber-500 text-white shadow-xs'
-                      : 'bg-zinc-900/60 border-zinc-700 text-zinc-400 hover:text-zinc-200'
+                      : 'bg-white/60 border-slate-300 text-slate-500 hover:text-slate-800'
                   }`}
                 >
                   DCA Intelligence
@@ -125,11 +125,11 @@ export const OperatorLoginScreen: React.FC = () => {
 
       {/* Security Accreditation Footer */}
       <div className="mt-6 text-center space-y-1">
-        <p className="text-xs font-semibold text-zinc-400 flex items-center justify-center space-x-1.5">
-          <ShieldCheck className="w-4 h-4 text-sky-400" />
+        <p className="text-xs font-semibold text-slate-500 flex items-center justify-center space-x-1.5">
+          <ShieldCheck className="w-4 h-4 text-sky-700" />
           <span>Role-Based Access Control (RBAC) • Department of Consumer Affairs</span>
         </p>
-        <p className="text-[11px] text-zinc-500">
+        <p className="text-[11px] text-slate-400">
           All weighbridge slips and moisture ratings are cryptographically signed.
         </p>
       </div>

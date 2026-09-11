@@ -54,7 +54,7 @@ export const NotificationBell: React.FC = () => {
       <button
         id="notification-bell-btn"
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-xl text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition cursor-pointer"
+        className="relative p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
         title="View Notifications"
       >
         <Bell className="w-4 h-4" />
@@ -71,12 +71,12 @@ export const NotificationBell: React.FC = () => {
             className="fixed inset-0 z-40"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-white shadow-2xl border border-zinc-200 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-white shadow-2xl border border-slate-200 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             {/* Header */}
-            <div className="p-3.5 bg-zinc-50 border-b border-zinc-200 flex items-center justify-between">
+            <div className="p-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Bell className="w-4 h-4 text-emerald-600" />
-                <h4 className="text-xs font-bold text-zinc-900">
+                <h4 className="text-xs font-bold text-slate-900">
                   Procurement Alerts ({relevantNotifications.length})
                 </h4>
               </div>
@@ -94,7 +94,7 @@ export const NotificationBell: React.FC = () => {
                 {relevantNotifications.length > 0 && (
                   <button
                     onClick={clearAllNotifications}
-                    className="text-[10px] font-medium text-zinc-400 hover:text-red-600"
+                    className="text-[10px] font-medium text-slate-500 hover:text-red-600"
                     title="Clear all alerts"
                   >
                     <Trash2 className="w-3 h-3" />
@@ -102,7 +102,7 @@ export const NotificationBell: React.FC = () => {
                 )}
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="text-zinc-400 hover:text-zinc-600"
+                  className="text-slate-500 hover:text-slate-600"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -110,10 +110,10 @@ export const NotificationBell: React.FC = () => {
             </div>
 
             {/* List */}
-            <div className="max-h-80 overflow-y-auto divide-y divide-zinc-100">
+            <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
               {relevantNotifications.length === 0 ? (
-                <div className="p-6 text-center text-xs text-zinc-400 space-y-1">
-                  <p className="font-semibold text-zinc-600">No new alerts</p>
+                <div className="p-6 text-center text-xs text-slate-500 space-y-1">
+                  <p className="font-semibold text-slate-600">No new alerts</p>
                   <p className="text-[11px]">All queue updates & payments will appear here.</p>
                 </div>
               ) : (
@@ -121,22 +121,22 @@ export const NotificationBell: React.FC = () => {
                   <div
                     key={n.id}
                     onClick={() => markNotificationAsRead(n.id)}
-                    className={`p-3 text-xs transition cursor-pointer hover:bg-zinc-50 flex items-start space-x-2.5 ${
-                      !n.read ? 'bg-emerald-50/40 font-medium' : 'text-zinc-600'
+                    className={`p-3 text-xs transition cursor-pointer hover:bg-slate-50 flex items-start space-x-2.5 ${
+                      !n.read ? 'bg-emerald-50/40 font-medium' : 'text-slate-600'
                     }`}
                   >
-                    <div className="p-1.5 rounded-lg bg-white border border-zinc-200 mt-0.5 shadow-2xs">
+                    <div className="p-1.5 rounded-lg bg-white border border-slate-200 mt-0.5 shadow-2xs">
                       {getNotificationIcon(n)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-zinc-900 truncate">{n.title}</span>
-                        <span className="text-[10px] text-zinc-400 flex items-center space-x-0.5 whitespace-nowrap ml-1">
+                        <span className="font-bold text-slate-900 truncate">{n.title}</span>
+                        <span className="text-[10px] text-slate-500 flex items-center space-x-0.5 whitespace-nowrap ml-1">
                           <Clock className="w-2.5 h-2.5" />
                           <span>{n.timestamp}</span>
                         </span>
                       </div>
-                      <p className="text-[11px] text-zinc-600 mt-0.5 line-clamp-2">
+                      <p className="text-[11px] text-slate-600 mt-0.5 line-clamp-2">
                         {n.message}
                       </p>
                       {n.tokenNumber && (
@@ -150,7 +150,7 @@ export const NotificationBell: React.FC = () => {
                         e.stopPropagation();
                         clearNotification(n.id);
                       }}
-                      className="text-zinc-300 hover:text-red-500 p-0.5 transition"
+                      className="text-slate-700 hover:text-red-500 p-0.5 transition"
                     >
                       <X className="w-3 h-3" />
                     </button>

@@ -48,11 +48,11 @@ export const DepartmentAnalytics: React.FC = () => {
 
       {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl border border-zinc-200 p-5 shadow-xs">
-          <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
+          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
             Total Procured Today
           </span>
-          <div className="text-2xl font-black text-zinc-900 font-mono mt-1">
+          <div className="text-2xl font-black text-slate-900 font-mono mt-1">
             {totalProcuredQuintals.toLocaleString()} Qtl
           </div>
           <div className="flex items-center space-x-1 text-xs text-emerald-600 font-semibold mt-1">
@@ -61,20 +61,20 @@ export const DepartmentAnalytics: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-zinc-200 p-5 shadow-xs">
-          <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
+          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
             Guaranteed MSP DBT Disbursed
           </span>
           <div className="text-2xl font-black text-emerald-700 font-mono mt-1">
             ₹{(totalDbtDisbursed / 10000000).toFixed(2)} Cr
           </div>
-          <span className="text-xs text-zinc-500 mt-1 block">
+          <span className="text-xs text-slate-400 mt-1 block">
             Directly credited to Farmer Accounts
           </span>
         </div>
 
-        <div className="bg-white rounded-2xl border border-zinc-200 p-5 shadow-xs">
-          <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
+          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
             Avg Mandi Queue Waiting Time
           </span>
           <div className="text-2xl font-black text-amber-700 font-mono mt-1">21.4 mins</div>
@@ -83,25 +83,25 @@ export const DepartmentAnalytics: React.FC = () => {
           </span>
         </div>
 
-        <div className="bg-white rounded-2xl border border-zinc-200 p-5 shadow-xs">
-          <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
+          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
             AI Load Balancing Efficiency
           </span>
           <div className="text-2xl font-black text-amber-600 font-mono mt-1">94.8%</div>
-          <span className="text-xs text-zinc-500 mt-1 block">38 trolleys auto-diverted today</span>
+          <span className="text-xs text-slate-400 mt-1 block">38 trolleys auto-diverted today</span>
         </div>
       </div>
 
       {/* SIH AI Load Balancing & Congestion Prevention Matrix */}
-      <div className="bg-white rounded-2xl border border-zinc-200 p-5 shadow-xs">
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
         <div className="flex items-center justify-between mb-4 border-b border-zinc-100 pb-3">
           <div className="flex items-center space-x-2">
             <Sparkles className="w-5 h-5 text-amber-500" />
             <div>
-              <h3 className="font-bold text-sm text-zinc-900">
+              <h3 className="font-bold text-sm text-slate-900">
                 Predictive AI Yard Balancing & Diversion Engine
               </h3>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-slate-400">
                 Prevents bottlenecking at mega mandis by dynamically routing arrivals to low-load
                 sub-centres.
               </p>
@@ -150,7 +150,7 @@ export const DepartmentAnalytics: React.FC = () => {
             <div key={c.id} className="space-y-1 text-xs">
               <div className="flex justify-between font-medium">
                 <span className="text-zinc-800 font-bold">{c.name}</span>
-                <span className="font-mono text-zinc-600">
+                <span className="font-mono text-slate-600">
                   {c.yardCapacityPercent}% utilized • {c.currentQueueCount} waiting • ~{c.avgWaitMinutes}m
                   turnaround
                 </span>
@@ -173,21 +173,21 @@ export const DepartmentAnalytics: React.FC = () => {
       </div>
 
       {/* Real-time Audit Log & Fraud Prevention Trail */}
-      <div className="bg-white rounded-2xl border border-zinc-200 p-5 shadow-xs">
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
         <div className="flex items-center justify-between mb-4 border-b border-zinc-100 pb-3">
           <div className="flex items-center space-x-2">
             <Layers className="w-5 h-5 text-amber-600" />
-            <h3 className="font-bold text-sm text-zinc-900">
+            <h3 className="font-bold text-sm text-slate-900">
               Department Transparency & Audit Compliance Trail
             </h3>
           </div>
-          <span className="text-[11px] text-zinc-500 font-mono">Immutable Event Ledger</span>
+          <span className="text-[11px] text-slate-400 font-mono">Immutable Event Ledger</span>
         </div>
 
         <div className="space-y-2.5 text-xs font-mono">
-          <div className="bg-zinc-50 p-2.5 rounded-lg border border-zinc-200 flex items-center justify-between">
+          <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <span className="text-zinc-400">09:35:12</span>
+              <span className="text-slate-500">09:35:12</span>
               <span className="text-emerald-700 font-bold">[DBT_SETTLED]</span>
               <span className="text-zinc-800">
                 Token #KF-2026-0940 • Net: 52.0 Qtl Wheat • Payout: ₹1,18,300 • UTR:
@@ -197,9 +197,9 @@ export const DepartmentAnalytics: React.FC = () => {
             <span className="text-emerald-600 text-[10px] font-bold">VERIFIED</span>
           </div>
 
-          <div className="bg-zinc-50 p-2.5 rounded-lg border border-zinc-200 flex items-center justify-between">
+          <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <span className="text-zinc-400">09:15:00</span>
+              <span className="text-slate-500">09:15:00</span>
               <span className="text-sky-700 font-bold">[BAY_CALL]</span>
               <span className="text-zinc-800">
                 Token #KF-2026-0942 called to Weighbridge Bay 2 (Tractor PB-10-DF-4819)
@@ -208,9 +208,9 @@ export const DepartmentAnalytics: React.FC = () => {
             <span className="text-sky-600 text-[10px] font-bold">ACTIVE</span>
           </div>
 
-          <div className="bg-zinc-50 p-2.5 rounded-lg border border-zinc-200 flex items-center justify-between">
+          <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <span className="text-zinc-400">08:45:22</span>
+              <span className="text-slate-500">08:45:22</span>
               <span className="text-amber-700 font-bold">[GATE_SCAN]</span>
               <span className="text-zinc-800">
                 Token #KF-2026-0945 verified at Samrala Gate 1 • Vehicle PB-10-EA-1922 admitted
@@ -219,15 +219,15 @@ export const DepartmentAnalytics: React.FC = () => {
             <span className="text-amber-600 text-[10px] font-bold">LOGGED</span>
           </div>
 
-          <div className="bg-zinc-50 p-2.5 rounded-lg border border-zinc-200 flex items-center justify-between">
+          <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <span className="text-zinc-400">07:15:08</span>
+              <span className="text-slate-500">07:15:08</span>
               <span className="text-zinc-700 font-bold">[SLOT_BOOK]</span>
               <span className="text-zinc-800">
                 Token #KF-2026-0942 issued to Gurpreet Singh Dhillon (PMK-2024-PB-99412)
               </span>
             </div>
-            <span className="text-zinc-500 text-[10px] font-bold">CONFIRMED</span>
+            <span className="text-slate-400 text-[10px] font-bold">CONFIRMED</span>
           </div>
         </div>
       </div>

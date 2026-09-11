@@ -67,7 +67,7 @@ export const SimulationModal: React.FC = () => {
   const current = stepsInfo[simulationStep - 1] || stepsInfo[0];
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 max-w-lg w-full bg-zinc-900 text-white rounded-2xl shadow-2xl border border-amber-500/40 p-5 animate-in fade-in slide-in-from-bottom-4 duration-300">
+    <div className="fixed bottom-4 right-4 z-50 max-w-lg w-full bg-white text-white rounded-2xl shadow-2xl border border-amber-500/40 p-5 animate-in fade-in slide-in-from-bottom-4 duration-300">
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center space-x-2">
           <span className="p-1.5 bg-amber-500/20 text-amber-400 rounded-lg">
@@ -82,22 +82,22 @@ export const SimulationModal: React.FC = () => {
                 Step {simulationStep} of {stepsInfo.length}
               </span>
             </div>
-            <p className="text-xs text-zinc-400">Context: {current.targetRole}</p>
+            <p className="text-xs text-slate-500">Context: {current.targetRole}</p>
           </div>
         </div>
 
         <button
           onClick={stopSimulation}
-          className="text-zinc-400 hover:text-white p-1 rounded-md transition"
+          className="text-slate-500 hover:text-white p-1 rounded-md transition"
           title="Exit Tour"
         >
           <X className="w-4 h-4" />
         </button>
       </div>
 
-      <div className="bg-zinc-800/80 rounded-xl p-3 border border-zinc-700/80 mb-4">
-        <h4 className="text-sm font-semibold text-zinc-100 mb-1">{current.title}</h4>
-        <p className="text-xs text-zinc-300 leading-relaxed">{current.desc}</p>
+      <div className="bg-slate-200 rounded-xl p-3 border border-slate-300/80 mb-4">
+        <h4 className="text-sm font-semibold text-slate-900 mb-1">{current.title}</h4>
+        <p className="text-xs text-slate-700 leading-relaxed">{current.desc}</p>
       </div>
 
       <div className="flex items-center justify-between">
@@ -108,7 +108,7 @@ export const SimulationModal: React.FC = () => {
         <div className="flex items-center space-x-2">
           <button
             onClick={stopSimulation}
-            className="px-3 py-1.5 text-xs text-zinc-400 hover:text-white transition"
+            className="px-3 py-1.5 text-xs text-slate-500 hover:text-white transition"
           >
             Cancel
           </button>

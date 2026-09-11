@@ -330,23 +330,23 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
   };
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-zinc-100 shadow-xl space-y-5">
+    <div className="bg-white border border-slate-200 rounded-2xl p-5 text-slate-900 shadow-xl space-y-5">
       {/* Header & Mode Switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div>
           <h3 className="text-base font-extrabold text-white flex items-center space-x-2">
             <span>KisanFlow Gate Pass Verification</span>
-            <span className="bg-sky-950/80 text-sky-300 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border border-sky-600/50">
+            <span className="bg-sky-100/80 text-sky-300 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border border-sky-600/50">
               SECURE
             </span>
           </h3>
-          <p className="text-xs text-zinc-400 mt-0.5">
+          <p className="text-xs text-slate-500 mt-0.5">
             Scan farmer e-Pass QR code or use manual lookup fallback to verify arrivals
           </p>
         </div>
 
         {/* Tab Toggle */}
-        <div className="flex items-center space-x-1 bg-zinc-800 p-1 rounded-xl border border-zinc-700 text-xs font-semibold">
+        <div className="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl border border-slate-300 text-xs font-semibold">
           <button
             type="button"
             onClick={() => {
@@ -360,7 +360,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
             className={`px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition ${
               activeMode === 'camera'
                 ? 'bg-sky-600 text-white shadow-xs'
-                : 'text-zinc-400 hover:text-white'
+                : 'text-slate-500 hover:text-white'
             }`}
           >
             <Camera className="w-3.5 h-3.5" />
@@ -376,7 +376,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
             className={`px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition ${
               activeMode === 'manual'
                 ? 'bg-sky-600 text-white shadow-xs'
-                : 'text-zinc-400 hover:text-white'
+                : 'text-slate-500 hover:text-white'
             }`}
           >
             <Search className="w-3.5 h-3.5" />
@@ -387,10 +387,10 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
 
       {/* Verifying Spinner */}
       {verifying && (
-        <div className="p-6 bg-zinc-800/80 border border-sky-500/40 rounded-xl flex flex-col items-center justify-center text-center space-y-3">
-          <RefreshCw className="w-8 h-8 text-sky-400 animate-spin" />
+        <div className="p-6 bg-slate-200 border border-sky-500/40 rounded-xl flex flex-col items-center justify-center text-center space-y-3">
+          <RefreshCw className="w-8 h-8 text-sky-700 animate-spin" />
           <div className="text-sm font-bold text-sky-200">Verifying e-Pass with Authority Server...</div>
-          <div className="text-xs text-zinc-400 font-mono">Validating signature, expiry, and centre isolation</div>
+          <div className="text-xs text-slate-500 font-mono">Validating signature, expiry, and centre isolation</div>
         </div>
       )}
 
@@ -435,7 +435,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
                     <span className="text-[10px] uppercase text-emerald-400 font-semibold block">
                       Booking Ref
                     </span>
-                    <span className="text-xs font-mono text-zinc-200 truncate block">
+                    <span className="text-xs font-mono text-slate-800 truncate block">
                       {verificationResult.data.booking_id || 'Confirmed'}
                     </span>
                   </div>
@@ -508,9 +508,9 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
 
           {/* 4. ALREADY VERIFIED STATE */}
           {verificationResult.state === 'ALREADY_VERIFIED' && (
-            <div className="p-5 bg-sky-950/60 border border-sky-500/50 rounded-xl text-sky-100 space-y-3">
+            <div className="p-5 bg-sky-100/60 border border-sky-500/50 rounded-xl text-sky-100 space-y-3">
               <div className="flex items-start space-x-3">
-                <AlertTriangle className="w-6 h-6 text-sky-400 shrink-0 mt-0.5" />
+                <AlertTriangle className="w-6 h-6 text-sky-700 shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <h4 className="text-sm font-bold text-sky-300">ALREADY VERIFIED</h4>
                   <p className="text-xs text-sky-200/90 leading-relaxed">
@@ -556,12 +556,12 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
 
           {/* 6. NOT FOUND STATE */}
           {verificationResult.state === 'NOT_FOUND' && (
-            <div className="p-5 bg-zinc-800 border border-zinc-700 rounded-xl text-zinc-100 space-y-3">
+            <div className="p-5 bg-slate-100 border border-slate-300 rounded-xl text-slate-900 space-y-3">
               <div className="flex items-start space-x-3">
-                <XCircle className="w-6 h-6 text-zinc-400 shrink-0 mt-0.5" />
+                <XCircle className="w-6 h-6 text-slate-500 shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <h4 className="text-sm font-bold text-zinc-200">NO BOOKING FOUND</h4>
-                  <p className="text-xs text-zinc-400 leading-relaxed">
+                  <h4 className="text-sm font-bold text-slate-800">NO BOOKING FOUND</h4>
+                  <p className="text-xs text-slate-500 leading-relaxed">
                     {verificationResult.message || 'No booking was found.'}
                   </p>
                 </div>
@@ -570,7 +570,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
                 <button
                   type="button"
                   onClick={handleResetForNextScan}
-                  className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white font-bold text-xs rounded-xl transition cursor-pointer"
+                  className="px-4 py-2 bg-slate-200 hover:bg-zinc-600 text-white font-bold text-xs rounded-xl transition cursor-pointer"
                 >
                   Try Again
                 </button>
@@ -594,7 +594,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
                 <button
                   type="button"
                   onClick={handleResetForNextScan}
-                  className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white font-bold text-xs rounded-xl transition cursor-pointer"
+                  className="px-4 py-2 bg-slate-200 hover:bg-zinc-600 text-white font-bold text-xs rounded-xl transition cursor-pointer"
                 >
                   Try Again
                 </button>
@@ -608,19 +608,19 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
       {activeMode === 'camera' && !verificationResult && !verifying && (
         <div className="space-y-3">
           {/* Webcam / Hardware Device Selector Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-zinc-950/80 rounded-xl border border-zinc-800">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-slate-900/40 rounded-xl border border-slate-200">
             <div className="flex items-center space-x-2.5 min-w-0 flex-1">
-              <div className="w-7 h-7 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0 border border-sky-500/30">
+              <div className="w-7 h-7 rounded-lg bg-sky-500/20 text-sky-700 flex items-center justify-center shrink-0 border border-sky-500/30">
                 <Video className="w-4 h-4" />
               </div>
               <div className="flex flex-col min-w-0 flex-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                   Webcam Input Source:
                 </label>
                 <select
                   value={selectedCameraId}
                   onChange={(e) => handleCameraChange(e.target.value)}
-                  className="bg-zinc-900 border border-zinc-700 text-zinc-200 text-xs rounded-lg px-2.5 py-1.5 focus:ring-1 focus:ring-sky-500 focus:border-sky-500 outline-none truncate w-full max-w-sm mt-0.5 cursor-pointer font-medium"
+                  className="bg-white border border-slate-300 text-slate-800 text-xs rounded-lg px-2.5 py-1.5 focus:ring-1 focus:ring-sky-500 focus:border-sky-500 outline-none truncate w-full max-w-sm mt-0.5 cursor-pointer font-medium"
                 >
                   {availableCameras.length === 0 ? (
                     <option value="">Default Camera / Environment</option>
@@ -641,18 +641,18 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
                 onClick={fetchCameras}
                 disabled={isEnumeratingCameras}
                 title="Scan for connected USB webcams"
-                className="px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-zinc-700 text-xs flex items-center space-x-1.5 transition disabled:opacity-50 cursor-pointer"
+                className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-white border border-slate-300 text-xs flex items-center space-x-1.5 transition disabled:opacity-50 cursor-pointer"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isEnumeratingCameras ? 'animate-spin' : ''}`} />
                 <span className="text-[11px] font-semibold">Detect Devices</span>
               </button>
-              <span className="text-[10px] font-mono px-2 py-1 rounded bg-zinc-800/80 text-sky-400 border border-zinc-700/80 font-bold">
+              <span className="text-[10px] font-mono px-2 py-1 rounded bg-slate-200 text-sky-700 border border-slate-300/80 font-bold">
                 {availableCameras.length} {availableCameras.length === 1 ? 'CAM' : 'CAMS'}
               </span>
             </div>
           </div>
 
-          <div className="relative bg-zinc-950 rounded-2xl overflow-hidden border border-zinc-800">
+          <div className="relative bg-slate-50 rounded-2xl overflow-hidden border border-slate-200">
             {/* Camera feed wrapper */}
             <div className="relative w-full flex items-center justify-center" style={{ minHeight: '320px' }}>
               <div
@@ -674,13 +674,13 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
               )}
 
               {!isScanning && (
-                <div className="absolute inset-0 bg-zinc-950/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center space-y-3 z-10">
-                  <div className="w-14 h-14 rounded-2xl bg-sky-600/20 text-sky-400 flex items-center justify-center border border-sky-500/30">
+                <div className="absolute inset-0 bg-slate-50/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center space-y-3 z-10">
+                  <div className="w-14 h-14 rounded-2xl bg-sky-600/20 text-sky-700 flex items-center justify-center border border-sky-500/30">
                     <Camera className="w-7 h-7" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-zinc-100">Camera Scanner Ready</h4>
-                    <p className="text-xs text-zinc-400 max-w-xs mt-1">
+                    <h4 className="text-sm font-bold text-slate-900">Camera Scanner Ready</h4>
+                    <p className="text-xs text-slate-500 max-w-xs mt-1">
                       {selectedCameraId && availableCameras.length > 0
                         ? `Ready to scan using ${availableCameras.find((c) => c.id === selectedCameraId)?.label || 'selected camera'}`
                         : 'Click Start Scanner to activate device camera and scan farmer e-Pass QR code'}
@@ -699,8 +699,8 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
             </div>
 
             {isScanning && (
-              <div className="flex items-center justify-between px-4 py-2.5 bg-zinc-900/95 border-t border-zinc-800">
-                <div className="flex items-center space-x-2 text-xs text-sky-400 font-medium truncate max-w-[65%]">
+              <div className="flex items-center justify-between px-4 py-2.5 bg-white/95 border-t border-slate-200">
+                <div className="flex items-center space-x-2 text-xs text-sky-700 font-medium truncate max-w-[65%]">
                   <span className="w-2 h-2 rounded-full bg-sky-400 animate-ping shrink-0" />
                   <span className="truncate">
                     Active: {availableCameras.find((c) => c.id === selectedCameraId)?.label || 'Camera Feed'}
@@ -740,19 +740,19 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
       {/* Mode 2: MANUAL FALLBACK — STRICT 2-STEP WORKFLOW */}
       {activeMode === 'manual' && !verificationResult && !verifying && (
         <div className="space-y-4">
-          <form onSubmit={handleFindBooking} className="p-4 bg-zinc-950/70 border border-zinc-800 rounded-xl space-y-3">
+          <form onSubmit={handleFindBooking} className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-3">
             <div className="flex items-center space-x-2">
-              <Search className="w-4 h-4 text-sky-400" />
-              <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-300">
+              <Search className="w-4 h-4 text-sky-700" />
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
                 Manual Fallback: Booking Lookup
               </h4>
             </div>
-            <p className="text-xs text-zinc-400 leading-relaxed">
+            <p className="text-xs text-slate-500 leading-relaxed">
               Enter farmer's booking reference or booking ID. The system will look up and validate authority records before allowing arrival verification.
             </p>
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-zinc-400">
+              <label className="text-[11px] font-semibold text-slate-500">
                 Booking Reference:
               </label>
               <div className="flex gap-2">
@@ -764,7 +764,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
                     setLookupError(null);
                   }}
                   placeholder="e.g. KF-2026-0948 or UUID"
-                  className="flex-1 p-2.5 bg-zinc-900 border border-zinc-700 rounded-xl text-xs font-mono text-zinc-100 placeholder:text-zinc-600 focus:outline-hidden focus:ring-2 focus:ring-sky-500"
+                  className="flex-1 p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-mono text-slate-900 placeholder:text-slate-600 focus:outline-hidden focus:ring-2 focus:ring-sky-500"
                   required
                 />
                 <button
@@ -797,17 +797,17 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
 
           {/* Safe Booking Details Card (shown ONLY after backend lookup succeeds) */}
           {lookupData && (
-            <div className="p-5 bg-gradient-to-br from-zinc-950 to-zinc-900 border border-sky-500/40 rounded-xl space-y-4 shadow-lg">
-              <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+            <div className="p-5 bg-gradient-to-br from-slate-100 to-white border border-sky-500/40 rounded-xl space-y-4 shadow-lg">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                 <div className="flex items-center space-x-2">
-                  <UserCheck className="w-5 h-5 text-sky-400" />
+                  <UserCheck className="w-5 h-5 text-sky-700" />
                   <span className="text-xs font-bold uppercase tracking-wider text-sky-300">
                     Validated Booking Record
                   </span>
                 </div>
                 <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
                   lookupData.status === 'ARRIVED'
-                    ? 'bg-sky-950/80 text-sky-300 border-sky-600/50'
+                    ? 'bg-sky-100/80 text-sky-300 border-sky-600/50'
                     : lookupData.status === 'COMPLETED'
                     ? 'bg-emerald-950/80 text-emerald-300 border-emerald-600/50'
                     : 'bg-amber-950/80 text-amber-300 border-amber-600/50'
@@ -818,34 +818,34 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
                 <div>
-                  <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Farmer Name</span>
+                  <span className="text-[10px] text-slate-400 uppercase font-semibold block">Farmer Name</span>
                   <span className="font-bold text-white text-sm">{lookupData.farmer_name || 'N/A'}</span>
-                  <span className="text-[11px] text-zinc-400 block">{lookupData.village || ''}</span>
+                  <span className="text-[11px] text-slate-500 block">{lookupData.village || ''}</span>
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Booking Reference</span>
+                  <span className="text-[10px] text-slate-400 uppercase font-semibold block">Booking Reference</span>
                   <span className="font-mono font-bold text-sky-300">{lookupData.booking_reference}</span>
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Procurement Centre</span>
-                  <span className="font-semibold text-zinc-200">{lookupData.centre_name}</span>
+                  <span className="text-[10px] text-slate-400 uppercase font-semibold block">Procurement Centre</span>
+                  <span className="font-semibold text-slate-800">{lookupData.centre_name}</span>
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Crop & Produce</span>
-                  <span className="font-semibold text-zinc-200">{lookupData.crop_name}</span>
+                  <span className="text-[10px] text-slate-400 uppercase font-semibold block">Crop & Produce</span>
+                  <span className="font-semibold text-slate-800">{lookupData.crop_name}</span>
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Allocated Slot</span>
-                  <span className="font-mono text-zinc-300">{lookupData.slot_date}</span>
-                  <span className="text-[10px] text-zinc-500 block">{lookupData.slot_time}</span>
+                  <span className="text-[10px] text-slate-400 uppercase font-semibold block">Allocated Slot</span>
+                  <span className="font-mono text-slate-700">{lookupData.slot_date}</span>
+                  <span className="text-[10px] text-slate-400 block">{lookupData.slot_time}</span>
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Estimated Quantity</span>
+                  <span className="text-[10px] text-slate-400 uppercase font-semibold block">Estimated Quantity</span>
                   <span className="font-mono font-bold text-emerald-400 text-sm">
                     {lookupData.quantity ? (lookupData.quantity / 100).toFixed(0) : '0'} Quintals
                   </span>
@@ -853,8 +853,8 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
               </div>
 
               {/* Verify Arrival Action — enabled ONLY if not already arrived/completed */}
-              <div className="pt-3 border-t border-zinc-800 flex items-center justify-between">
-                <span className="text-[11px] text-zinc-400">
+              <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
+                <span className="text-[11px] text-slate-500">
                   {lookupData.status === 'ARRIVED'
                     ? '⚠️ Farmer already arrived and recorded in queue.'
                     : lookupData.status === 'COMPLETED'

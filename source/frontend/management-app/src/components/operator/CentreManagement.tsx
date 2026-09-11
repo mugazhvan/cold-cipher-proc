@@ -326,16 +326,16 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
     <>
       {/* 1. Search Farmer */}
       <div className="mb-8">
-        <h3 className="text-sm font-bold mb-3 text-zinc-300">1. Select Farmer</h3>
+        <h3 className="text-sm font-bold mb-3 text-slate-700">1. Select Farmer</h3>
         <div className="flex space-x-3 mb-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-zinc-400" />
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
             <input
               type="text"
               placeholder="Search by phone number..."
               value={phoneQuery}
               onChange={(e) => setPhoneQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-zinc-950 border border-zinc-700/80 rounded-xl text-xs font-medium text-zinc-100 placeholder:text-zinc-500 focus:outline-hidden focus:ring-2 focus:ring-sky-500"
+              className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300/80 rounded-xl text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-sky-500"
             />
           </div>
           <button
@@ -348,24 +348,24 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
         </div>
 
         {farmers.length > 0 && !selectedFarmer && (
-          <div className="border border-zinc-800 rounded-xl overflow-hidden bg-zinc-950/60">
+          <div className="border border-slate-200 rounded-xl overflow-hidden bg-slate-50/60">
             <table className="w-full text-left text-xs">
-              <thead className="bg-zinc-950 border-b border-zinc-800 text-zinc-400 font-bold uppercase tracking-wider text-[10px]">
+              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
                 <tr>
                   <th className="px-4 py-3">Name</th>
                   <th className="px-4 py-3">Phone</th>
                   <th className="px-4 py-3 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-800/80 font-medium">
+              <tbody className="divide-y divide-slate-200/80 font-medium">
                 {farmers.map((farmer: any) => (
-                  <tr key={farmer.id} className="hover:bg-zinc-800/60 transition">
+                  <tr key={farmer.id} className="hover:bg-slate-100/60 transition">
                     <td className="px-4 py-3 text-white font-bold">{farmer.name || farmer.user?.full_name || 'Farmer'}</td>
-                    <td className="px-4 py-3 font-mono text-zinc-300">{farmer.user?.phone || farmer.user?.phone_number || 'N/A'}</td>
+                    <td className="px-4 py-3 font-mono text-slate-700">{farmer.user?.phone || farmer.user?.phone_number || 'N/A'}</td>
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={() => setSelectedFarmer(farmer)}
-                        className="text-sky-400 hover:text-sky-300 font-bold cursor-pointer"
+                        className="text-sky-700 hover:text-sky-300 font-bold cursor-pointer"
                       >
                         Select
                       </button>
@@ -385,7 +385,7 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
             </div>
             <button
               onClick={() => setSelectedFarmer(null)}
-              className="text-zinc-400 hover:text-white text-xs font-medium cursor-pointer"
+              className="text-slate-500 hover:text-white text-xs font-medium cursor-pointer"
             >
               Change Farmer
             </button>
@@ -396,17 +396,17 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
       {/* 2. Crop Details */}
       {selectedFarmer && (
         <div className="mb-8">
-          <h3 className="text-sm font-bold mb-3 text-zinc-300 flex items-center">
+          <h3 className="text-sm font-bold mb-3 text-slate-700 flex items-center">
             <Package className="w-4 h-4 mr-2" />
             2. Crop & Quantity
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-zinc-400 mb-1.5">Crop</label>
+              <label className="block text-xs font-bold text-slate-500 mb-1.5">Crop</label>
               <select
                 value={selectedCrop}
                 onChange={(e) => setSelectedCrop(e.target.value)}
-                className="w-full p-2.5 bg-zinc-950 border border-zinc-700/80 rounded-xl text-xs font-medium text-zinc-100 focus:outline-hidden focus:ring-2 focus:ring-sky-500 cursor-pointer"
+                className="w-full p-2.5 bg-slate-50 border border-slate-300/80 rounded-xl text-xs font-medium text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-sky-500 cursor-pointer"
               >
                 <option value="">Select Crop</option>
                 {crops.map((crop: any) => (
@@ -415,7 +415,7 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-zinc-400 mb-1.5">Estimated Quantity (Quintals)</label>
+              <label className="block text-xs font-bold text-slate-500 mb-1.5">Estimated Quantity (Quintals)</label>
               <input
                 type="number"
                 min="0.1"
@@ -423,7 +423,7 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 placeholder="e.g. 50"
-                className="w-full p-2.5 bg-zinc-950 border border-zinc-700/80 rounded-xl text-xs font-medium text-zinc-100 placeholder:text-zinc-500 focus:outline-hidden focus:ring-2 focus:ring-sky-500"
+                className="w-full p-2.5 bg-slate-50 border border-slate-300/80 rounded-xl text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-sky-500"
               />
             </div>
           </div>
@@ -433,24 +433,24 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
       {/* 3. Slot Selection */}
       {selectedFarmer && selectedCrop && quantity && (
         <div className="mb-8">
-          <h3 className="text-sm font-bold mb-3 text-zinc-300 flex items-center">
+          <h3 className="text-sm font-bold mb-3 text-slate-700 flex items-center">
             <Calendar className="w-4 h-4 mr-2" />
             3. Select Slot
           </h3>
           <div className="mb-4">
-            <label className="block text-xs font-bold text-zinc-400 mb-1.5">Date</label>
+            <label className="block text-xs font-bold text-slate-500 mb-1.5">Date</label>
             <input
               type="date"
               value={date}
               min={new Date().toISOString().split('T')[0]}
               onChange={(e) => setDate(e.target.value)}
-              className="p-2.5 bg-zinc-950 border border-zinc-700/80 rounded-xl text-xs font-medium text-zinc-100 focus:outline-hidden focus:ring-2 focus:ring-sky-500 cursor-pointer"
+              className="p-2.5 bg-slate-50 border border-slate-300/80 rounded-xl text-xs font-medium text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-sky-500 cursor-pointer"
             />
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {slots.filter((s) => s.status === 'OPEN' && s.booked_count < s.capacity).length === 0 ? (
-              <p className="col-span-full text-zinc-500 text-xs">No open slots available for this date.</p>
+              <p className="col-span-full text-slate-400 text-xs">No open slots available for this date.</p>
             ) : (
               slots.map((slot: any) => {
                 const isAvailable = slot.status === 'OPEN' && slot.booked_count < slot.capacity;
@@ -463,8 +463,8 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
                     onClick={() => setSelectedSlot(slot.id)}
                     className={`p-3 rounded-xl border text-center transition cursor-pointer ${
                       selectedSlot === slot.id
-                        ? 'border-sky-500 bg-sky-950/40 text-sky-400'
-                        : 'border-zinc-700/80 hover:border-zinc-500 text-zinc-300 bg-zinc-950/60'
+                        ? 'border-sky-500 bg-sky-100/40 text-sky-700'
+                        : 'border-slate-300/80 hover:border-zinc-500 text-slate-700 bg-slate-50/60'
                     }`}
                   >
                     <div className="font-bold text-sm font-mono">
@@ -483,7 +483,7 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
 
       {/* Submit */}
       {selectedFarmer && selectedCrop && quantity && selectedSlot && (
-        <div className="pt-4 border-t border-zinc-800">
+        <div className="pt-4 border-t border-slate-200">
           <button
             onClick={handleBooking}
             disabled={loading}
@@ -499,33 +499,33 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
   const renderManagement = () => (
     <div className="mb-8 space-y-5">
       {/* Top Header & Action Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div>
           <h3 className="text-sm font-extrabold text-white flex items-center space-x-2">
-            <Calendar className="w-4 h-4 text-sky-400" />
+            <Calendar className="w-4 h-4 text-sky-700" />
             <span>Procurement Slot Schedule</span>
           </h3>
-          <p className="text-xs text-zinc-400 mt-0.5">
+          <p className="text-xs text-slate-500 mt-0.5">
             Manage live mandi capacity, create single windows, or generate automated daily routines
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           {/* Date Selector */}
-          <div className="flex items-center space-x-1.5 bg-zinc-950 border border-zinc-800 px-2.5 py-1.5 rounded-xl">
-            <span className="text-[11px] text-zinc-400 font-semibold">Date:</span>
+          <div className="flex items-center space-x-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-xl">
+            <span className="text-[11px] text-slate-500 font-semibold">Date:</span>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="bg-transparent text-xs font-mono text-zinc-100 outline-none cursor-pointer"
+              className="bg-transparent text-xs font-mono text-slate-900 outline-none cursor-pointer"
             />
           </div>
 
           {/* Create Slot Button */}
           <button
             onClick={() => setIsCreateSlotOpen(true)}
-            className="px-3.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-sky-400 border border-sky-500/40 rounded-xl text-xs font-bold transition flex items-center space-x-1 cursor-pointer"
+            className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-sky-700 border border-sky-500/40 rounded-xl text-xs font-bold transition flex items-center space-x-1 cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Create Slot</span>
@@ -543,9 +543,9 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
       </div>
 
       {/* Slots Table */}
-      <div className="overflow-x-auto border border-zinc-800 rounded-xl bg-zinc-950/60">
+      <div className="overflow-x-auto border border-slate-200 rounded-xl bg-slate-50/60">
         <table className="w-full text-left text-xs">
-          <thead className="bg-zinc-950 border-b border-zinc-800 text-zinc-400 font-bold uppercase tracking-wider text-[10px]">
+          <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
             <tr>
               <th className="px-4 py-3">Slot Window</th>
               <th className="px-4 py-3">Crop</th>
@@ -555,10 +555,10 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
               <th className="px-4 py-3 text-right">Station Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-800/80 font-medium">
+          <tbody className="divide-y divide-slate-200/80 font-medium">
             {slots.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-zinc-500">
+                <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
                   No slots found for {date}. Click <strong>Create Slot</strong> or <strong>Generate Routine</strong> to add database windows.
                 </td>
               </tr>
@@ -571,25 +571,25 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
                 const isOpen = slot.status === 'OPEN';
 
                 return (
-                  <tr key={slot.id} className="hover:bg-zinc-800/60 transition">
+                  <tr key={slot.id} className="hover:bg-slate-100/60 transition">
                     <td className="px-4 py-3 font-mono text-white font-bold">
                       {String(slot.start_time).substring(0, 5)} - {String(slot.end_time).substring(0, 5)}
                     </td>
-                    <td className="px-4 py-3 text-zinc-300">
+                    <td className="px-4 py-3 text-slate-700">
                       {slot.crop?.name || 'Wheat (Kanak / Gehu)'}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="font-mono text-zinc-200">
+                      <div className="font-mono text-slate-800">
                         <strong className={isFull ? 'text-amber-400' : 'text-emerald-400'}>{bookedCount}</strong> / {capacity}
                       </div>
-                      <div className="w-24 h-1.5 bg-zinc-800 rounded-full mt-1 overflow-hidden">
+                      <div className="w-24 h-1.5 bg-slate-100 rounded-full mt-1 overflow-hidden">
                         <div
                           className={`h-full ${isFull ? 'bg-amber-400' : 'bg-emerald-400'}`}
                           style={{ width: `${Math.min(100, (bookedCount / capacity) * 100)}%` }}
                         />
                       </div>
                     </td>
-                    <td className="px-4 py-3 font-mono font-bold text-zinc-300">
+                    <td className="px-4 py-3 font-mono font-bold text-slate-700">
                       {remaining} spots
                     </td>
                     <td className="px-4 py-3">
@@ -610,10 +610,10 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
                         {/* View Farmers */}
                         <button
                           onClick={() => handleOpenViewFarmers(slot)}
-                          className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-sky-300 rounded-lg text-xs font-semibold flex items-center space-x-1 border border-zinc-700 transition cursor-pointer"
+                          className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-sky-300 rounded-lg text-xs font-semibold flex items-center space-x-1 border border-slate-300 transition cursor-pointer"
                           title="View assigned farmers"
                         >
-                          <Users className="w-3.5 h-3.5 text-sky-400" />
+                          <Users className="w-3.5 h-3.5 text-sky-700" />
                           <span>Farmers ({bookedCount})</span>
                         </button>
 
@@ -631,7 +631,7 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
                             }
                           }}
                           disabled={loading}
-                          className="p-1.5 bg-zinc-800 hover:bg-zinc-700 text-amber-400 rounded-lg border border-zinc-700 transition cursor-pointer disabled:opacity-50"
+                          className="p-1.5 bg-slate-100 hover:bg-slate-200 text-amber-400 rounded-lg border border-slate-300 transition cursor-pointer disabled:opacity-50"
                           title="Change Capacity"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
@@ -665,16 +665,16 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
 
       {/* MODAL 1: Create Single Slot */}
       {isCreateSlotOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <div className="flex justify-between items-center border-b border-zinc-800 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white border border-slate-300 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-200 pb-3">
               <h3 className="text-sm font-bold text-white flex items-center space-x-2">
-                <Plus className="w-4 h-4 text-sky-400" />
+                <Plus className="w-4 h-4 text-sky-700" />
                 <span>Create Slot Window</span>
               </h3>
               <button
                 onClick={() => setIsCreateSlotOpen(false)}
-                className="text-zinc-400 hover:text-white cursor-pointer"
+                className="text-slate-500 hover:text-white cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -682,11 +682,11 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
 
             <form onSubmit={handleCreateSingleSlot} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-zinc-400 mb-1">Crop</label>
+                <label className="block font-bold text-slate-500 mb-1">Crop</label>
                 <select
                   value={newSlotCropId}
                   onChange={(e) => setNewSlotCropId(e.target.value)}
-                  className="w-full p-2 bg-zinc-950 border border-zinc-700 rounded-xl text-zinc-100 cursor-pointer"
+                  className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 cursor-pointer"
                   required
                 >
                   {crops.map((c) => (
@@ -697,22 +697,22 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-zinc-400 mb-1">Start Time</label>
+                  <label className="block font-bold text-slate-500 mb-1">Start Time</label>
                   <input
                     type="time"
                     value={newSlotStartTime}
                     onChange={(e) => setNewSlotStartTime(e.target.value)}
-                    className="w-full p-2 bg-zinc-950 border border-zinc-700 rounded-xl font-mono text-zinc-100"
+                    className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl font-mono text-slate-900"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-zinc-400 mb-1">End Time</label>
+                  <label className="block font-bold text-slate-500 mb-1">End Time</label>
                   <input
                     type="time"
                     value={newSlotEndTime}
                     onChange={(e) => setNewSlotEndTime(e.target.value)}
-                    className="w-full p-2 bg-zinc-950 border border-zinc-700 rounded-xl font-mono text-zinc-100"
+                    className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl font-mono text-slate-900"
                     required
                   />
                 </div>
@@ -720,22 +720,22 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-zinc-400 mb-1">Capacity</label>
+                  <label className="block font-bold text-slate-500 mb-1">Capacity</label>
                   <input
                     type="number"
                     min="1"
                     value={newSlotCapacity}
                     onChange={(e) => setNewSlotCapacity(parseInt(e.target.value, 10) || 20)}
-                    className="w-full p-2 bg-zinc-950 border border-zinc-700 rounded-xl font-mono text-zinc-100"
+                    className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl font-mono text-slate-900"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-zinc-400 mb-1">Initial Status</label>
+                  <label className="block font-bold text-slate-500 mb-1">Initial Status</label>
                   <select
                     value={newSlotStatus}
                     onChange={(e) => setNewSlotStatus(e.target.value)}
-                    className="w-full p-2 bg-zinc-950 border border-zinc-700 rounded-xl text-zinc-100 cursor-pointer"
+                    className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 cursor-pointer"
                   >
                     <option value="OPEN">OPEN (Published)</option>
                     <option value="CLOSED">CLOSED (Draft)</option>
@@ -743,11 +743,11 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-zinc-800 flex justify-end space-x-2">
+              <div className="pt-3 border-t border-slate-200 flex justify-end space-x-2">
                 <button
                   type="button"
                   onClick={() => setIsCreateSlotOpen(false)}
-                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl font-bold cursor-pointer"
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -766,19 +766,19 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
 
       {/* MODAL 2: Create Routine */}
       {isRoutineOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4">
-            <div className="flex justify-between items-center border-b border-zinc-800 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white border border-slate-300 rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-200 pb-3">
               <div className="flex items-center space-x-2">
                 <Zap className="w-5 h-5 text-amber-400" />
                 <div>
                   <h3 className="text-sm font-bold text-white">Generate Daily Slot Routine</h3>
-                  <p className="text-[11px] text-zinc-400">Standard Procurement Day: 08:00–16:00 (Break: 12:00–13:00)</p>
+                  <p className="text-[11px] text-slate-500">Standard Procurement Day: 08:00–16:00 (Break: 12:00–13:00)</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsRoutineOpen(false)}
-                className="text-zinc-400 hover:text-white cursor-pointer"
+                className="text-slate-500 hover:text-white cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -786,11 +786,11 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
 
             <form onSubmit={handleGenerateRoutine} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-zinc-400 mb-1">Crop</label>
+                <label className="block font-bold text-slate-500 mb-1">Crop</label>
                 <select
                   value={routineCropId}
                   onChange={(e) => setRoutineCropId(e.target.value)}
-                  className="w-full p-2 bg-zinc-950 border border-zinc-700 rounded-xl text-zinc-100 cursor-pointer"
+                  className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 cursor-pointer"
                   required
                 >
                   {crops.map((c) => (
@@ -801,22 +801,22 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-zinc-400 mb-1">Shift Start</label>
+                  <label className="block font-bold text-slate-500 mb-1">Shift Start</label>
                   <input
                     type="time"
                     value={routineStartTime}
                     onChange={(e) => setRoutineStartTime(e.target.value)}
-                    className="w-full p-2 bg-zinc-950 border border-zinc-700 rounded-xl font-mono text-zinc-100"
+                    className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl font-mono text-slate-900"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-zinc-400 mb-1">Shift End</label>
+                  <label className="block font-bold text-slate-500 mb-1">Shift End</label>
                   <input
                     type="time"
                     value={routineEndTime}
                     onChange={(e) => setRoutineEndTime(e.target.value)}
-                    className="w-full p-2 bg-zinc-950 border border-zinc-700 rounded-xl font-mono text-zinc-100"
+                    className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl font-mono text-slate-900"
                     required
                   />
                 </div>
@@ -824,38 +824,38 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-zinc-400 mb-1">Slot Duration (Minutes)</label>
+                  <label className="block font-bold text-slate-500 mb-1">Slot Duration (Minutes)</label>
                   <input
                     type="number"
                     min="15"
                     step="15"
                     value={routineDuration}
                     onChange={(e) => setRoutineDuration(parseInt(e.target.value, 10) || 60)}
-                    className="w-full p-2 bg-zinc-950 border border-zinc-700 rounded-xl font-mono text-zinc-100"
+                    className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl font-mono text-slate-900"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-zinc-400 mb-1">Capacity Per Slot</label>
+                  <label className="block font-bold text-slate-500 mb-1">Capacity Per Slot</label>
                   <input
                     type="number"
                     min="1"
                     value={routineCapacity}
                     onChange={(e) => setRoutineCapacity(parseInt(e.target.value, 10) || 20)}
-                    className="w-full p-2 bg-zinc-950 border border-zinc-700 rounded-xl font-mono text-zinc-100"
+                    className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl font-mono text-slate-900"
                     required
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 bg-zinc-950 p-3 rounded-xl border border-zinc-800">
+              <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
                 <div>
                   <label className="block font-bold text-amber-300 mb-1">Break Start (Skip Window)</label>
                   <input
                     type="time"
                     value={routineBreakStart}
                     onChange={(e) => setRoutineBreakStart(e.target.value)}
-                    className="w-full p-2 bg-zinc-900 border border-zinc-700 rounded-xl font-mono text-zinc-100"
+                    className="w-full p-2 bg-white border border-slate-300 rounded-xl font-mono text-slate-900"
                   />
                 </div>
                 <div>
@@ -864,16 +864,16 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
                     type="time"
                     value={routineBreakEnd}
                     onChange={(e) => setRoutineBreakEnd(e.target.value)}
-                    className="w-full p-2 bg-zinc-900 border border-zinc-700 rounded-xl font-mono text-zinc-100"
+                    className="w-full p-2 bg-white border border-slate-300 rounded-xl font-mono text-slate-900"
                   />
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-zinc-800 flex justify-end space-x-2">
+              <div className="pt-3 border-t border-slate-200 flex justify-end space-x-2">
                 <button
                   type="button"
                   onClick={() => setIsRoutineOpen(false)}
-                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl font-bold cursor-pointer"
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -892,41 +892,41 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
 
       {/* MODAL 3: View Farmers in Slot & Reassign */}
       {viewingSlot && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 max-w-2xl w-full shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
-            <div className="flex justify-between items-center border-b border-zinc-800 pb-3 shrink-0">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white border border-slate-300 rounded-2xl p-6 max-w-2xl w-full shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+            <div className="flex justify-between items-center border-b border-slate-200 pb-3 shrink-0">
               <div className="flex items-center space-x-2">
-                <Users className="w-5 h-5 text-sky-400" />
+                <Users className="w-5 h-5 text-sky-700" />
                 <div>
                   <h3 className="text-sm font-bold text-white">
                     Slot Bookings: {String(viewingSlot.start_time).substring(0, 5)} - {String(viewingSlot.end_time).substring(0, 5)}
                   </h3>
-                  <p className="text-[11px] text-zinc-400">
+                  <p className="text-[11px] text-slate-500">
                     Capacity: {viewingSlot.capacity} • Booked: {slotBookings.length} • Remaining: {Math.max(0, viewingSlot.capacity - slotBookings.length)}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setViewingSlot(null)}
-                className="text-zinc-400 hover:text-white cursor-pointer"
+                className="text-slate-500 hover:text-white cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="overflow-y-auto flex-1 border border-zinc-800 rounded-xl">
+            <div className="overflow-y-auto flex-1 border border-slate-200 rounded-xl">
               {isLoadingSlotBookings ? (
-                <div className="p-8 text-center text-zinc-400 text-xs flex items-center justify-center space-x-2">
-                  <RefreshCw className="w-4 h-4 animate-spin text-sky-400" />
+                <div className="p-8 text-center text-slate-500 text-xs flex items-center justify-center space-x-2">
+                  <RefreshCw className="w-4 h-4 animate-spin text-sky-700" />
                   <span>Loading live bookings from database...</span>
                 </div>
               ) : slotBookings.length === 0 ? (
-                <div className="p-8 text-center text-zinc-500 text-xs">
+                <div className="p-8 text-center text-slate-400 text-xs">
                   No farmers have booked into this slot yet.
                 </div>
               ) : (
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-zinc-950 border-b border-zinc-800 text-zinc-400 font-bold uppercase tracking-wider text-[10px]">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
                     <tr>
                       <th className="px-4 py-2.5">Farmer</th>
                       <th className="px-4 py-2.5">Booking Ref</th>
@@ -935,19 +935,19 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
                       <th className="px-4 py-2.5 text-right">Reassign</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-800 font-medium">
+                  <tbody className="divide-y divide-slate-200 font-medium">
                     {slotBookings.map((b: any) => (
-                      <tr key={b.id} className="hover:bg-zinc-800/60 transition">
+                      <tr key={b.id} className="hover:bg-slate-100/60 transition">
                         <td className="px-4 py-2.5">
                           <div className="font-bold text-white">{b.farmer_name || 'Farmer'}</div>
-                          <span className="text-[10px] text-zinc-400">{b.village || ''}</span>
+                          <span className="text-[10px] text-slate-500">{b.village || ''}</span>
                         </td>
                         <td className="px-4 py-2.5 font-mono text-sky-300">{b.booking_reference}</td>
-                        <td className="px-4 py-2.5 text-zinc-200">
+                        <td className="px-4 py-2.5 text-slate-800">
                           {b.crop_name} • {(b.quantity / 100).toFixed(0)} Qtl
                         </td>
                         <td className="px-4 py-2.5">
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-800 text-zinc-300">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
                             {b.status}
                           </span>
                         </td>
@@ -957,7 +957,7 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
                               setReassigningBooking(b);
                               setTargetSlotId('');
                             }}
-                            className="px-2.5 py-1 bg-sky-950/60 hover:bg-sky-900/80 text-sky-300 border border-sky-700/60 rounded-lg text-xs font-bold transition flex items-center space-x-1 ml-auto cursor-pointer"
+                            className="px-2.5 py-1 bg-sky-100/60 hover:bg-sky-900/80 text-sky-300 border border-sky-700/60 rounded-lg text-xs font-bold transition flex items-center space-x-1 ml-auto cursor-pointer"
                           >
                             <ArrowRightLeft className="w-3 h-3" />
                             <span>Reassign</span>
@@ -972,14 +972,14 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
 
             {/* Reassign Dialog Inline */}
             {reassigningBooking && (
-              <div className="p-4 bg-zinc-950 border border-sky-500/40 rounded-xl space-y-3 shrink-0">
+              <div className="p-4 bg-slate-50 border border-sky-500/40 rounded-xl space-y-3 shrink-0">
                 <div className="flex justify-between items-center">
                   <span className="font-bold text-xs text-sky-300">
                     Reassign Farmer: {reassigningBooking.farmer_name} ({reassigningBooking.booking_reference})
                   </span>
                   <button
                     onClick={() => setReassigningBooking(null)}
-                    className="text-zinc-400 hover:text-white text-xs cursor-pointer"
+                    className="text-slate-500 hover:text-white text-xs cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -988,7 +988,7 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
                   <select
                     value={targetSlotId}
                     onChange={(e) => setTargetSlotId(e.target.value)}
-                    className="flex-1 p-2 bg-zinc-900 border border-zinc-700 rounded-lg text-xs font-mono text-zinc-100 cursor-pointer"
+                    className="flex-1 p-2 bg-white border border-slate-300 rounded-lg text-xs font-mono text-slate-900 cursor-pointer"
                   >
                     <option value="">Select Destination Slot...</option>
                     {slots
@@ -1011,10 +1011,10 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
               </div>
             )}
 
-            <div className="pt-3 border-t border-zinc-800 flex justify-end shrink-0">
+            <div className="pt-3 border-t border-slate-200 flex justify-end shrink-0">
               <button
                 onClick={() => setViewingSlot(null)}
-                className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold cursor-pointer"
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-white rounded-xl text-xs font-bold cursor-pointer"
               >
                 Close
               </button>
@@ -1026,20 +1026,20 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
   );
 
   return (
-    <div className="bg-zinc-900/95 rounded-2xl border border-zinc-800 shadow-2xl p-6 text-zinc-100">
+    <div className="bg-white/95 rounded-2xl border border-slate-200 shadow-2xl p-6 text-slate-900">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <h2 className="text-lg font-extrabold flex items-center text-white">
-          <Settings className="w-5 h-5 mr-2 text-sky-400" />
+          <Settings className="w-5 h-5 mr-2 text-sky-700" />
           Mandi Centre Administration
         </h2>
-        <div className="flex bg-zinc-950 border border-zinc-800 p-1 rounded-xl">
+        <div className="flex bg-slate-50 border border-slate-200 p-1 rounded-xl">
           <button
             onClick={() => {
               setActiveTab('management');
               setMessage(null);
             }}
             className={`flex-1 px-4 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-              activeTab === 'management' ? 'bg-sky-600 text-white shadow-xs' : 'text-zinc-400 hover:text-zinc-200'
+              activeTab === 'management' ? 'bg-sky-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800'
             }`}
           >
             Slot Management
@@ -1050,7 +1050,7 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
               setMessage(null);
             }}
             className={`flex-1 px-4 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-              activeTab === 'booking' ? 'bg-sky-600 text-white shadow-xs' : 'text-zinc-400 hover:text-zinc-200'
+              activeTab === 'booking' ? 'bg-sky-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800'
             }`}
           >
             Walk-in Booking
@@ -1064,14 +1064,14 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
             message.type === 'success'
               ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-600/50'
               : message.type === 'info'
-              ? 'bg-sky-950/80 text-sky-300 border border-sky-600/50'
+              ? 'bg-sky-100/80 text-sky-300 border border-sky-600/50'
               : 'bg-rose-950/80 text-rose-300 border border-rose-600/50'
           }`}
         >
           <span>{message.text}</span>
           <button
             onClick={() => setMessage(null)}
-            className="text-zinc-400 hover:text-white text-xs px-2 py-0.5 rounded cursor-pointer"
+            className="text-slate-500 hover:text-white text-xs px-2 py-0.5 rounded cursor-pointer"
           >
             ✕
           </button>

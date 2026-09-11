@@ -1,11 +1,7 @@
 import axios from 'axios';
 
-const isVercel = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
 const rawEnvUrl = (import.meta as any).env?.VITE_API_BASE_URL;
-
-export const BASE_URL = isVercel
-  ? (!rawEnvUrl || rawEnvUrl.includes('localhost') ? 'https://kisanflow-backend.onrender.com/api/v1' : rawEnvUrl)
-  : (rawEnvUrl || 'http://localhost:8000/api/v1');
+export const BASE_URL = rawEnvUrl || 'http://localhost:8000/api/v1';
 
 export interface QRVerificationResult {
   success: boolean;
