@@ -166,16 +166,34 @@ export const OperatorConsole: React.FC = () => {
   const dynamicAvgTurnaround = currentCentre.avgWaitMinutes ? `${currentCentre.avgWaitMinutes} mins` : '18.4 mins';
   const dynamicActiveBays = `${currentCentre.activeBays || 4} / ${currentCentre.activeBays || 4} Operational`;
 
+  const [queueNotice, setQueueNotice] = useState<{ type: 'info' | 'success' | 'warning'; message: string } | null>(null);
+  const [isCallingNext, setIsCallingNext] = useState<boolean>(false);
+  const [activeActionTokenId, setActiveActionTokenId] = useState<string | null>(null);
+
   // Action handlers
   const handleCallNextQueued = (bayName = 'Weighbridge Bay 2 (Electronic)') => {
+    setIsCallingNext(true);
     const nextInLine = centreTokens.find(
       (tok) => tok.status === 'YARD_QUEUED' || tok.status === 'GATE_VERIFIED'
     );
     if (nextInLine) {
       callTokenToBay(nextInLine.id, bayName);
+      setQueueNotice({
+        type: 'success',
+        message: `📢 Token #${nextInLine.tokenNumber} (${nextInLine.farmerName}) called to ${bayName}.`
+      });
     } else {
-      alert('No tokens currently queued in the holding yard for this centre.');
+      setQueueNotice({
+        type: 'info',
+        message: 'No vehicles currently waiting in the yard queue for this centre.'
+      });
     }
+    setTimeout(() => {
+      setIsCallingNext(false);
+    }, 600);
+    setTimeout(() => {
+      setQueueNotice(null);
+    }, 4500);
   };
 
   const handleOpenInspection = (tok: TokenRecord) => {
@@ -320,6 +338,29 @@ export const OperatorConsole: React.FC = () => {
         </div>
       </div>
 
+      {/* Notification / Dispatch Feedback Banner */}
+      {queueNotice && (
+        <div
+          className={`p-3.5 rounded-xl border flex items-center justify-between text-xs font-semibold shadow-md animate-in fade-in slide-in-from-top duration-200 ${
+            queueNotice.type === 'success'
+              ? 'bg-emerald-950/90 border-emerald-500/50 text-emerald-200'
+              : queueNotice.type === 'warning'
+              ? 'bg-amber-950/90 border-amber-500/50 text-amber-200'
+              : 'bg-sky-950/90 border-sky-500/50 text-sky-200'
+          }`}
+        >
+          <div className="flex items-center space-x-2">
+            <span>{queueNotice.message}</span>
+          </div>
+          <button
+            onClick={() => setQueueNotice(null)}
+            className="text-zinc-400 hover:text-white text-xs px-2 py-0.5 rounded cursor-pointer"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Action Command Bar: Call Next, QR Scanner & Filter */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-zinc-900/95 p-4 rounded-2xl border border-zinc-800 shadow-xl backdrop-blur-md">
         <div className="flex items-center space-x-2 flex-1 max-w-md">
@@ -349,11 +390,12 @@ export const OperatorConsole: React.FC = () => {
           {/* Quick Call Next Button */}
           <button
             id="call-next-bay-btn"
+            disabled={isCallingNext}
             onClick={() => handleCallNextQueued()}
-            className="flex items-center space-x-1.5 px-4 py-2 bg-gradient-to-r from-amber-500 via-amber-400 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-zinc-950 font-extrabold text-xs rounded-xl shadow-lg shadow-amber-950/30 transition cursor-pointer"
+            className="flex items-center space-x-1.5 px-4 py-2 bg-gradient-to-r from-amber-500 via-amber-400 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:opacity-60 text-zinc-950 font-extrabold text-xs rounded-xl shadow-lg shadow-amber-950/30 transition cursor-pointer"
           >
-            <Volume2 className="w-4 h-4 text-zinc-950" />
-            <span>Call Next to Bay 2</span>
+            <Volume2 className={`w-4 h-4 text-zinc-950 ${isCallingNext ? 'animate-bounce' : ''}`} />
+            <span>{isCallingNext ? 'Calling Next...' : 'Call Next to Bay 2'}</span>
           </button>
 
           {/* Filter Pills */}
@@ -478,21 +520,45 @@ export const OperatorConsole: React.FC = () => {
                       <td className="p-3.5 text-right space-x-1.5 whitespace-nowrap">
                         {tok.status === 'BOOKED' && (
                           <button
-                            onClick={() => updateTokenStatus(tok.id, 'GATE_VERIFIED')}
-                            className="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+                            disabled={activeActionTokenId === tok.id}
+                            onClick={() => {
+                              setActiveActionTokenId(tok.id);
+                              setTimeout(() => {
+                                updateTokenStatus(tok.id, 'GATE_VERIFIED');
+                                setActiveActionTokenId(null);
+                                setQueueNotice({
+                                  type: 'success',
+                                  message: `✅ Gate pass verified for ${tok.farmerName} (Token #${tok.tokenNumber}). Admitted to yard.`
+                                });
+                                setTimeout(() => setQueueNotice(null), 4000);
+                              }, 350);
+                            }}
+                            className="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 disabled:opacity-60 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
                             title="Verify e-Gate Pass and admit vehicle to yard"
                           >
-                            Verify Gate Pass
+                            {activeActionTokenId === tok.id ? 'Admitting...' : 'Verify Gate Pass'}
                           </button>
                         )}
 
                         {(tok.status === 'GATE_VERIFIED' || tok.status === 'YARD_QUEUED') && (
                           <button
-                            onClick={() => callTokenToBay(tok.id, 'Weighbridge Bay 2 (North)')}
-                            className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-zinc-950 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+                            disabled={activeActionTokenId === tok.id}
+                            onClick={() => {
+                              setActiveActionTokenId(tok.id);
+                              setTimeout(() => {
+                                callTokenToBay(tok.id, 'Weighbridge Bay 2 (North)');
+                                setActiveActionTokenId(null);
+                                setQueueNotice({
+                                  type: 'success',
+                                  message: `📢 Called ${tok.farmerName} (Token #${tok.tokenNumber}) to Weighbridge Bay 2.`
+                                });
+                                setTimeout(() => setQueueNotice(null), 4000);
+                              }, 350);
+                            }}
+                            className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:opacity-60 text-zinc-950 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
                             title="Call token to active weighing bay"
                           >
-                            Call to Bay 2
+                            {activeActionTokenId === tok.id ? 'Calling...' : 'Call to Bay 2'}
                           </button>
                         )}
 
