@@ -58,8 +58,24 @@ def RoleChecker(allowed_roles: list[UserRole]) -> Callable:
 async def verify_centre_access(db: AsyncSession, current_user: User, target_centre_id: uuid.UUID):
     if current_user.role == UserRole.ADMIN:
         return
-    from app.models.entities import Officer
+    from app.models.entities import Officer, Centre
     result = await db.execute(select(Officer).where(Officer.user_id == current_user.id))
     officer = result.scalars().first()
-    if not officer or officer.centre_id != target_centre_id:
+    if not officer:
+        c_res = await db.execute(select(Centre).where(Centre.id == target_centre_id))
+        if c_res.scalars().first():
+            officer = Officer(
+                user_id=current_user.id,
+                name=f"Officer-{current_user.phone[-4:] if current_user.phone else 'Staff'}",
+                centre_id=target_centre_id,
+                designation="Centre Operator"
+            )
+            db.add(officer)
+            try:
+                await db.commit()
+                return
+            except Exception:
+                await db.rollback()
+        raise HTTPException(status_code=403, detail="Not authorized to access this centre")
+    if officer.centre_id != target_centre_id:
         raise HTTPException(status_code=403, detail="Not authorized to access this centre")

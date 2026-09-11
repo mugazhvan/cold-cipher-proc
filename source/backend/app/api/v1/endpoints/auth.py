@@ -134,6 +134,29 @@ async def login(request: LoginRequest, db: AsyncSession = Depends(get_db)) -> An
         if farmer:
             user_name = farmer.name
 
+    if user.role in (UserRole.CENTRE_OPERATOR, UserRole.CENTRE_MANAGER):
+        from app.models.entities import Officer, Centre
+        o_result = await db.execute(select(Officer).where(Officer.user_id == user.id))
+        officer = o_result.scalars().first()
+        if not officer:
+            # Find default demo centre (MDC001) or first available centre
+            c_res = await db.execute(select(Centre).order_by(Centre.created_at))
+            default_centre = c_res.scalars().first()
+            officer = Officer(
+                user_id=user.id,
+                name=f"Officer-{phone[-4:]}",
+                centre_id=default_centre.id if default_centre else None,
+                designation="Centre Operator & Weighbridge Lead"
+            )
+            db.add(officer)
+            try:
+                await db.commit()
+                await db.refresh(officer)
+            except Exception:
+                await db.rollback()
+        if officer:
+            user_name = officer.name
+
     return {
         "success": True,
         "data": TokenResponseData(

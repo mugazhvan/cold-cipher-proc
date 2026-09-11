@@ -103,7 +103,7 @@ async def read_centre_bookings(
     return {
         "success": True,
         "data": {
-            "items": [BookingResponse.model_validate(b).model_dump() for b in bookings],
+            "items": [BookingResponse.from_booking(b).model_dump() for b in bookings],
             "total": total
         },
         "message": "Centre bookings returned."

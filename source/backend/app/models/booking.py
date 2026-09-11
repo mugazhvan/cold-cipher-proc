@@ -56,6 +56,9 @@ class Booking(BaseModel):
     check_in_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     crop = relationship("Crop")
+    farmer = relationship("Farmer")
+    slot = relationship("Slot")
+    centre = relationship("Centre")
 
     __table_args__ = (
         Index('idx_bookings_farmer_status', 'farmer_id', 'status'),

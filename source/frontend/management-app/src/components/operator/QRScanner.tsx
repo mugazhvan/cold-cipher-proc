@@ -12,8 +12,15 @@ import {
   Search,
   ArrowRight,
   Video,
+  UserCheck,
+  FileCheck,
 } from 'lucide-react';
-import { verifyGateQR, QRVerificationResult } from '../../services/api';
+import {
+  verifyGateQR,
+  lookupBooking,
+  verifyBookingArrival,
+  QRVerificationResult,
+} from '../../services/api';
 
 export interface CameraDevice {
   id: string;
@@ -39,13 +46,16 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
   // Manual fallback state
   const [manualCode, setManualCode] = useState('');
   const [activeMode, setActiveMode] = useState<'camera' | 'manual'>('camera');
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupError, setLookupError] = useState<string | null>(null);
+  const [lookupData, setLookupData] = useState<any | null>(null);
+  const [verifyingArrival, setVerifyingArrival] = useState(false);
 
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
   const activeTracksRef = useRef<MediaStreamTrack[]>([]);
   const readerId = 'operator-qr-reader-portal';
 
   const forceStopAllCameraTracks = () => {
-    // 1. Direct hardware release for all captured tracks
     if (activeTracksRef.current && activeTracksRef.current.length > 0) {
       activeTracksRef.current.forEach((track) => {
         try {
@@ -59,7 +69,6 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
       activeTracksRef.current = [];
     }
 
-    // 2. Stop and detach tracks on all video elements in DOM
     try {
       const videos = document.querySelectorAll('video');
       videos.forEach((video) => {
@@ -82,7 +91,6 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
     }
   };
 
-  // Enumerate available camera input devices
   const fetchCameras = async () => {
     setIsEnumeratingCameras(true);
     try {
@@ -93,7 +101,6 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
           if (prev && devices.some((d) => d.id === prev)) {
             return prev;
           }
-          // Prioritize back/rear/usb/environment cameras
           const preferred = devices.find((d) =>
             /back|rear|environment|usb|external|webcam/i.test(d.label)
           );
@@ -107,7 +114,6 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
     }
   };
 
-  // Intercept getUserMedia and cleanup on unmount
   useEffect(() => {
     fetchCameras();
 
@@ -127,14 +133,11 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
     }
 
     return () => {
-      // Restore getUserMedia
       if (navigator.mediaDevices && originalGetUserMedia) {
         navigator.mediaDevices.getUserMedia = originalGetUserMedia;
       }
-      // Force kill tracks immediately and synchronously
       forceStopAllCameraTracks();
 
-      // Stop scanner instance
       if (html5QrCodeRef.current) {
         try {
           if (html5QrCodeRef.current.isScanning) {
@@ -176,10 +179,8 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
     setVerificationResult(null);
 
     try {
-      // Ensure any previous scanner instance is cleanly stopped
       await stopCameraScanner();
 
-      // Check available devices if not yet populated
       let activeCameraId = overrideCameraId || selectedCameraId;
       if (!activeCameraId) {
         try {
@@ -197,7 +198,6 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
       const html5QrCode = new Html5Qrcode(readerId);
       html5QrCodeRef.current = html5QrCode;
 
-      // Use specific camera device ID if available, otherwise environment facingMode
       const cameraConfig = activeCameraId ? activeCameraId : { facingMode: 'environment' };
 
       await html5QrCode.start(
@@ -207,7 +207,6 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
           qrbox: { width: 250, height: 250 },
         },
         async (decodedText) => {
-          // Pause/stop scanner upon finding a QR code
           await stopCameraScanner();
           handleVerifyQR(decodedText);
         },
@@ -217,7 +216,6 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
       );
 
       setIsScanning(true);
-      // Re-fetch cameras after permission grant to get human-readable device labels
       fetchCameras();
     } catch (err: any) {
       console.error('Failed to start camera scanner:', err);
@@ -249,7 +247,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
     try {
       const result = await verifyGateQR(payload);
       setVerificationResult(result);
-      if (onVerificationComplete) {
+      if (onVerificationComplete && result.success) {
         onVerificationComplete(result);
       }
     } catch (err: any) {
@@ -263,16 +261,69 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
     }
   };
 
-  const handleManualSubmit = (e: React.FormEvent) => {
+  const handleFindBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!manualCode.trim()) return;
-    handleVerifyQR(manualCode);
+
+    setLookupLoading(true);
+    setLookupError(null);
+    setLookupData(null);
+
+    try {
+      const res = await lookupBooking(manualCode.trim());
+      if (res?.success && res.data) {
+        setLookupData(res.data);
+      } else {
+        setLookupError(res?.detail || res?.message || 'No booking found with this reference.');
+      }
+    } catch (err: any) {
+      setLookupError(err?.message || 'Could not contact server.');
+    } finally {
+      setLookupLoading(false);
+    }
+  };
+
+  const handleConfirmManualArrival = async () => {
+    if (!lookupData) return;
+    setVerifyingArrival(true);
+    setLookupError(null);
+
+    try {
+      const res = await verifyBookingArrival(lookupData.id);
+      if (res?.success && res.data) {
+        const vResult: QRVerificationResult = {
+          success: true,
+          state: 'SUCCESS',
+          message: 'Farmer arrival verified successfully. Admitted to holding yard.',
+          data: {
+            token_id: res.data.token_id,
+            token_number: res.data.token_number,
+            status: 'ARRIVED',
+            booking_id: lookupData.booking_reference,
+            farmer_name: lookupData.farmer_name,
+            centre_id: lookupData.centre_id,
+          },
+        };
+        setVerificationResult(vResult);
+        if (onVerificationComplete) {
+          onVerificationComplete(vResult);
+        }
+      } else {
+        setLookupError(res?.detail || res?.message || 'Failed to verify arrival.');
+      }
+    } catch (err: any) {
+      setLookupError(err?.message || 'Server error during arrival verification.');
+    } finally {
+      setVerifyingArrival(false);
+    }
   };
 
   const handleResetForNextScan = () => {
     setVerificationResult(null);
     setLastScannedPayload('');
     setManualCode('');
+    setLookupData(null);
+    setLookupError(null);
     if (activeMode === 'camera') {
       startCameraScanner();
     }
@@ -284,13 +335,13 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-4">
         <div>
           <h3 className="text-base font-extrabold text-white flex items-center space-x-2">
-            <span>KisanFlow e-Pass QR Scanner</span>
+            <span>KisanFlow Gate Pass Verification</span>
             <span className="bg-sky-950/80 text-sky-300 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border border-sky-600/50">
-              HMAC-SHA256
+              SECURE
             </span>
           </h3>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Scan farmer digital e-Pass QR code or enter booking reference for cryptographic gate ingress
+            Scan farmer e-Pass QR code or use manual lookup fallback to verify arrivals
           </p>
         </div>
 
@@ -300,6 +351,8 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
             type="button"
             onClick={() => {
               setActiveMode('camera');
+              setLookupData(null);
+              setLookupError(null);
               if (!isScanning && !verificationResult) {
                 startCameraScanner();
               }
@@ -311,13 +364,14 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
             }`}
           >
             <Camera className="w-3.5 h-3.5" />
-            <span>Camera Scanner</span>
+            <span>Scan QR Code</span>
           </button>
           <button
             type="button"
             onClick={() => {
               stopCameraScanner();
               setActiveMode('manual');
+              setVerificationResult(null);
             }}
             className={`px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition ${
               activeMode === 'manual'
@@ -326,20 +380,21 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
             }`}
           >
             <Search className="w-3.5 h-3.5" />
-            <span>Manual Fallback</span>
+            <span>Can't scan? Use Manual Fallback</span>
           </button>
         </div>
       </div>
 
-      {/* Verification State Cards (Success, Invalid, Unauthorized, Already Verified, Expired) */}
+      {/* Verifying Spinner */}
       {verifying && (
         <div className="p-6 bg-zinc-800/80 border border-sky-500/40 rounded-xl flex flex-col items-center justify-center text-center space-y-3">
           <RefreshCw className="w-8 h-8 text-sky-400 animate-spin" />
           <div className="text-sm font-bold text-sky-200">Verifying e-Pass with Authority Server...</div>
-          <div className="text-xs text-zinc-400 font-mono">Validating HMAC signature, slot validity & centre isolation</div>
+          <div className="text-xs text-zinc-400 font-mono">Validating signature, expiry, and centre isolation</div>
         </div>
       )}
 
+      {/* Verification State Cards */}
       {!verifying && verificationResult && (
         <div className="space-y-4">
           {/* 1. SUCCESS STATE */}
@@ -352,8 +407,8 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
                     GATE ENTRY VERIFIED & RECORDED
                   </h4>
                   <p className="text-xs text-emerald-200/90 leading-relaxed">
-                    Cryptographic signature is valid. Booking has transitioned to{' '}
-                    <strong className="font-mono bg-emerald-900/80 px-1.5 py-0.5 rounded text-white">ARRIVED</strong>.
+                    Farmer verified successfully. Booking status transitioned to{' '}
+                    <strong className="font-mono bg-emerald-900/80 px-1.5 py-0.5 rounded text-white">ARRIVED</strong> in PostgreSQL.
                   </p>
                 </div>
               </div>
@@ -381,7 +436,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
                       Booking Ref
                     </span>
                     <span className="text-xs font-mono text-zinc-200 truncate block">
-                      {verificationResult.data.booking_id?.substring(0, 13) || 'Confirmed'}...
+                      {verificationResult.data.booking_id || 'Confirmed'}
                     </span>
                   </div>
                 </div>
@@ -389,14 +444,14 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
 
               <div className="pt-2 flex items-center justify-between">
                 <span className="text-[10px] font-mono text-emerald-300/60 truncate max-w-xs">
-                  Payload: {lastScannedPayload}
+                  {lastScannedPayload ? `Scanned: ${lastScannedPayload}` : 'Manual Verification'}
                 </span>
                 <button
                   type="button"
                   onClick={handleResetForNextScan}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center space-x-1.5"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center space-x-1.5 cursor-pointer"
                 >
-                  <span>Scan Next Farmer</span>
+                  <span>Verify Next Farmer</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -411,7 +466,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
                 <div className="space-y-1">
                   <h4 className="text-sm font-bold text-rose-300">INVALID OR TAMPERED QR CODE</h4>
                   <p className="text-xs text-rose-200/90 leading-relaxed">
-                    {verificationResult.message || 'Cryptographic signature verification failed. The e-Pass QR code may be counterfeit or altered.'}
+                    {verificationResult.message || 'This QR code is not valid.'}
                   </p>
                 </div>
               </div>
@@ -419,7 +474,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
                 <button
                   type="button"
                   onClick={handleResetForNextScan}
-                  className="px-4 py-2 bg-rose-700 hover:bg-rose-600 text-white font-bold text-xs rounded-xl transition"
+                  className="px-4 py-2 bg-rose-700 hover:bg-rose-600 text-white font-bold text-xs rounded-xl transition cursor-pointer"
                 >
                   Retry Scan
                 </button>
@@ -435,7 +490,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
                 <div className="space-y-1">
                   <h4 className="text-sm font-bold text-amber-300">WRONG PROCUREMENT CENTRE</h4>
                   <p className="text-xs text-amber-200/90 leading-relaxed">
-                    {verificationResult.message || 'This booking is registered for another mandi centre. Centre isolation policy prevents gate admission here.'}
+                    {verificationResult.message || 'This farmer is assigned to another procurement centre.'}
                   </p>
                 </div>
               </div>
@@ -443,7 +498,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
                 <button
                   type="button"
                   onClick={handleResetForNextScan}
-                  className="px-4 py-2 bg-amber-700 hover:bg-amber-600 text-white font-bold text-xs rounded-xl transition"
+                  className="px-4 py-2 bg-amber-700 hover:bg-amber-600 text-white font-bold text-xs rounded-xl transition cursor-pointer"
                 >
                   Scan Next Farmer
                 </button>
@@ -457,9 +512,9 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
               <div className="flex items-start space-x-3">
                 <AlertTriangle className="w-6 h-6 text-sky-400 shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <h4 className="text-sm font-bold text-sky-300">ALREADY GATE-VERIFIED</h4>
+                  <h4 className="text-sm font-bold text-sky-300">ALREADY VERIFIED</h4>
                   <p className="text-xs text-sky-200/90 leading-relaxed">
-                    {verificationResult.message || 'This booking has already been gate-verified and admitted into the procurement holding yard.'}
+                    {verificationResult.message || 'This farmer has already been checked in.'}
                   </p>
                 </div>
               </div>
@@ -467,7 +522,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
                 <button
                   type="button"
                   onClick={handleResetForNextScan}
-                  className="px-4 py-2 bg-sky-700 hover:bg-sky-600 text-white font-bold text-xs rounded-xl transition"
+                  className="px-4 py-2 bg-sky-700 hover:bg-sky-600 text-white font-bold text-xs rounded-xl transition cursor-pointer"
                 >
                   Scan Another
                 </button>
@@ -481,9 +536,9 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
               <div className="flex items-start space-x-3">
                 <Clock className="w-6 h-6 text-orange-400 shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <h4 className="text-sm font-bold text-orange-300">EXPIRED e-PASS / SLOT</h4>
+                  <h4 className="text-sm font-bold text-orange-300">EXPIRED GATE PASS</h4>
                   <p className="text-xs text-orange-200/90 leading-relaxed">
-                    {verificationResult.message || 'The time window for this booking slot has expired. Farmer must book an updated slot.'}
+                    {verificationResult.message || 'This gate pass has expired.'}
                   </p>
                 </div>
               </div>
@@ -491,7 +546,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
                 <button
                   type="button"
                   onClick={handleResetForNextScan}
-                  className="px-4 py-2 bg-orange-700 hover:bg-orange-600 text-white font-bold text-xs rounded-xl transition"
+                  className="px-4 py-2 bg-orange-700 hover:bg-orange-600 text-white font-bold text-xs rounded-xl transition cursor-pointer"
                 >
                   Scan Another
                 </button>
@@ -499,14 +554,38 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
             </div>
           )}
 
-          {/* 6. GENERAL ERROR STATE */}
-          {verificationResult.state === 'ERROR' && (
-            <div className="p-5 bg-zinc-800 border border-rose-500/50 rounded-xl text-zinc-100 space-y-3">
+          {/* 6. NOT FOUND STATE */}
+          {verificationResult.state === 'NOT_FOUND' && (
+            <div className="p-5 bg-zinc-800 border border-zinc-700 rounded-xl text-zinc-100 space-y-3">
+              <div className="flex items-start space-x-3">
+                <XCircle className="w-6 h-6 text-zinc-400 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <h4 className="text-sm font-bold text-zinc-200">NO BOOKING FOUND</h4>
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    {verificationResult.message || 'No booking was found.'}
+                  </p>
+                </div>
+              </div>
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleResetForNextScan}
+                  className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white font-bold text-xs rounded-xl transition cursor-pointer"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 7. GENERAL / STATE ERROR */}
+          {(verificationResult.state === 'INVALID_STATE' || verificationResult.state === 'ERROR') && (
+            <div className="p-5 bg-rose-950/60 border border-rose-500/50 rounded-xl text-rose-100 space-y-3">
               <div className="flex items-start space-x-3">
                 <AlertTriangle className="w-6 h-6 text-rose-400 shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <h4 className="text-sm font-bold text-rose-300">VERIFICATION ERROR</h4>
-                  <p className="text-xs text-zinc-300 leading-relaxed">
+                  <p className="text-xs text-rose-200/90 leading-relaxed">
                     {verificationResult.message}
                   </p>
                 </div>
@@ -515,7 +594,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
                 <button
                   type="button"
                   onClick={handleResetForNextScan}
-                  className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white font-bold text-xs rounded-xl transition"
+                  className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white font-bold text-xs rounded-xl transition cursor-pointer"
                 >
                   Try Again
                 </button>
@@ -574,34 +653,26 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
           </div>
 
           <div className="relative bg-zinc-950 rounded-2xl overflow-hidden border border-zinc-800">
-            {/* Camera feed wrapper — fixed aspect ratio, centered */}
+            {/* Camera feed wrapper */}
             <div className="relative w-full flex items-center justify-center" style={{ minHeight: '320px' }}>
-              {/* HTML5 QR Container — fills the box, library injects <video> here */}
               <div
                 id={readerId}
                 className="w-full h-full absolute inset-0 [&>video]:w-full [&>video]:h-full [&>video]:object-cover [&_img]:hidden"
                 style={{ overflow: 'hidden' }}
               />
 
-              {/* Scan target overlay — centered crosshair frame on top of the camera */}
               {isScanning && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
                   <div className="w-56 h-56 relative">
-                    {/* Top-left corner */}
                     <div className="absolute top-0 left-0 w-8 h-8 border-t-[3px] border-l-[3px] border-emerald-400 rounded-tl-lg" />
-                    {/* Top-right corner */}
                     <div className="absolute top-0 right-0 w-8 h-8 border-t-[3px] border-r-[3px] border-emerald-400 rounded-tr-lg" />
-                    {/* Bottom-left corner */}
                     <div className="absolute bottom-0 left-0 w-8 h-8 border-b-[3px] border-l-[3px] border-emerald-400 rounded-bl-lg" />
-                    {/* Bottom-right corner */}
                     <div className="absolute bottom-0 right-0 w-8 h-8 border-b-[3px] border-r-[3px] border-emerald-400 rounded-br-lg" />
-                    {/* Scanning line animation */}
                     <div className="absolute left-2 right-2 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent animate-pulse" style={{ top: '50%' }} />
                   </div>
                 </div>
               )}
 
-              {/* Start scanner overlay — shown when camera is NOT active */}
               {!isScanning && (
                 <div className="absolute inset-0 bg-zinc-950/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center space-y-3 z-10">
                   <div className="w-14 h-14 rounded-2xl bg-sky-600/20 text-sky-400 flex items-center justify-center border border-sky-500/30">
@@ -627,7 +698,6 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
               )}
             </div>
 
-            {/* Bottom control bar — inside the camera container */}
             {isScanning && (
               <div className="flex items-center justify-between px-4 py-2.5 bg-zinc-900/95 border-t border-zinc-800">
                 <div className="flex items-center space-x-2 text-xs text-sky-400 font-medium truncate max-w-[65%]">
@@ -667,45 +737,153 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
         </div>
       )}
 
-      {/* Mode 2: MANUAL FALLBACK */}
+      {/* Mode 2: MANUAL FALLBACK — STRICT 2-STEP WORKFLOW */}
       {activeMode === 'manual' && !verificationResult && !verifying && (
-        <form onSubmit={handleManualSubmit} className="space-y-4">
-          <div className="p-4 bg-zinc-950/70 border border-zinc-800 rounded-xl space-y-3">
+        <div className="space-y-4">
+          <form onSubmit={handleFindBooking} className="p-4 bg-zinc-950/70 border border-zinc-800 rounded-xl space-y-3">
             <div className="flex items-center space-x-2">
               <Search className="w-4 h-4 text-sky-400" />
               <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-300">
-                Manual Token / QR Reference Verification
+                Manual Fallback: Booking Lookup
               </h4>
             </div>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              If camera scanning is unavailable or the printed QR code is damaged, paste the signed QR payload string or booking ID to verify authority record.
+              Enter farmer's booking reference or booking ID. The system will look up and validate authority records before allowing arrival verification.
             </p>
+
             <div className="space-y-1.5">
               <label className="text-[11px] font-semibold text-zinc-400">
-                Gate Token Number, Booking Reference or QR Payload:
+                Booking Reference:
               </label>
-              <textarea
-                rows={3}
-                value={manualCode}
-                onChange={(e) => setManualCode(e.target.value)}
-                placeholder="e.g. KF-2026-5897, BK-0ED6E9A5, or scanned QR string"
-                className="w-full p-3 bg-zinc-900 border border-zinc-700 rounded-xl text-xs font-mono text-zinc-100 placeholder:text-zinc-600 focus:outline-hidden focus:ring-2 focus:ring-sky-500"
-                required
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={manualCode}
+                  onChange={(e) => {
+                    setManualCode(e.target.value);
+                    setLookupError(null);
+                  }}
+                  placeholder="e.g. KF-2026-0948 or UUID"
+                  className="flex-1 p-2.5 bg-zinc-900 border border-zinc-700 rounded-xl text-xs font-mono text-zinc-100 placeholder:text-zinc-600 focus:outline-hidden focus:ring-2 focus:ring-sky-500"
+                  required
+                />
+                <button
+                  type="submit"
+                  disabled={!manualCode.trim() || lookupLoading}
+                  className="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center space-x-1.5 shrink-0 cursor-pointer"
+                >
+                  {lookupLoading ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Finding...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Search className="w-3.5 h-3.5" />
+                      <span>Find Booking</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
 
-            <div className="flex justify-end pt-1">
-              <button
-                type="submit"
-                disabled={!manualCode.trim()}
-                className="px-5 py-2.5 bg-gradient-to-r from-sky-600 to-amber-600 hover:from-sky-700 hover:to-amber-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center space-x-1.5 cursor-pointer"
-              >
-                <span>Verify Gate Entry</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+            {lookupError && (
+              <div className="p-3 bg-rose-950/50 border border-rose-500/40 rounded-xl text-rose-200 text-xs flex items-center space-x-2">
+                <XCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                <span>{lookupError}</span>
+              </div>
+            )}
+          </form>
+
+          {/* Safe Booking Details Card (shown ONLY after backend lookup succeeds) */}
+          {lookupData && (
+            <div className="p-5 bg-gradient-to-br from-zinc-950 to-zinc-900 border border-sky-500/40 rounded-xl space-y-4 shadow-lg">
+              <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+                <div className="flex items-center space-x-2">
+                  <UserCheck className="w-5 h-5 text-sky-400" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-sky-300">
+                    Validated Booking Record
+                  </span>
+                </div>
+                <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
+                  lookupData.status === 'ARRIVED'
+                    ? 'bg-sky-950/80 text-sky-300 border-sky-600/50'
+                    : lookupData.status === 'COMPLETED'
+                    ? 'bg-emerald-950/80 text-emerald-300 border-emerald-600/50'
+                    : 'bg-amber-950/80 text-amber-300 border-amber-600/50'
+                }`}>
+                  {lookupData.status}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                <div>
+                  <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Farmer Name</span>
+                  <span className="font-bold text-white text-sm">{lookupData.farmer_name || 'N/A'}</span>
+                  <span className="text-[11px] text-zinc-400 block">{lookupData.village || ''}</span>
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Booking Reference</span>
+                  <span className="font-mono font-bold text-sky-300">{lookupData.booking_reference}</span>
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Procurement Centre</span>
+                  <span className="font-semibold text-zinc-200">{lookupData.centre_name}</span>
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Crop & Produce</span>
+                  <span className="font-semibold text-zinc-200">{lookupData.crop_name}</span>
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Allocated Slot</span>
+                  <span className="font-mono text-zinc-300">{lookupData.slot_date}</span>
+                  <span className="text-[10px] text-zinc-500 block">{lookupData.slot_time}</span>
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Estimated Quantity</span>
+                  <span className="font-mono font-bold text-emerald-400 text-sm">
+                    {lookupData.quantity ? (lookupData.quantity / 100).toFixed(0) : '0'} Quintals
+                  </span>
+                </div>
+              </div>
+
+              {/* Verify Arrival Action — enabled ONLY if not already arrived/completed */}
+              <div className="pt-3 border-t border-zinc-800 flex items-center justify-between">
+                <span className="text-[11px] text-zinc-400">
+                  {lookupData.status === 'ARRIVED'
+                    ? '⚠️ Farmer already arrived and recorded in queue.'
+                    : lookupData.status === 'COMPLETED'
+                    ? '⚠️ Procurement already completed for this booking.'
+                    : 'Confirm arrival to admit farmer and generate yard token.'}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={handleConfirmManualArrival}
+                  disabled={verifyingArrival || lookupData.status === 'ARRIVED' || lookupData.status === 'COMPLETED'}
+                  className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-40 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center space-x-2 cursor-pointer"
+                >
+                  {verifyingArrival ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Verifying...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FileCheck className="w-4 h-4" />
+                      <span>Verify Arrival</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
-          </div>
-        </form>
+          )}
+        </div>
       )}
     </div>
   );

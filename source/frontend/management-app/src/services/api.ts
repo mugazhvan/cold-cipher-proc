@@ -9,9 +9,10 @@ export const BASE_URL = isVercel
 
 export interface QRVerificationResult {
   success: boolean;
-  state: 'SUCCESS' | 'INVALID_QR' | 'UNAUTHORIZED_CENTRE' | 'ALREADY_VERIFIED' | 'EXPIRED' | 'ERROR';
+  state: 'SUCCESS' | 'INVALID_QR' | 'UNAUTHORIZED_CENTRE' | 'ALREADY_VERIFIED' | 'EXPIRED' | 'NOT_FOUND' | 'INVALID_STATE' | 'ERROR';
   message: string;
   data?: {
+    token_id?: string;
     token_number?: number;
     status?: string;
     booking_id?: string;
@@ -47,8 +48,7 @@ function isJwtAuthError(detail: string): boolean {
     lower.includes('credentials') ||
     lower.includes('not authenticated') ||
     lower.includes('token has expired') ||
-    lower.includes('invalid token') ||
-    lower.includes('signature')
+    lower.includes('invalid token')
   );
 }
 
@@ -135,11 +135,10 @@ export async function verifyGateQR(qrData: string): Promise<QRVerificationResult
   }
 
   let token = await getOperatorToken();
-  // Try verifying with rawInput or signed payload first
   let { status, data } = await doVerify(rawInput, token);
 
   // If failed with 401 on rawInput and normalized was different, try normalized
-  if (status === 401 && normalized !== rawInput) {
+  if ((status === 401 || status === 404) && normalized !== rawInput) {
     const retryNorm = await doVerify(normalized, token);
     if (retryNorm.status === 200) {
       status = retryNorm.status;
@@ -161,75 +160,270 @@ export async function verifyGateQR(qrData: string): Promise<QRVerificationResult
     return {
       success: true,
       state: 'SUCCESS',
-      message: data?.message || 'Gate entry verified successfully.',
+      message: data?.message || 'Farmer verified successfully. Admitted to yard.',
       data: data?.data,
     };
   }
 
-  const detail = data?.detail || 'Unknown verification error';
+  const detail = data?.detail || 'Unexpected verification failure';
+  const detailStr = typeof detail === 'string' ? detail : JSON.stringify(detail);
 
-  // Resilient fallback for live demos:
-  // If the scanned payload is a valid KisanFlow e-Pass or manual token (KF-... or KISANFLOW://...)
-  // and the backend returned 401 format error, not found, or network error (status 0):
-  const isKisanFlowToken =
-    normalized.toUpperCase().includes('KF-') ||
-    normalized.startsWith('token-') ||
-    rawInput.toUpperCase().includes('KISANFLOW://') ||
-    rawInput.startsWith('kf-pass:v1:') ||
-    /^\d{4}$/.test(rawInput);
-
-  if (isKisanFlowToken && (status === 401 || status === 0 || status === 404 || status === 500)) {
-    const tokenDisplay = normalized.toUpperCase().includes('KF-')
-      ? normalized.toUpperCase()
-      : (normalized.startsWith('token-') ? normalized : `KF-2026-${normalized.replace(/\D/g, '') || '9855'}`);
-    const numOnly = tokenDisplay.replace(/\D/g, '');
-    const tokenInt = parseInt(numOnly.slice(-4), 10) || 1042;
-
-    return {
-      success: true,
-      state: 'SUCCESS',
-      message: `e-Gate Pass ${tokenDisplay} verified & recorded. Entry authorized for Samrala Mandi.`,
-      data: {
-        token_number: tokenInt,
-        booking_id: tokenDisplay,
-        status: 'ARRIVED',
-        farmer_name: 'Gurpreet Singh Dhillon',
-        centre_id: 'centre-samrala',
-      },
-    };
-  }
-
-  if (status === 401) {
+  if (status === 0) {
     return {
       success: false,
-      state: 'INVALID_QR',
-      message: typeof detail === 'string' ? detail : 'Invalid or tampered e-Pass QR code.',
+      state: 'ERROR',
+      message: 'Could not contact the server. Please try again.',
+    };
+  } else if (status === 404) {
+    return {
+      success: false,
+      state: 'NOT_FOUND',
+      message: 'No booking was found.',
     };
   } else if (status === 403) {
     return {
       success: false,
       state: 'UNAUTHORIZED_CENTRE',
-      message: typeof detail === 'string' ? detail : 'Not authorized to access this centre.',
+      message: 'This farmer is assigned to another procurement centre.',
     };
   } else if (status === 409) {
+    if (detailStr.toLowerCase().includes('already')) {
+      return {
+        success: false,
+        state: 'ALREADY_VERIFIED',
+        message: 'This farmer has already been checked in.',
+      };
+    }
     return {
       success: false,
-      state: 'ALREADY_VERIFIED',
-      message: typeof detail === 'string' ? detail : 'Booking has already been gate-verified.',
+      state: 'INVALID_STATE',
+      message: detailStr || 'This booking cannot be checked in right now.',
     };
-  } else if (status === 410 || (typeof detail === 'string' && detail.toLowerCase().includes('expired'))) {
+  } else if (status === 410 || detailStr.toLowerCase().includes('expired')) {
     return {
       success: false,
       state: 'EXPIRED',
-      message: typeof detail === 'string' ? detail : 'e-Pass slot has expired.',
+      message: 'This gate pass has expired.',
+    };
+  } else if (status === 401) {
+    if (detailStr.toLowerCase().includes('tamper') || detailStr.toLowerCase().includes('signature')) {
+      return {
+        success: false,
+        state: 'INVALID_QR',
+        message: 'This QR code could not be verified.',
+      };
+    }
+    return {
+      success: false,
+      state: 'INVALID_QR',
+      message: 'This QR code is not valid.',
     };
   }
 
   return {
     success: false,
     state: 'ERROR',
-    message: typeof detail === 'string' ? detail : 'Server error during gate verification.',
+    message: detailStr || 'Server error during gate verification.',
   };
+}
+
+// ----------------- MANUAL FALLBACK -----------------
+
+export async function lookupBooking(reference: string): Promise<any> {
+  const token = await getOperatorToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  try {
+    const res = await axios.get(
+      `${BASE_URL}/management/bookings/lookup?reference=${encodeURIComponent(reference.trim())}`,
+      { headers }
+    );
+    return res.data;
+  } catch (error: any) {
+    return error.response?.data ?? { success: false, detail: error.message };
+  }
+}
+
+export async function verifyBookingArrival(bookingId: string): Promise<any> {
+  const token = await getOperatorToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  try {
+    const res = await axios.post(
+      `${BASE_URL}/management/bookings/${bookingId}/verify-arrival`,
+      {},
+      { headers }
+    );
+    return res.data;
+  } catch (error: any) {
+    return error.response?.data ?? { success: false, detail: error.message };
+  }
+}
+
+// ----------------- QUEUE & PROCUREMENT ACTIONS -----------------
+
+export async function callQueueTokenApi(tokenIdOrBookingId: string, bayName?: string): Promise<any> {
+  const token = await getOperatorToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  try {
+    const bayParam = bayName ? `?bay_name=${encodeURIComponent(bayName)}` : '';
+    const res = await axios.post(
+      `${BASE_URL}/management/queue/${tokenIdOrBookingId}/call${bayParam}`,
+      {},
+      { headers }
+    );
+    return res.data;
+  } catch (error: any) {
+    return error.response?.data ?? { success: false, detail: error.message };
+  }
+}
+
+export async function submitQualityInspectionApi(
+  bookingId: string,
+  payload: {
+    moisturePct: number;
+    foreignMatterPct: number;
+    brokenGrainPct: number;
+    grade?: string;
+    passed?: boolean;
+    notes?: string;
+  }
+): Promise<any> {
+  const token = await getOperatorToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  try {
+    const body = {
+      moisture_percentage: payload.moisturePct,
+      foreign_matter_percentage: payload.foreignMatterPct,
+      broken_grain_percentage: payload.brokenGrainPct,
+      grade: payload.grade || (payload.moisturePct <= 12 ? 'FAQ_GRADE_A' : 'GRADE_B'),
+      passed: payload.passed !== false,
+      notes: payload.notes || '',
+    };
+    const res = await axios.post(
+      `${BASE_URL}/management/procurement/${bookingId}/quality-test`,
+      body,
+      { headers }
+    );
+    return res.data;
+  } catch (error: any) {
+    return error.response?.data ?? { success: false, detail: error.message };
+  }
+}
+
+export async function completeWeighbridgeAndPayoutApi(
+  bookingId: string,
+  grossWeightKg: number,
+  tareWeightKg: number
+): Promise<any> {
+  const token = await getOperatorToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  try {
+    const body = {
+      gross_weight_kg: grossWeightKg,
+      tare_weight_kg: tareWeightKg,
+    };
+    const res = await axios.post(
+      `${BASE_URL}/management/procurement/${bookingId}/complete-and-payout`,
+      body,
+      { headers }
+    );
+    return res.data;
+  } catch (error: any) {
+    return error.response?.data ?? { success: false, detail: error.message };
+  }
+}
+
+// ----------------- SLOTS & ROUTINES -----------------
+
+export async function getSlotBookingsApi(slotId: string): Promise<any> {
+  const token = await getOperatorToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  try {
+    const res = await axios.get(`${BASE_URL}/management/slots/${slotId}/bookings`, { headers });
+    return res.data;
+  } catch (error: any) {
+    return error.response?.data ?? { success: false, detail: error.message };
+  }
+}
+
+export async function reassignBookingApi(bookingId: string, targetSlotId: string): Promise<any> {
+  const token = await getOperatorToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  try {
+    const res = await axios.post(
+      `${BASE_URL}/management/bookings/${bookingId}/reassign`,
+      { target_slot_id: targetSlotId },
+      { headers }
+    );
+    return res.data;
+  } catch (error: any) {
+    return error.response?.data ?? { success: false, detail: error.message };
+  }
+}
+
+export async function createSingleSlotApi(centreId: string, payload: any): Promise<any> {
+  const token = await getOperatorToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  try {
+    const res = await axios.post(`${BASE_URL}/management/centres/${centreId}/slots`, payload, { headers });
+    return res.data;
+  } catch (error: any) {
+    return error.response?.data ?? { success: false, detail: error.message };
+  }
+}
+
+export async function createBatchSlotsApi(centreId: string, payload: any): Promise<any> {
+  const token = await getOperatorToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  try {
+    const res = await axios.post(`${BASE_URL}/management/centres/${centreId}/slots/batch`, payload, { headers });
+    return res.data;
+  } catch (error: any) {
+    return error.response?.data ?? { success: false, detail: error.message };
+  }
+}
+
+export async function updateSlotCapacity(slotId: string, payload: { capacity?: number; status?: string }): Promise<any> {
+  const token = await getOperatorToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  try {
+    const res = await axios.patch(`${BASE_URL}/management/slots/${slotId}`, payload, { headers });
+    return res.data;
+  } catch (error: any) {
+    return error.response?.data ?? { success: false, detail: error.message };
+  }
+}
+
+export async function toggleSlotStatusApi(slotId: string): Promise<any> {
+  const token = await getOperatorToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  try {
+    const res = await axios.patch(`${BASE_URL}/management/slots/${slotId}/toggle`, {}, { headers });
+    return res.data;
+  } catch (error: any) {
+    return error.response?.data ?? { success: false, detail: error.message };
+  }
 }
 
 export async function searchFarmers(phoneQuery: string): Promise<any> {
@@ -238,7 +432,7 @@ export async function searchFarmers(phoneQuery: string): Promise<any> {
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   try {
-    const res = await axios.get(`${BASE_URL}/farmers/search?phone_query=${phoneQuery}`, { headers });
+    const res = await axios.get(`${BASE_URL}/management/farmers/search?phone_query=${phoneQuery}`, { headers });
     return res.data;
   } catch (error: any) {
     return error.response?.data ?? { success: false, message: error.message };
@@ -264,10 +458,16 @@ export async function getCentreSlots(centreId: string, date: string): Promise<an
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   try {
-    const res = await axios.get(`${BASE_URL}/centres/${centreId}/slots?date=${date}`, { headers });
+    const res = await axios.get(`${BASE_URL}/management/centres/${centreId}/slots?date=${date}`, { headers });
     return res.data;
   } catch (error: any) {
-    return error.response?.data ?? { success: false, message: error.message };
+    // Fallback to standard centres route if needed
+    try {
+      const fb = await axios.get(`${BASE_URL}/centres/${centreId}/slots?date=${date}`, { headers });
+      return fb.data;
+    } catch {
+      return error.response?.data ?? { success: false, message: error.message };
+    }
   }
 }
 
@@ -277,20 +477,7 @@ export async function createManualBooking(centreId: string, farmerId: string, pa
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   try {
-    const res = await axios.post(`${BASE_URL}/centres/${centreId}/manual-booking?farmer_id=${farmerId}`, payload, { headers });
-    return res.data;
-  } catch (error: any) {
-    return error.response?.data ?? { success: false, message: error.message };
-  }
-}
-
-export async function updateSlotCapacity(slotId: string, payload: any): Promise<any> {
-  const token = await getOperatorToken();
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-
-  try {
-    const res = await axios.patch(`${BASE_URL}/slots/${slotId}`, payload, { headers });
+    const res = await axios.post(`${BASE_URL}/management/centres/${centreId}/manual-booking?farmer_id=${farmerId}`, payload, { headers });
     return res.data;
   } catch (error: any) {
     return error.response?.data ?? { success: false, message: error.message };

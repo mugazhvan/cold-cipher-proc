@@ -10,12 +10,13 @@ from app.models.users import User, UserRole
 from app.models.booking import Booking, Slot, BookingStatus
 from app.models.queue import QueueToken, QueueStatus
 from app.models.operations import Procurement, Payment, ProcurementStatus, PaymentStatus
-from app.models.entities import Officer
-from datetime import time
+from app.models.entities import Officer, Farmer, Centre
+from datetime import time, datetime
 from sqlalchemy.orm import selectinload
 from app.schemas.auth import StandardResponse
 from app.schemas.slot import SlotCreate, SlotResponse, SlotUpdate, BatchSlotCreate
-from app.schemas.procurement import ProcurementBase, ProcurementResponse, ProcurementUpdate
+from app.schemas.booking import BookingResponse, QRVerifyRequest, ReassignBookingRequest
+from app.schemas.procurement import ProcurementBase, ProcurementResponse, ProcurementUpdate, QualityTestRequest, CompleteWeighmentRequest
 from app.schemas.payment import PaymentResponse, PaymentBase
 from app.api.deps import RoleChecker, verify_centre_access
 from app.core.security import verify_signed_qr_payload
@@ -63,18 +64,47 @@ async def create_batch_slots(
     current_user: User = Depends(RoleChecker([UserRole.CENTRE_MANAGER, UserRole.CENTRE_OPERATOR, UserRole.ADMIN]))
 ) -> Any:
     await verify_centre_access(db, current_user, centre_id)
-    # 5 standard 2-hour windows
-    standard_windows = [
-        (time(8, 0), time(10, 0)),
-        (time(10, 0), time(12, 0)),
-        (time(12, 0), time(14, 0)),
-        (time(14, 0), time(16, 0)),
-        (time(16, 0), time(18, 0)),
-    ]
-    
+
+    from datetime import datetime, timedelta
+    start_h = batch_in.start_time.hour if batch_in.start_time else 8
+    start_m = batch_in.start_time.minute if batch_in.start_time else 0
+    end_h = batch_in.end_time.hour if batch_in.end_time else 16
+    end_m = batch_in.end_time.minute if batch_in.end_time else 0
+    duration_mins = batch_in.slot_duration_minutes if (batch_in.slot_duration_minutes and batch_in.slot_duration_minutes > 0) else 60
+
+    b_start_h = batch_in.break_start_time.hour if batch_in.break_start_time else 12
+    b_end_h = batch_in.break_end_time.hour if batch_in.break_end_time else 13
+
+    windows = []
+    curr = datetime(2000, 1, 1, start_h, start_m)
+    limit = datetime(2000, 1, 1, end_h, end_m)
+    while curr < limit:
+        nxt = curr + timedelta(minutes=duration_mins)
+        if nxt > limit:
+            break
+        # Skip interval if it overlaps with break interval
+        is_break = False
+        if batch_in.break_start_time is not None or batch_in.break_end_time is not None or (b_start_h < b_end_h):
+            if curr.hour >= b_start_h and curr.hour < b_end_h:
+                is_break = True
+        if not is_break:
+            windows.append((curr.time(), nxt.time()))
+        curr = nxt
+
+    if not windows:
+        # Fallback to standard 2-hour windows if configured range was invalid
+        windows = [
+            (time(8, 0), time(9, 0)),
+            (time(9, 0), time(10, 0)),
+            (time(10, 0), time(11, 0)),
+            (time(11, 0), time(12, 0)),
+            (time(13, 0), time(14, 0)),
+            (time(14, 0), time(15, 0)),
+            (time(15, 0), time(16, 0)),
+        ]
+
     created_slots = []
-    for start_t, end_t in standard_windows:
-        # Check if identical slot already exists
+    for start_t, end_t in windows:
         existing = await db.execute(
             select(Slot)
             .where(Slot.centre_id == centre_id)
@@ -95,24 +125,32 @@ async def create_batch_slots(
             )
             db.add(s)
             created_slots.append(s)
-            
+
     await db.commit()
-    
-    # Reload all slots for this centre, crop and date
-    result = await db.execute(
-        select(Slot)
-        .where(Slot.centre_id == centre_id)
-        .where(Slot.crop_id == batch_in.crop_id)
-        .where(Slot.slot_date == batch_in.slot_date)
-        .options(selectinload(Slot.crop))
-        .order_by(Slot.start_time)
+
+    # Reload newly created slots with crop relation
+    created_ids = [s.id for s in created_slots]
+    if created_ids:
+        result = await db.execute(
+            select(Slot)
+            .where(Slot.id.in_(created_ids))
+            .options(selectinload(Slot.crop))
+            .order_by(Slot.start_time)
+        )
+        loaded_created = result.scalars().all()
+    else:
+        loaded_created = []
+
+    msg = (
+        f"Daily routine generated: {len(loaded_created)} new slots created in database."
+        if loaded_created
+        else "Today's slots already exist in database. No duplicate slots created."
     )
-    all_slots = result.scalars().all()
-    
+
     return {
         "success": True,
-        "data": [SlotResponse.from_slot(s).model_dump() for s in all_slots],
-        "message": f"Daily schedule generated with {len(created_slots)} new slots."
+        "data": [SlotResponse.from_slot(s).model_dump() for s in loaded_created],
+        "message": msg
     }
 
 @router.get("/centres/{centre_id}/slots", response_model=StandardResponse)
@@ -202,37 +240,165 @@ async def toggle_slot_status(
         "message": f"Slot is now {slot.status}."
     }
 
-# ----------------- QUEUE MANAGEMENT -----------------
+# ----------------- QUEUE & ARRIVAL MANAGEMENT -----------------
+
+async def verify_farmer_arrival(
+    db: AsyncSession,
+    booking: Booking,
+    current_user: User,
+    notes: str = "Gate entry verified"
+) -> QueueToken:
+    # 1. Verify Operator Authorization for this centre
+    await verify_centre_access(db, current_user, booking.centre_id)
+
+    # 2. Check status
+    if booking.status == BookingStatus.ARRIVED:
+        raise HTTPException(status_code=409, detail="This farmer has already been checked in.")
+    if booking.status in [BookingStatus.COMPLETED, BookingStatus.CANCELLED, BookingStatus.NO_SHOW]:
+        stat_name = booking.status if isinstance(booking.status, str) else getattr(booking.status, 'value', str(booking.status))
+        raise HTTPException(status_code=409, detail=f"This booking cannot be checked in right now (status: {stat_name}).")
+
+    # 3. Obtain slot date
+    slot_res = await db.execute(select(Slot).where(Slot.id == booking.slot_id))
+    slot = slot_res.scalars().first()
+    queue_d = slot.slot_date if slot else booking.created_at.date()
+
+    # 4. Fetch or create QueueToken with lock
+    token_result = await db.execute(select(QueueToken).where(QueueToken.booking_id == booking.id).with_for_update())
+    queue_token = token_result.scalars().first()
+
+    if not queue_token:
+        max_token_res = await db.execute(
+            select(func.max(QueueToken.token_number))
+            .where(QueueToken.centre_id == booking.centre_id)
+            .where(QueueToken.queue_date == queue_d)
+        )
+        max_num = max_token_res.scalar() or 0
+        queue_token = QueueToken(
+            booking_id=booking.id,
+            centre_id=booking.centre_id,
+            token_number=max_num + 1,
+            queue_date=queue_d,
+            status=QueueStatus.WAITING,
+            check_in_at=datetime.utcnow()
+        )
+        db.add(queue_token)
+        await db.flush()
+    else:
+        queue_token.check_in_at = queue_token.check_in_at or datetime.utcnow()
+        queue_token.status = QueueStatus.WAITING
+        db.add(queue_token)
+
+    # 5. Update states
+    from app.models.queue import QueueEvent
+    old_status = queue_token.status if isinstance(queue_token.status, str) else queue_token.status.value
+
+    booking.status = BookingStatus.ARRIVED
+    booking.check_in_at = booking.check_in_at or datetime.utcnow()
+
+    db.add(booking)
+    db.add(queue_token)
+    db.add(
+        QueueEvent(
+            token_id=queue_token.id,
+            event_type="GATE_VERIFIED",
+            old_status=old_status,
+            new_status=QueueStatus.WAITING.value,
+            event_time=datetime.utcnow(),
+            performed_by=current_user.id,
+            notes=notes,
+        )
+    )
+    await db.commit()
+    await db.refresh(queue_token)
+    await db.refresh(booking)
+    return queue_token
+
 
 @router.post("/queue/{token_id}/call", response_model=StandardResponse)
 async def call_token(
     token_id: uuid.UUID,
+    bay_name: Optional[str] = Query("Weighbridge Bay 2 (North)"),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(RoleChecker([UserRole.CENTRE_OPERATOR, UserRole.CENTRE_MANAGER]))
+    current_user: User = Depends(RoleChecker([UserRole.CENTRE_OPERATOR, UserRole.CENTRE_MANAGER, UserRole.ADMIN]))
 ) -> Any:
+    # 1. Search by token id
     result = await db.execute(select(QueueToken).where(QueueToken.id == token_id).with_for_update())
     token = result.scalars().first()
-    
+
+    # 2. If not found by token ID, search by booking id
     if not token:
-        raise HTTPException(status_code=404, detail="Token not found")
-        
+        result = await db.execute(select(QueueToken).where(QueueToken.booking_id == token_id).with_for_update())
+        token = result.scalars().first()
+
+    # 3. If token does not exist yet but booking exists, create queue token
+    if not token:
+        b_res = await db.execute(select(Booking).where(Booking.id == token_id).with_for_update())
+        booking = b_res.scalars().first()
+        if not booking:
+            raise HTTPException(status_code=404, detail="Token or booking not found")
+        await verify_centre_access(db, current_user, booking.centre_id)
+
+        slot_res = await db.execute(select(Slot).where(Slot.id == booking.slot_id))
+        slot = slot_res.scalars().first()
+        queue_d = slot.slot_date if slot else booking.created_at.date()
+
+        max_res = await db.execute(
+            select(func.max(QueueToken.token_number))
+            .where(QueueToken.centre_id == booking.centre_id)
+            .where(QueueToken.queue_date == queue_d)
+        )
+        max_num = max_res.scalar() or 0
+        token = QueueToken(
+            booking_id=booking.id,
+            centre_id=booking.centre_id,
+            token_number=max_num + 1,
+            queue_date=queue_d,
+            status=QueueStatus.WAITING,
+            check_in_at=datetime.utcnow()
+        )
+        booking.status = BookingStatus.ARRIVED
+        db.add(booking)
+        db.add(token)
+        await db.flush()
+
     await verify_centre_access(db, current_user, token.centre_id)
-    
-    if token.status != QueueStatus.WAITING:
-        raise HTTPException(status_code=409, detail=f"Token is not WAITING, it is {token.status if isinstance(token.status, str) else getattr(token.status, 'value', str(token.status))}")
-        
+
+    curr_status = token.status if isinstance(token.status, str) else token.status.value
+    if curr_status != "WAITING":
+        raise HTTPException(
+            status_code=409,
+            detail=f"Token #{token.token_number} is already in status {curr_status} and cannot be called."
+        )
+
     token.status = QueueStatus.CALLED
+    token.called_at = datetime.utcnow()
     db.add(token)
+
+    from app.models.queue import QueueEvent
+    db.add(
+        QueueEvent(
+            token_id=token.id,
+            event_type="TOKEN_CALLED",
+            new_status=QueueStatus.CALLED.value,
+            event_time=datetime.utcnow(),
+            performed_by=current_user.id,
+            notes=f"Dispatched to {bay_name}",
+        )
+    )
     await db.commit()
-    
+    await db.refresh(token)
+
     return {
         "success": True,
-        "data": {"token_number": token.token_number, "status": token.status if isinstance(token.status, str) else getattr(token.status, 'value', str(token.status))},
-        "message": "Token called."
+        "data": {
+            "token_number": token.token_number,
+            "status": token.status if isinstance(token.status, str) else getattr(token.status, 'value', str(token.status)),
+            "assigned_bay": bay_name
+        },
+        "message": f"Token #{token.token_number} called to {bay_name}."
     }
 
-from app.schemas.booking import QRVerifyRequest
-from datetime import datetime
 
 @router.post("/qr/verify", response_model=StandardResponse)
 async def verify_epass_qr(
@@ -240,7 +406,6 @@ async def verify_epass_qr(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(RoleChecker([UserRole.CENTRE_OPERATOR, UserRole.CENTRE_MANAGER, UserRole.ADMIN]))
 ) -> Any:
-    # 1. Decode and Verify QR cryptographic payload or direct token / URI
     raw_payload = (request.payload or request.qr_data or "").strip()
     if not raw_payload:
         raise HTTPException(status_code=401, detail="Empty QR payload")
@@ -250,7 +415,6 @@ async def verify_epass_qr(
         try:
             qr_data = verify_signed_qr_payload(raw_payload)
         except ValueError as e:
-            # 401 Unauthorized for invalid signatures
             raise HTTPException(status_code=401, detail=str(e))
     elif raw_payload.upper().startswith("KISANFLOW://TOKEN/"):
         parts = raw_payload.split("/")
@@ -258,7 +422,7 @@ async def verify_epass_qr(
         qr_data = {"booking_ref": token_part}
     elif "KF-" in raw_payload.upper() or raw_payload.startswith("token-") or raw_payload.isdigit():
         booking_ref_norm = raw_payload
-        if raw_payload.isdigit() and len(raw_payload) == 4:
+        if raw_payload.isdigit() and len(raw_payload) <= 4:
             booking_ref_norm = f"KF-2026-{raw_payload}"
         qr_data = {"booking_ref": booking_ref_norm}
     else:
@@ -277,128 +441,247 @@ async def verify_epass_qr(
     except ValueError:
         pass
 
-    # 2. Get booking by UUID or booking_reference
     if parsed_booking_id:
-        result = await db.execute(select(Booking).where(Booking.id == parsed_booking_id))
+        result = await db.execute(select(Booking).where(Booking.id == parsed_booking_id).with_for_update())
     else:
-        result = await db.execute(select(Booking).where(Booking.booking_reference == booking_ref))
-    
+        result = await db.execute(select(Booking).where(Booking.booking_reference == booking_ref).with_for_update())
+
     booking = result.scalars().first()
     if not booking:
-        # If farmer booked via portal with KF- token format, resolve for operator's centre
-        if "KF-" in booking_ref:
-            from app.models.entities import Officer, Centre
-            officer_res = await db.execute(select(Officer).where(Officer.user_id == current_user.id))
-            officer = officer_res.scalars().first()
-            target_centre_id = officer.centre_id if officer else None
-            if not target_centre_id and current_user.role == UserRole.ADMIN:
-                c_res = await db.execute(select(Centre.id))
-                target_centre_id = c_res.scalars().first()
-            if target_centre_id:
-                b_res = await db.execute(
-                    select(Booking)
-                    .where(Booking.centre_id == target_centre_id)
-                    .where(Booking.status == BookingStatus.CONFIRMED)
-                    .order_by(Booking.created_at.desc())
-                )
-                cand = b_res.scalars().first()
-                if not cand:
-                    b_res_any = await db.execute(
-                        select(Booking)
-                        .where(Booking.centre_id == target_centre_id)
-                        .order_by(Booking.created_at.desc())
-                    )
-                    cand = b_res_any.scalars().first()
-                if cand:
-                    booking = cand
-                    booking.booking_reference = booking_ref
-        if not booking:
-            # If still not found, return successful verification for demo tokens so live demos never fail
-            if "KF-" in booking_ref.upper() or booking_ref.startswith("token-"):
-                token_digits = "".join(filter(str.isdigit, booking_ref))
-                token_num = int(token_digits[-4:] or "1042")
-                return {
-                    "success": True,
-                    "data": {
-                        "token_number": token_num,
-                        "status": "WAITING",
-                        "booking_id": booking_ref,
-                        "farmer_name": "Gurpreet Singh Dhillon"
-                    },
-                    "message": f"e-Gate Pass {booking_ref} verified & recorded. Entry authorized for Samrala Mandi."
-                }
-            raise HTTPException(status_code=401, detail="Invalid e-Pass QR code format or booking not found")
+        raise HTTPException(status_code=404, detail="No booking was found.")
 
-    # 3. Verify Operator Authorization
-    await verify_centre_access(db, current_user, booking.centre_id)
-
-    # 4. Check status
-    if booking.status in [BookingStatus.ARRIVED, BookingStatus.COMPLETED, BookingStatus.CANCELLED, BookingStatus.NO_SHOW]:
-        if booking.status == BookingStatus.ARRIVED:
-            raise HTTPException(status_code=409, detail="Booking already gate-verified")
-        raise HTTPException(status_code=409, detail=f"Booking is in {booking.status if isinstance(booking.status, str) else getattr(booking.status, 'value', str(booking.status))} state")
-
-    # 5. Fetch or create QueueToken
-    token_result = await db.execute(select(QueueToken).where(QueueToken.booking_id == booking.id).with_for_update())
-    queue_token = token_result.scalars().first()
-    
-    # Need slot for date
-    slot_res = await db.execute(select(Slot).where(Slot.id == booking.slot_id))
-    slot = slot_res.scalars().first()
-    
-    if not queue_token:
-        # Create token if farmer didn't generate it manually
-        # Find next token number
-        max_token_res = await db.execute(
-            select(func.max(QueueToken.token_number))
-            .where(QueueToken.centre_id == booking.centre_id)
-            .where(QueueToken.queue_date == slot.slot_date)
-        )
-        max_num = max_token_res.scalar() or 0
-        queue_token = QueueToken(
-            booking_id=booking.id,
-            centre_id=booking.centre_id,
-            token_number=max_num + 1,
-            queue_date=slot.slot_date,
-            status=QueueStatus.WAITING
-        )
-        db.add(queue_token)
-        await db.flush()
-
-    # 6. Update states
-    from app.models.queue import QueueEvent
-    old_status = queue_token.status if isinstance(queue_token.status, str) else queue_token.status.value
-    
-    booking.status = BookingStatus.ARRIVED
-    # Assuming Booking has a check_in_at if it was migrated, else we skip it
-    
-    queue_token.check_in_at = queue_token.check_in_at or datetime.utcnow()
-    queue_token.status = QueueStatus.WAITING
-    
-    db.add(booking)
-    db.add(queue_token)
-    db.add(
-        QueueEvent(
-            token_id=queue_token.id,
-            event_type="GATE_VERIFIED",
-            old_status=old_status,
-            new_status=QueueStatus.WAITING.value,
-            event_time=datetime.utcnow(),
-            performed_by=current_user.id,
-            notes="Gate entry verified via QR scan",
-        )
+    queue_token = await verify_farmer_arrival(
+        db=db,
+        booking=booking,
+        current_user=current_user,
+        notes="Gate entry verified via QR scan"
     )
-    await db.commit()
-    await db.refresh(queue_token)
 
     return {
         "success": True,
         "data": {
             "token_number": queue_token.token_number,
             "status": queue_token.status if isinstance(queue_token.status, str) else queue_token.status.value,
-            "booking_id": str(booking.id)
+            "booking_id": str(booking.id),
+            "booking_reference": booking.booking_reference
         },
-        "message": "Gate entry verified."
+        "message": f"e-Gate Pass {booking.booking_reference} verified. Token #{queue_token.token_number} issued."
+    }
+
+
+@router.get("/bookings/lookup", response_model=StandardResponse)
+async def lookup_booking(
+    reference: str = Query(..., min_length=1),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(RoleChecker([UserRole.CENTRE_OPERATOR, UserRole.CENTRE_MANAGER, UserRole.ADMIN]))
+) -> Any:
+    ref_norm = reference.strip()
+    parsed_uuid = None
+    try:
+        parsed_uuid = uuid.UUID(ref_norm)
+    except ValueError:
+        pass
+
+    stmt = select(Booking).options(
+        selectinload(Booking.crop),
+        selectinload(Booking.farmer).selectinload(Farmer.user),
+        selectinload(Booking.slot),
+        selectinload(Booking.centre),
+    )
+    if parsed_uuid:
+        stmt = stmt.where(Booking.id == parsed_uuid)
+    else:
+        stmt = stmt.where(Booking.booking_reference == ref_norm)
+
+    res = await db.execute(stmt)
+    booking = res.scalars().first()
+
+    if not booking:
+        # Check digit-only fallback
+        if ref_norm.isdigit() and len(ref_norm) <= 4:
+            alt_ref = f"KF-2026-{ref_norm}"
+            stmt_alt = select(Booking).options(
+                selectinload(Booking.crop),
+                selectinload(Booking.farmer).selectinload(Farmer.user),
+                selectinload(Booking.slot),
+                selectinload(Booking.centre),
+            ).where(Booking.booking_reference == alt_ref)
+            res_alt = await db.execute(stmt_alt)
+            booking = res_alt.scalars().first()
+
+    if not booking:
+        raise HTTPException(status_code=404, detail="No booking was found.")
+
+    await verify_centre_access(db, current_user, booking.centre_id)
+
+    f_name = booking.farmer.name if getattr(booking, 'farmer', None) else "Farmer"
+    f_village = booking.farmer.village if getattr(booking, 'farmer', None) else "Local Village"
+    f_phone = booking.farmer.user.phone if getattr(booking, 'farmer', None) and getattr(booking.farmer, 'user', None) else None
+    c_name = booking.centre.name if getattr(booking, 'centre', None) else "Procurement Centre"
+    cr_name = booking.crop.name if getattr(booking, 'crop', None) else "Wheat"
+    s_date = str(booking.slot.slot_date) if getattr(booking, 'slot', None) else str(booking.created_at.date())
+    s_time = (
+        f"{booking.slot.start_time.strftime('%I:%M %p')} - {booking.slot.end_time.strftime('%I:%M %p')}"
+        if getattr(booking, 'slot', None)
+        else "09:00 AM - 10:00 AM"
+    )
+    b_stat = booking.status if isinstance(booking.status, str) else getattr(booking.status, 'value', str(booking.status))
+
+    return {
+        "success": True,
+        "data": {
+            "id": str(booking.id),
+            "booking_reference": booking.booking_reference,
+            "farmer_name": f_name,
+            "village": f_village,
+            "farmer_phone": f_phone,
+            "centre_id": str(booking.centre_id),
+            "centre_name": c_name,
+            "crop_name": cr_name,
+            "slot_date": s_date,
+            "slot_time": s_time,
+            "quantity": float(booking.quantity),
+            "status": b_stat,
+        },
+        "message": "Booking found."
+    }
+
+
+@router.post("/bookings/{booking_id}/verify-arrival", response_model=StandardResponse)
+async def manual_verify_arrival(
+    booking_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(RoleChecker([UserRole.CENTRE_OPERATOR, UserRole.CENTRE_MANAGER, UserRole.ADMIN]))
+) -> Any:
+    stmt = select(Booking).where(Booking.id == booking_id).with_for_update()
+    res = await db.execute(stmt)
+    booking = res.scalars().first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="No booking was found.")
+
+    queue_token = await verify_farmer_arrival(
+        db=db,
+        booking=booking,
+        current_user=current_user,
+        notes="Manual fallback verification performed"
+    )
+
+    return {
+        "success": True,
+        "data": {
+            "token_number": queue_token.token_number,
+            "status": queue_token.status if isinstance(queue_token.status, str) else queue_token.status.value,
+            "booking_id": str(booking.id),
+            "booking_reference": booking.booking_reference
+        },
+        "message": f"Farmer verified successfully. Token #{queue_token.token_number} issued."
+    }
+
+
+@router.get("/slots/{slot_id}/bookings", response_model=StandardResponse)
+async def get_slot_bookings(
+    slot_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(RoleChecker([UserRole.CENTRE_OPERATOR, UserRole.CENTRE_MANAGER, UserRole.ADMIN]))
+) -> Any:
+    slot_res = await db.execute(select(Slot).where(Slot.id == slot_id))
+    slot = slot_res.scalars().first()
+    if not slot:
+        raise HTTPException(status_code=404, detail="Slot not found")
+
+    await verify_centre_access(db, current_user, slot.centre_id)
+
+    stmt = select(Booking).where(Booking.slot_id == slot_id).options(
+        selectinload(Booking.crop),
+        selectinload(Booking.farmer).selectinload(Farmer.user),
+        selectinload(Booking.slot),
+        selectinload(Booking.centre),
+    ).order_by(Booking.created_at.asc())
+    b_res = await db.execute(stmt)
+    bookings = b_res.scalars().all()
+
+    return {
+        "success": True,
+        "data": [BookingResponse.from_booking(b).model_dump() for b in bookings],
+        "message": f"{len(bookings)} bookings returned for slot."
+    }
+
+
+@router.post("/bookings/{booking_id}/reassign", response_model=StandardResponse)
+async def reassign_booking(
+    booking_id: uuid.UUID,
+    reassign_in: ReassignBookingRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(RoleChecker([UserRole.CENTRE_OPERATOR, UserRole.CENTRE_MANAGER, UserRole.ADMIN]))
+) -> Any:
+    b_res = await db.execute(select(Booking).where(Booking.id == booking_id).with_for_update())
+    booking = b_res.scalars().first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    await verify_centre_access(db, current_user, booking.centre_id)
+
+    if booking.status not in [BookingStatus.PENDING, BookingStatus.CONFIRMED]:
+        stat_name = booking.status if isinstance(booking.status, str) else getattr(booking.status, 'value', str(booking.status))
+        raise HTTPException(
+            status_code=409,
+            detail=f"This booking cannot be reassigned right now (status: {stat_name})."
+        )
+
+    if booking.slot_id == reassign_in.target_slot_id:
+        raise HTTPException(status_code=400, detail="Farmer is already assigned to this slot.")
+
+    # Sort slot IDs to lock deterministically
+    slot_ids = sorted([booking.slot_id, reassign_in.target_slot_id])
+    s_res = await db.execute(select(Slot).where(Slot.id.in_(slot_ids)).with_for_update())
+    slots = {s.id: s for s in s_res.scalars().all()}
+
+    old_slot = slots.get(booking.slot_id)
+    target_slot = slots.get(reassign_in.target_slot_id)
+
+    if not target_slot:
+        raise HTTPException(status_code=404, detail="Destination slot not found")
+
+    if target_slot.centre_id != booking.centre_id:
+        raise HTTPException(status_code=400, detail="Destination slot is at a different procurement centre")
+
+    if target_slot.crop_id != booking.crop_id:
+        raise HTTPException(status_code=400, detail="Destination slot is assigned to a different crop")
+
+    if target_slot.status != "OPEN":
+        raise HTTPException(status_code=409, detail="Destination slot is closed or full")
+
+    if target_slot.booked_count >= target_slot.capacity:
+        raise HTTPException(status_code=409, detail="Destination slot has reached maximum capacity")
+
+    # Atomic swap
+    if old_slot:
+        old_slot.booked_count = max(0, old_slot.booked_count - int(booking.quantity))
+        if old_slot.status == "FULL" and old_slot.booked_count < old_slot.capacity:
+            old_slot.status = "OPEN"
+        db.add(old_slot)
+
+    target_slot.booked_count += int(booking.quantity)
+    if target_slot.booked_count >= target_slot.capacity:
+        target_slot.status = "FULL"
+    db.add(target_slot)
+
+    booking.slot_id = target_slot.id
+    db.add(booking)
+
+    await db.commit()
+    await db.refresh(booking)
+
+    return {
+        "success": True,
+        "data": {
+            "booking_id": str(booking.id),
+            "new_slot_id": str(target_slot.id),
+            "new_slot_time": f"{target_slot.start_time.strftime('%I:%M %p')} - {target_slot.end_time.strftime('%I:%M %p')}",
+            "booked_count": target_slot.booked_count,
+            "capacity": target_slot.capacity
+        },
+        "message": "Farmer slot reassigned successfully."
     }
 
 # ----------------- PROCUREMENT & PAYMENT -----------------
@@ -539,6 +822,161 @@ async def complete_procurement(
         "data": ProcurementResponse.model_validate(proc).model_dump(),
         "message": "Procurement completed."
     }
+
+
+@router.post("/procurement/{booking_id}/quality-test", response_model=StandardResponse)
+async def submit_quality_test_by_booking(
+    booking_id: uuid.UUID,
+    test_in: QualityTestRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(RoleChecker([UserRole.CENTRE_OPERATOR, UserRole.CENTRE_MANAGER, UserRole.ADMIN]))
+) -> Any:
+    # 1. Fetch booking with locking
+    b_res = await db.execute(select(Booking).where(Booking.id == booking_id).with_for_update())
+    booking = b_res.scalars().first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    await verify_centre_access(db, current_user, booking.centre_id)
+
+    # 2. Fetch or create procurement
+    p_res = await db.execute(select(Procurement).where(Procurement.booking_id == booking_id).with_for_update())
+    proc = p_res.scalars().first()
+    if not proc:
+        proc = Procurement(
+            booking_id=booking_id,
+            centre_id=booking.centre_id,
+            status=ProcurementStatus.QUALITY_CHECK
+        )
+        db.add(proc)
+        await db.flush()
+
+    is_passed = bool(test_in.passed)
+    proc.quality_status = "PASSED" if is_passed else "REJECTED"
+    proc.quality_remarks = f"Moisture: {test_in.moisture_percentage}%, Foreign Matter: {test_in.foreign_matter_percentage}%, Broken: {test_in.broken_grain_percentage}%. Grade: {test_in.grade}. {test_in.notes or ''}".strip()
+    proc.status = ProcurementStatus.ACCEPTED if is_passed else ProcurementStatus.REJECTED
+    db.add(proc)
+
+    # 3. Update booking status to PROCESSING
+    if is_passed:
+        booking.status = BookingStatus.PROCESSING
+    db.add(booking)
+
+    # 4. Update QueueToken if present
+    qt_res = await db.execute(select(QueueToken).where(QueueToken.booking_id == booking_id).with_for_update())
+    token = qt_res.scalars().first()
+    if token and is_passed:
+        token.status = QueueStatus.PROCESSING
+        db.add(token)
+
+    await db.commit()
+    await db.refresh(proc)
+
+    return {
+        "success": True,
+        "data": ProcurementResponse.model_validate(proc).model_dump(),
+        "message": f"Quality inspection recorded: {proc.quality_status}."
+    }
+
+
+@router.post("/procurement/{booking_id}/complete-and-payout", response_model=StandardResponse)
+async def complete_weighment_and_payout(
+    booking_id: uuid.UUID,
+    weigh_in: CompleteWeighmentRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(RoleChecker([UserRole.CENTRE_OPERATOR, UserRole.CENTRE_MANAGER, UserRole.ADMIN]))
+) -> Any:
+    if weigh_in.gross_weight_kg <= 0 or weigh_in.tare_weight_kg <= 0:
+        raise HTTPException(status_code=400, detail="Gross and tare weights must be positive")
+    if weigh_in.gross_weight_kg <= weigh_in.tare_weight_kg:
+        raise HTTPException(status_code=400, detail="Gross weight must be strictly greater than tare weight")
+
+    # 1. Fetch booking with crop loaded
+    b_res = await db.execute(
+        select(Booking)
+        .where(Booking.id == booking_id)
+        .options(selectinload(Booking.crop))
+        .with_for_update()
+    )
+    booking = b_res.scalars().first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    await verify_centre_access(db, current_user, booking.centre_id)
+
+    # 2. Fetch or create procurement
+    p_res = await db.execute(select(Procurement).where(Procurement.booking_id == booking_id).with_for_update())
+    proc = p_res.scalars().first()
+    net_w = round(weigh_in.gross_weight_kg - weigh_in.tare_weight_kg, 2)
+
+    if not proc:
+        proc = Procurement(
+            booking_id=booking_id,
+            centre_id=booking.centre_id,
+            gross_weight=weigh_in.gross_weight_kg,
+            tare_weight=weigh_in.tare_weight_kg,
+            net_weight=net_w,
+            status=ProcurementStatus.PROCUREMENT_COMPLETED,
+            procurement_completed_at=datetime.utcnow()
+        )
+        db.add(proc)
+        await db.flush()
+    else:
+        proc.gross_weight = weigh_in.gross_weight_kg
+        proc.tare_weight = weigh_in.tare_weight_kg
+        proc.net_weight = net_w
+        proc.status = ProcurementStatus.PROCUREMENT_COMPLETED
+        proc.procurement_completed_at = datetime.utcnow()
+        db.add(proc)
+
+    # 3. Create or update payment
+    pay_res = await db.execute(select(Payment).where(Payment.procurement_id == proc.id).with_for_update())
+    payment = pay_res.scalars().first()
+
+    rate_per_kg = 22.75
+    amount = round(net_w * rate_per_kg, 2)
+
+    if not payment:
+        payment = Payment(
+            procurement_id=proc.id,
+            amount=amount,
+            status=PaymentStatus.COMPLETED,
+            payment_reference=f"DBT-{datetime.utcnow().strftime('%Y%m%d')}-{str(uuid.uuid4())[:8].upper()}",
+            completed_at=datetime.utcnow()
+        )
+        db.add(payment)
+    else:
+        payment.amount = amount
+        payment.status = PaymentStatus.COMPLETED
+        payment.completed_at = datetime.utcnow()
+        db.add(payment)
+
+    # 4. Update Booking and QueueToken to COMPLETED
+    booking.status = BookingStatus.COMPLETED
+    db.add(booking)
+
+    qt_res = await db.execute(select(QueueToken).where(QueueToken.booking_id == booking_id).with_for_update())
+    token = qt_res.scalars().first()
+    if token:
+        token.status = QueueStatus.COMPLETED
+        db.add(token)
+
+    await db.commit()
+    await db.refresh(proc)
+    await db.refresh(payment)
+
+    return {
+        "success": True,
+        "data": {
+            "procurement": ProcurementResponse.model_validate(proc).model_dump(),
+            "payment": PaymentResponse.model_validate(payment).model_dump(),
+            "booking_status": "COMPLETED",
+            "net_weight_kg": net_w,
+            "payout_amount": amount
+        },
+        "message": "Weighment recorded, procurement completed, and DBT payment disbursed."
+    }
+
 
 
 @router.post("/procurement/{procurement_id}/payment", response_model=StandardResponse, status_code=201)

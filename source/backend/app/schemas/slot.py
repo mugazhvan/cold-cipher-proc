@@ -28,7 +28,12 @@ class SlotCreate(SlotBase):
 class BatchSlotCreate(BaseModel):
     crop_id: uuid.UUID
     slot_date: date
-    capacity: int = 20000
+    capacity: int = 20
+    start_time: Optional[time] = None
+    end_time: Optional[time] = None
+    slot_duration_minutes: Optional[int] = 60
+    break_start_time: Optional[time] = None
+    break_end_time: Optional[time] = None
 
 class SlotUpdate(BaseModel):
     capacity: Optional[int] = None

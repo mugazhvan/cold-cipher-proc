@@ -36,6 +36,7 @@ class Farmer(BaseModel):
     district: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     state: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     preferred_language: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    user = relationship("User")
 
 class Officer(BaseModel):
     __tablename__ = "officers"
@@ -44,6 +45,7 @@ class Officer(BaseModel):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     centre_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("centres.id"), nullable=True)
     designation: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    user = relationship("User")
 
 class CropCategory(BaseModel):
     __tablename__ = "crop_categories"

@@ -3,7 +3,12 @@ import axios from 'axios';
 
 import { TokenRecord } from '../../types';
 import { INITIAL_CENTRES, INITIAL_TOKENS } from '../../mockData';
-import { getOperatorToken } from '../../services/api';
+import {
+  getOperatorToken,
+  callQueueTokenApi,
+  submitQualityInspectionApi,
+  completeWeighbridgeAndPayoutApi,
+} from '../../services/api';
 import { OperatorReceiptModal } from './OperatorReceiptModal';
 import { GateVerificationModal } from './GateVerificationModal';
 import { CentreManagement } from './CentreManagement';
@@ -26,7 +31,7 @@ export const OperatorConsole: React.FC = () => {
   const [selectedCentreId, setSelectedCentreId] = useState<string>(INITIAL_CENTRES[0]?.id || 'centre-samrala');
   const [isGateScannerOpen, setIsGateScannerOpen] = useState(false);
 
-  const loadBookings = async () => {
+  const loadBookings = async (centreIdToUse?: string) => {
     try {
       const isVercel = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
       const rawEnv = (import.meta as any).env?.VITE_API_BASE_URL;
@@ -35,6 +40,8 @@ export const OperatorConsole: React.FC = () => {
         : (rawEnv || 'http://localhost:8000/api/v1');
       const token = await getOperatorToken();
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      let activeCentre = centreIdToUse || selectedCentreId;
 
       // Fetch live centres if backend is available
       try {
@@ -51,8 +58,13 @@ export const OperatorConsole: React.FC = () => {
             avgWaitMinutes: c.avg_wait_minutes || 18,
             activeBays: c.active_bays || 4,
           }));
-          // Merge with initial centres to ensure rich names & codes
           setCentres(mappedCentres);
+
+          // If current centre is not a valid UUID in items, select the first valid centre
+          if (!items.some((c: any) => c.id === activeCentre)) {
+            activeCentre = items[0].id;
+            setSelectedCentreId(items[0].id);
+          }
         }
       } catch (cErr) {
         console.warn("Using default procurement centres", cErr);
@@ -60,35 +72,48 @@ export const OperatorConsole: React.FC = () => {
 
       // Fetch live bookings for queue if available
       try {
-        const bookingsRes = await axios.get(`${baseURL}/centres/${selectedCentreId}/bookings`, { headers });
+        const bookingsRes = await axios.get(`${baseURL}/centres/${activeCentre}/bookings`, { headers });
         const bItems = bookingsRes.data?.data?.items || (Array.isArray(bookingsRes.data?.data) ? bookingsRes.data?.data : []);
         if (bItems && bItems.length > 0) {
-          const mappedTokens: TokenRecord[] = bItems.map((b: any) => ({
-            id: b.id,
-            tokenNumber: b.booking_reference || b.id.substring(0, 8).toUpperCase(),
-            farmerId: b.farmer_id || 'FARM-01',
-            farmerName: b.farmer?.user?.full_name || 'Farmer',
-            village: b.farmer?.village || 'Local Village',
-            cropId: b.crop_id || 'crop-wheat',
-            cropName: b.crop?.name || 'Wheat (Kanak / Gehu)',
-            estimatedQuintals: (b.quantity / 100) || 50,
-            centreId: b.centre_id,
-            centreName: b.centre?.name || 'Procurement Depot',
-            slotDate: b.slot_date || new Date().toISOString().split('T')[0],
-            slotTime: b.slot_time || '09:00 AM - 10:00 AM',
-            vehicleType: 'Tractor Trolley',
-            vehicleNumber: 'PB-10-XX-1234',
-            status: b.status === 'PENDING' ? 'BOOKED' : (b.status === 'ARRIVED' ? 'GATE_VERIFIED' : (b.status === 'CONFIRMED' ? 'GATE_VERIFIED' : b.status)),
-            assignedBay: null,
-            createdAt: b.created_at || new Date().toISOString(),
-            updatedAt: b.updated_at || new Date().toISOString(),
-            qrCodeValue: b.booking_reference || b.id,
-            smsAlerts: [],
-          }));
+          const mappedTokens: TokenRecord[] = bItems.map((b: any) => {
+            const rawStatus = b.status || 'BOOKED';
+            let mappedStatus = rawStatus;
+            if (rawStatus === 'PENDING') mappedStatus = 'BOOKED';
+            else if (rawStatus === 'CONFIRMED' || rawStatus === 'ARRIVED') mappedStatus = 'GATE_VERIFIED';
+            else if (rawStatus === 'PROCESSING') mappedStatus = 'WEIGHBRIDGE_IN';
+            else if (rawStatus === 'ACCEPTED') mappedStatus = 'UNLOADING';
+            else if (rawStatus === 'COMPLETED') mappedStatus = 'COMPLETED';
+
+            const assignedBay = (mappedStatus === 'WEIGHBRIDGE_IN' || mappedStatus === 'UNLOADING')
+              ? 'Bay 2 (Electronic Weighbridge)'
+              : (mappedStatus === 'COMPLETED' ? 'Bay 1 (Unloading Platform)' : null);
+
+            return {
+              id: b.id,
+              tokenNumber: b.booking_reference || b.id.substring(0, 8).toUpperCase(),
+              farmerId: b.farmer_id || 'FARM-01',
+              farmerName: b.farmer_name || b.farmer?.user?.full_name || 'Farmer',
+              village: b.village || b.farmer?.village || 'Local Village',
+              cropId: b.crop_id || 'crop-wheat',
+              cropName: b.crop?.name || 'Wheat (Kanak / Gehu)',
+              estimatedQuintals: (b.quantity / 100) || 50,
+              centreId: b.centre_id,
+              centreName: b.centre_name || b.centre?.name || 'Procurement Depot',
+              slotDate: b.slot_date || new Date().toISOString().split('T')[0],
+              slotTime: b.slot_time || '09:00 AM - 10:00 AM',
+              vehicleType: 'Tractor Trolley',
+              vehicleNumber: 'PB-10-XX-1234',
+              status: mappedStatus,
+              assignedBay: assignedBay,
+              createdAt: b.created_at || new Date().toISOString(),
+              updatedAt: b.updated_at || new Date().toISOString(),
+              qrCodeValue: b.booking_reference || b.id,
+              smsAlerts: [],
+            };
+          });
 
           setTokens(mappedTokens);
         } else {
-          // If live API returns empty list, preserve existing queue tokens or fallback to initial mocks
           setTokens((prev) => (prev.length > 0 ? prev : INITIAL_TOKENS));
         }
       } catch (bErr) {
@@ -97,29 +122,12 @@ export const OperatorConsole: React.FC = () => {
     } catch (err) {
       console.error("Failed to fetch data", err);
     }
-
   };
 
-  // Fetch data on mount
+  // Fetch data on mount and whenever selected centre changes
   useEffect(() => {
-    loadBookings();
-  }, []);
-
-  const updateTokenStatus = (id: string, newStatus: string) => {
-    setTokens(prev => prev.map(t => t.id === id ? { ...t, status: newStatus as any } : t));
-  };
-
-  const callTokenToBay = (id: string, bayName: string) => {
-    setTokens(prev => prev.map(t => t.id === id ? { ...t, assignedBay: bayName, status: 'WEIGHBRIDGE_IN' } : t));
-  };
-
-  const submitQualityInspection = (id: string, _data: any) => {
-    setTokens(prev => prev.map(t => t.id === id ? { ...t, status: 'UNLOADING' } : t));
-  };
-
-  const completeWeighbridgeAndPayout = (id: string, _gross: number, _tare: number) => {
-    setTokens(prev => prev.map(t => t.id === id ? { ...t, status: 'COMPLETED' } : t));
-  };
+    loadBookings(selectedCentreId);
+  }, [selectedCentreId]);
 
   const [activeTabFilter, setActiveTabFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -174,30 +182,49 @@ export const OperatorConsole: React.FC = () => {
   const [isCallingNext, setIsCallingNext] = useState<boolean>(false);
   const [activeActionTokenId, setActiveActionTokenId] = useState<string | null>(null);
 
-  // Action handlers
-  const handleCallNextQueued = (bayName = 'Weighbridge Bay 2 (Electronic)') => {
+  // Real Action handlers backed by PostgreSQL
+  const handleCallTokenToBay = async (tok: TokenRecord, bayName = 'Weighbridge Bay 2 (North)') => {
+    setActiveActionTokenId(tok.id);
+    try {
+      const res = await callQueueTokenApi(tok.id, bayName);
+      if (res?.success) {
+        setQueueNotice({
+          type: 'success',
+          message: `📢 Called ${tok.farmerName} (Token #${tok.tokenNumber}) to ${bayName}.`
+        });
+        await loadBookings();
+      } else {
+        setQueueNotice({
+          type: 'warning',
+          message: res?.detail || 'Failed to call token to bay.'
+        });
+      }
+    } catch (e: any) {
+      setQueueNotice({
+        type: 'warning',
+        message: e.message || 'Error communicating with server.'
+      });
+    } finally {
+      setActiveActionTokenId(null);
+      setTimeout(() => setQueueNotice(null), 4000);
+    }
+  };
+
+  const handleCallNextQueued = async (bayName = 'Weighbridge Bay 2 (Electronic)') => {
     setIsCallingNext(true);
     const nextInLine = centreTokens.find(
       (tok) => tok.status === 'YARD_QUEUED' || tok.status === 'GATE_VERIFIED'
     );
     if (nextInLine) {
-      callTokenToBay(nextInLine.id, bayName);
-      setQueueNotice({
-        type: 'success',
-        message: `📢 Token #${nextInLine.tokenNumber} (${nextInLine.farmerName}) called to ${bayName}.`
-      });
+      await handleCallTokenToBay(nextInLine, bayName);
     } else {
       setQueueNotice({
         type: 'info',
         message: 'No vehicles currently waiting in the yard queue for this centre.'
       });
+      setTimeout(() => setQueueNotice(null), 4000);
     }
-    setTimeout(() => {
-      setIsCallingNext(false);
-    }, 600);
-    setTimeout(() => {
-      setQueueNotice(null);
-    }, 4500);
+    setIsCallingNext(false);
   };
 
   const handleOpenInspection = (tok: TokenRecord) => {
@@ -207,25 +234,43 @@ export const OperatorConsole: React.FC = () => {
     setBrokenGrainPct(0.8);
   };
 
-  const handleSubmitInspection = (e: React.FormEvent) => {
+  const handleSubmitInspection = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inspectionToken) return;
 
     const isPassed = moisturePct <= 14.0;
     const grade = moisturePct <= 12.0 ? 'FAQ_GRADE_A' : 'GRADE_B';
-    const deductions = moisturePct > 12.0 && moisturePct <= 14.0 ? 500 : 0;
 
-    submitQualityInspection(inspectionToken.id, {
-      moisturePct,
-      foreignMatterPct,
-      brokenGrainPct,
-      grade,
-      deductionsAppliedRs: deductions,
-      inspectorName: 'Er. R. K. Sharma (QCO-IV)',
-      passed: isPassed,
-      notes: inspectorNotes,
-    });
-    setInspectionToken(null);
+    try {
+      const res = await submitQualityInspectionApi(inspectionToken.id, {
+        moisturePct,
+        foreignMatterPct,
+        brokenGrainPct,
+        grade,
+        notes: inspectorNotes,
+        passed: isPassed,
+      });
+      if (res?.success) {
+        setQueueNotice({
+          type: 'success',
+          message: `✅ Quality test recorded: ${isPassed ? 'PASSED (FAQ Grade A)' : 'REJECTED'}. Produce authorized for unloading.`
+        });
+        await loadBookings();
+      } else {
+        setQueueNotice({
+          type: 'warning',
+          message: res?.detail || 'Failed to submit quality inspection.'
+        });
+      }
+    } catch (err: any) {
+      setQueueNotice({
+        type: 'warning',
+        message: err.message || 'Error submitting quality inspection.'
+      });
+    } finally {
+      setInspectionToken(null);
+      setTimeout(() => setQueueNotice(null), 4000);
+    }
   };
 
   const handleOpenWeighbridge = (tok: TokenRecord) => {
@@ -235,11 +280,33 @@ export const OperatorConsole: React.FC = () => {
     setTareWeightKg(3120);
   };
 
-  const handleFinalizeWeighment = (e: React.FormEvent) => {
+  const handleFinalizeWeighment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!weighbridgeToken) return;
-    completeWeighbridgeAndPayout(weighbridgeToken.id, grossWeightKg, tareWeightKg);
-    setWeighbridgeToken(null);
+
+    try {
+      const res = await completeWeighbridgeAndPayoutApi(weighbridgeToken.id, grossWeightKg, tareWeightKg);
+      if (res?.success) {
+        setQueueNotice({
+          type: 'success',
+          message: `✅ Weighment completed & DBT payment disbursed for ${weighbridgeToken.farmerName} (Net: ${res.data?.net_weight_kg || grossWeightKg - tareWeightKg} kg, ₹${res.data?.payout_amount || 'N/A'}).`
+        });
+        await loadBookings();
+      } else {
+        setQueueNotice({
+          type: 'warning',
+          message: res?.detail || 'Failed to complete weighment and payout.'
+        });
+      }
+    } catch (err: any) {
+      setQueueNotice({
+        type: 'warning',
+        message: err.message || 'Error finalizing weighment.'
+      });
+    } finally {
+      setWeighbridgeToken(null);
+      setTimeout(() => setQueueNotice(null), 4000);
+    }
   };
 
   return (
@@ -404,7 +471,7 @@ export const OperatorConsole: React.FC = () => {
 
           {/* Filter Pills */}
           <div className="flex items-center space-x-1 bg-zinc-950 p-1 rounded-xl border border-zinc-800 text-xs">
-            {['ALL', 'QUEUED', 'ACTIVE', 'COMPLETED', 'MANUAL BOOKING'].map((filter) => (
+            {['ALL', 'QUEUED', 'ACTIVE', 'COMPLETED', 'SLOTS & ROUTINES', 'WALK-IN BOOKING'].map((filter) => (
               <button
                 key={filter}
                 onClick={() => setActiveTabFilter(filter)}
@@ -421,8 +488,10 @@ export const OperatorConsole: React.FC = () => {
         </div>
       </div>
 
-      {activeTabFilter === 'MANUAL BOOKING' ? (
-        <CentreManagement centreId={selectedCentreId} />
+      {activeTabFilter === 'SLOTS & ROUTINES' ? (
+        <CentreManagement centreId={selectedCentreId} initialTab="management" />
+      ) : activeTabFilter === 'WALK-IN BOOKING' ? (
+        <CentreManagement centreId={selectedCentreId} initialTab="booking" />
       ) : (
       /* Main Orchestration Queue Table */
       <div className="bg-zinc-900/95 rounded-2xl border border-zinc-800 shadow-2xl overflow-hidden">
@@ -524,41 +593,19 @@ export const OperatorConsole: React.FC = () => {
                       <td className="p-3.5 text-right space-x-1.5 whitespace-nowrap">
                         {tok.status === 'BOOKED' && (
                           <button
-                            disabled={activeActionTokenId === tok.id}
-                            onClick={() => {
-                              setActiveActionTokenId(tok.id);
-                              setTimeout(() => {
-                                updateTokenStatus(tok.id, 'GATE_VERIFIED');
-                                setActiveActionTokenId(null);
-                                setQueueNotice({
-                                  type: 'success',
-                                  message: `✅ Gate pass verified for ${tok.farmerName} (Token #${tok.tokenNumber}). Admitted to yard.`
-                                });
-                                setTimeout(() => setQueueNotice(null), 4000);
-                              }, 350);
-                            }}
-                            className="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 disabled:opacity-60 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
-                            title="Verify e-Gate Pass and admit vehicle to yard"
+                            onClick={() => setIsGateScannerOpen(true)}
+                            className="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer flex items-center space-x-1"
+                            title="Scan QR or use manual fallback to verify gate pass"
                           >
-                            {activeActionTokenId === tok.id ? 'Admitting...' : 'Verify Gate Pass'}
+                            <QrCode className="w-3.5 h-3.5" />
+                            <span>Scan QR / Gate Ingress</span>
                           </button>
                         )}
 
                         {(tok.status === 'GATE_VERIFIED' || tok.status === 'YARD_QUEUED') && (
                           <button
                             disabled={activeActionTokenId === tok.id}
-                            onClick={() => {
-                              setActiveActionTokenId(tok.id);
-                              setTimeout(() => {
-                                callTokenToBay(tok.id, 'Weighbridge Bay 2 (North)');
-                                setActiveActionTokenId(null);
-                                setQueueNotice({
-                                  type: 'success',
-                                  message: `📢 Called ${tok.farmerName} (Token #${tok.tokenNumber}) to Weighbridge Bay 2.`
-                                });
-                                setTimeout(() => setQueueNotice(null), 4000);
-                              }, 350);
-                            }}
+                            onClick={() => handleCallTokenToBay(tok, 'Weighbridge Bay 2 (North)')}
                             className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:opacity-60 text-zinc-950 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
                             title="Call token to active weighing bay"
                           >
@@ -851,45 +898,13 @@ export const OperatorConsole: React.FC = () => {
       <GateVerificationModal
         isOpen={isGateScannerOpen}
         onClose={() => setIsGateScannerOpen(false)}
-        onVerifiedSuccess={(result) => {
-          if (result && result.data) {
-            const tokenNum = (result.data as any).booking_id || `KF-2026-${result.data.token_number || '9855'}`;
-            setTokens((prev) => {
-              const exists = prev.some((t) => t.id === tokenNum || t.tokenNumber === tokenNum);
-              if (exists) {
-                return prev.map((t) =>
-                  t.id === tokenNum || t.tokenNumber === tokenNum
-                    ? { ...t, status: 'GATE_VERIFIED' }
-                    : t
-                );
-              }
-              const newToken: TokenRecord = {
-                id: tokenNum,
-                tokenNumber: tokenNum,
-                farmerId: 'FARM-PB-2026-9855',
-                farmerName: (result.data as any).farmer_name || 'Gurpreet Singh Dhillon',
-                phone: '+91 98765 43210',
-                village: 'Samrala Khurd',
-                cropId: 'crop-wheat',
-                cropName: 'Wheat (Kanak / Gehu)',
-                estimatedQuintals: 45,
-                centreId: selectedCentreId,
-                centreName: currentCentre.name,
-                slotDate: new Date().toISOString().split('T')[0],
-                slotTime: '09:00 AM - 10:30 AM',
-                vehicleType: 'Tractor Trolley',
-                vehicleNumber: 'PB-10-CZ-4819',
-                status: 'GATE_VERIFIED',
-                assignedBay: undefined,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                qrCodeValue: tokenNum,
-                smsAlerts: [],
-              };
-              return [newToken, ...prev];
-            });
-          }
-          loadBookings();
+        onVerifiedSuccess={async (result) => {
+          setQueueNotice({
+            type: 'success',
+            message: `✅ Gate pass verified! Farmer admitted to yard (Token #${result.data?.token_number || ''}).`
+          });
+          await loadBookings();
+          setTimeout(() => setQueueNotice(null), 4000);
         }}
         centreName={currentCentre.name}
         centreCode={currentCentre.code}

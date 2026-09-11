@@ -4,8 +4,11 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import selectinload
 
-from app.models.booking import Booking, Slot, BookingStatus
+from app.models.booking import Booking, Slot, BookingStatus, SlotStatus
+from app.models.entities import Farmer
 from app.schemas.booking import BookingCreate
 
 async def create_booking(db: AsyncSession, farmer_id: uuid.UUID, booking_in: BookingCreate) -> Booking:
@@ -98,7 +101,12 @@ async def get_bookings_for_centre(
     count_query = select(func.count()).select_from(query.subquery())
     total = (await db.execute(count_query)).scalar_one()
     
-    query = query.options(selectinload(Booking.crop)).order_by(Booking.created_at.asc()).offset(skip).limit(limit)
+    query = query.options(
+        selectinload(Booking.crop),
+        selectinload(Booking.farmer).selectinload(Farmer.user),
+        selectinload(Booking.slot),
+        selectinload(Booking.centre),
+    ).order_by(Booking.created_at.desc()).offset(skip).limit(limit)
     result = await db.execute(query)
     
     return result.scalars().all(), total

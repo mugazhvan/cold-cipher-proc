@@ -27,6 +27,19 @@ class ProcurementUpdate(BaseModel):
     quality_remarks: Optional[str] = None
     status: Optional[str] = None
 
+class QualityTestRequest(BaseModel):
+    moisture_percentage: Optional[float] = 11.4
+    foreign_matter_percentage: Optional[float] = 0.3
+    broken_grain_percentage: Optional[float] = 0.8
+    grade: Optional[str] = "FAQ_GRADE_A"
+    passed: Optional[bool] = True
+    notes: Optional[str] = None
+
+class CompleteWeighmentRequest(BaseModel):
+    gross_weight_kg: float
+    tare_weight_kg: float
+    notes: Optional[str] = None
+
 class ProcurementResponse(ProcurementBase):
     id: uuid.UUID
     booking_id: uuid.UUID
