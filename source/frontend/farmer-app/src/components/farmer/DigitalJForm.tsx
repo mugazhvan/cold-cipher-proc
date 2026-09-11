@@ -50,7 +50,11 @@ export const DigitalJForm: React.FC = () => {
       setDownloading(true);
       setError(null);
       const jwtToken = localStorage.getItem('kisanflow_token');
-      const backendUrl = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+      const isVercel = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
+      const rawEnv = (import.meta as any).env?.VITE_API_BASE_URL;
+      const backendUrl = isVercel
+        ? (!rawEnv || rawEnv.includes('localhost') ? 'https://kisanflow-backend.onrender.com/api/v1' : rawEnv)
+        : (rawEnv || 'http://localhost:8000/api/v1');
       
       const res = await fetch(`${backendUrl}/bookings/receipt/${completedToken.tokenNumber}`, {
         headers: {

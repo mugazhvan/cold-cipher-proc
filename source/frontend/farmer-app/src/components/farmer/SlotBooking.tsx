@@ -105,7 +105,11 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
   useEffect(() => {
     const fetchSlots = async () => {
       try {
-        const baseURL = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+        const isVercel = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
+        const rawEnv = (import.meta as any).env?.VITE_API_BASE_URL;
+        const baseURL = isVercel
+          ? (!rawEnv || rawEnv.includes('localhost') ? 'https://kisanflow-backend.onrender.com/api/v1' : rawEnv)
+          : (rawEnv || 'http://localhost:8000/api/v1');
         const payload = {
           centre_id: selectedCentreId,
           crop_id: selectedCropId,
@@ -162,7 +166,11 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
     setIsSubmitting(true);
     
     try {
-      const baseURL = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+      const isVercel = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
+      const rawEnv = (import.meta as any).env?.VITE_API_BASE_URL;
+      const baseURL = isVercel
+        ? (!rawEnv || rawEnv.includes('localhost') ? 'https://kisanflow-backend.onrender.com/api/v1' : rawEnv)
+        : (rawEnv || 'http://localhost:8000/api/v1');
       const token = localStorage.getItem('kisanflow_token');
       
       const effectiveSlots = allSlots.length > 0 ? allSlots : DEFAULT_FALLBACK_SLOTS;

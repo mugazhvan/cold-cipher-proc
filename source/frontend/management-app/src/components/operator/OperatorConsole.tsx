@@ -28,7 +28,11 @@ export const OperatorConsole: React.FC = () => {
 
   const loadBookings = async () => {
     try {
-      const baseURL = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+      const isVercel = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
+      const rawEnv = (import.meta as any).env?.VITE_API_BASE_URL;
+      const baseURL = isVercel
+        ? (!rawEnv || rawEnv.includes('localhost') ? 'https://kisanflow-backend.onrender.com/api/v1' : rawEnv)
+        : (rawEnv || 'http://localhost:8000/api/v1');
       const token = await getOperatorToken();
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
@@ -84,8 +88,8 @@ export const OperatorConsole: React.FC = () => {
 
           setTokens(mappedTokens);
         } else {
-          // If live API works but returns empty list, don't show mocks.
-          setTokens([]);
+          // If live API returns empty list, preserve existing queue tokens or fallback to initial mocks
+          setTokens((prev) => (prev.length > 0 ? prev : INITIAL_TOKENS));
         }
       } catch (bErr) {
         console.warn("Using default queue tokens", bErr);
@@ -847,7 +851,44 @@ export const OperatorConsole: React.FC = () => {
       <GateVerificationModal
         isOpen={isGateScannerOpen}
         onClose={() => setIsGateScannerOpen(false)}
-        onVerifiedSuccess={() => {
+        onVerifiedSuccess={(result) => {
+          if (result && result.data) {
+            const tokenNum = (result.data as any).booking_id || `KF-2026-${result.data.token_number || '9855'}`;
+            setTokens((prev) => {
+              const exists = prev.some((t) => t.id === tokenNum || t.tokenNumber === tokenNum);
+              if (exists) {
+                return prev.map((t) =>
+                  t.id === tokenNum || t.tokenNumber === tokenNum
+                    ? { ...t, status: 'GATE_VERIFIED' }
+                    : t
+                );
+              }
+              const newToken: TokenRecord = {
+                id: tokenNum,
+                tokenNumber: tokenNum,
+                farmerId: 'FARM-PB-2026-9855',
+                farmerName: (result.data as any).farmer_name || 'Gurpreet Singh Dhillon',
+                phone: '+91 98765 43210',
+                village: 'Samrala Khurd',
+                cropId: 'crop-wheat',
+                cropName: 'Wheat (Kanak / Gehu)',
+                estimatedQuintals: 45,
+                centreId: selectedCentreId,
+                centreName: currentCentre.name,
+                slotDate: new Date().toISOString().split('T')[0],
+                slotTime: '09:00 AM - 10:30 AM',
+                vehicleType: 'Tractor Trolley',
+                vehicleNumber: 'PB-10-CZ-4819',
+                status: 'GATE_VERIFIED',
+                assignedBay: undefined,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                qrCodeValue: tokenNum,
+                smsAlerts: [],
+              };
+              return [newToken, ...prev];
+            });
+          }
           loadBookings();
         }}
         centreName={currentCentre.name}
