@@ -220,19 +220,19 @@ export const OperatorReceiptModal: React.FC<OperatorReceiptModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-white border border-slate-300 rounded-3xl max-w-2xl w-full text-slate-900 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+      <div className="bg-white border border-slate-200 rounded-3xl max-w-2xl w-full text-slate-900 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* Top Header */}
         <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <FileCheck className="w-5 h-5 text-emerald-400" />
-            <h3 className="font-bold text-base text-slate-900">
+            <FileCheck className="w-5 h-5 text-emerald-700" />
+            <h3 className="font-extrabold text-base text-slate-900">
               Procurement & Payment Receipt • J-Form
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl text-slate-500 hover:text-white hover:bg-slate-100 transition cursor-pointer"
+            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-200 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -241,54 +241,54 @@ export const OperatorReceiptModal: React.FC<OperatorReceiptModalProps> = ({
         {/* Modal Body Preview */}
         <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto text-xs">
           {/* Card Summary */}
-          <div className="bg-slate-200 border border-slate-300 rounded-2xl p-5 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-300 pb-3 gap-2">
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-3 gap-2">
               <div>
-                <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">
+                <span className="text-[10px] text-amber-800 font-bold uppercase tracking-wider">
                   Official Sale Slip (Rule 24)
                 </span>
-                <h4 className="text-base font-extrabold text-white">
+                <h4 className="text-base font-black text-slate-900">
                   Form J: {payment.jFormNumber}
                 </h4>
               </div>
-              <span className="bg-emerald-950 text-emerald-300 font-mono font-bold px-3 py-1 rounded-full border border-emerald-800 self-start sm:self-auto">
+              <span className="bg-emerald-50 text-emerald-800 border border-emerald-300 font-mono font-bold px-3 py-1 rounded-full self-start sm:self-auto">
                 ₹{payment.netPayableRs.toLocaleString('en-IN')} DBT Paid
               </span>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-slate-700">
               <div>
-                <span className="text-slate-500 block text-[11px]">Farmer</span>
-                <strong className="text-white text-xs">{token.farmerName}</strong>
+                <span className="text-slate-500 block text-[11px] font-semibold">Farmer</span>
+                <strong className="text-slate-900 font-bold text-xs">{token.farmerName}</strong>
               </div>
               <div>
-                <span className="text-slate-500 block text-[11px]">Token No</span>
-                <strong className="text-emerald-400 font-mono">{token.tokenNumber}</strong>
+                <span className="text-slate-500 block text-[11px] font-semibold">Token No</span>
+                <strong className="text-slate-900 font-bold font-mono">{token.tokenNumber}</strong>
               </div>
               <div>
-                <span className="text-slate-500 block text-[11px]">Commodity</span>
-                <strong className="text-white">{token.cropName}</strong>
+                <span className="text-slate-500 block text-[11px] font-semibold">Commodity</span>
+                <strong className="text-slate-900 font-bold">{token.cropName}</strong>
               </div>
               <div>
-                <span className="text-slate-500 block text-[11px]">Net Weight</span>
-                <strong className="text-white font-mono">{payment.netWeightQuintals} Qtl</strong>
+                <span className="text-slate-500 block text-[11px] font-semibold">Net Weight</span>
+                <strong className="text-slate-900 font-bold font-mono">{payment.netWeightQuintals} Qtl</strong>
               </div>
               <div>
-                <span className="text-slate-500 block text-[11px]">Vehicle</span>
-                <strong className="text-amber-300 font-mono">{token.vehicleNumber}</strong>
+                <span className="text-slate-500 block text-[11px] font-semibold">Vehicle</span>
+                <strong className="text-slate-900 font-bold font-mono">{token.vehicleNumber}</strong>
               </div>
               <div>
-                <span className="text-slate-500 block text-[11px]">Mandi Centre</span>
-                <strong className="text-white truncate block">{token.centreName}</strong>
+                <span className="text-slate-500 block text-[11px] font-semibold">Mandi Centre</span>
+                <strong className="text-slate-900 font-bold truncate block">{token.centreName}</strong>
               </div>
             </div>
 
-            <div className="bg-emerald-950/60 border border-emerald-800/60 rounded-xl p-3 text-emerald-200">
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-emerald-950">
               <div className="flex items-center space-x-1.5 font-bold mb-1">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-700" />
                 <span>Automated Clearing House (SIMULATED)</span>
               </div>
-              <p className="text-[11px] font-mono text-emerald-300">
+              <p className="text-[11px] font-mono text-emerald-800 font-bold">
                 UTR: {payment.utrNumber}
               </p>
             </div>
@@ -299,7 +299,7 @@ export const OperatorReceiptModal: React.FC<OperatorReceiptModalProps> = ({
         <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex items-center justify-between">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold text-slate-500 hover:text-white transition cursor-pointer"
+            className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-900 transition cursor-pointer"
           >
             Close
           </button>
@@ -307,20 +307,20 @@ export const OperatorReceiptModal: React.FC<OperatorReceiptModalProps> = ({
           <div className="flex items-center space-x-3">
             <button
               onClick={handlePrint}
-              className="flex items-center space-x-1.5 px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-100 text-xs font-bold text-slate-800 transition cursor-pointer"
+              className="flex items-center space-x-1.5 px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-100 text-xs font-bold text-slate-900 transition cursor-pointer shadow-2xs"
             >
-              <Printer className="w-4 h-4 text-slate-500" />
+              <Printer className="w-4 h-4 text-slate-600" />
               <span>Print Slip</span>
             </button>
 
             <button
               onClick={handleDownload}
               disabled={downloading}
-              className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-950/40 transition cursor-pointer"
+              className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-zinc-950 hover:bg-black text-white text-xs font-bold shadow-xs transition cursor-pointer"
             >
               {downloadSuccess ? (
                 <>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-200" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                   <span>Receipt Saved!</span>
                 </>
               ) : (
