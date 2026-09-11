@@ -334,9 +334,9 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
       {/* Header & Mode Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div>
-          <h3 className="text-base font-extrabold text-white flex items-center space-x-2">
+          <h3 className="text-base font-extrabold text-slate-900 flex items-center space-x-2">
             <span>KisanFlow Gate Pass Verification</span>
-            <span className="bg-sky-100/80 text-sky-300 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border border-sky-600/50">
+            <span className="bg-sky-50 text-sky-800 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border border-sky-300">
               SECURE
             </span>
           </h3>
@@ -357,10 +357,10 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
                 startCameraScanner();
               }
             }}
-            className={`px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition ${
+            className={`px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition cursor-pointer ${
               activeMode === 'camera'
-                ? 'bg-sky-600 text-white shadow-xs'
-                : 'text-slate-500 hover:text-white'
+                ? 'bg-zinc-950 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <Camera className="w-3.5 h-3.5" />
@@ -373,10 +373,10 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
               setActiveMode('manual');
               setVerificationResult(null);
             }}
-            className={`px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition ${
+            className={`px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition cursor-pointer ${
               activeMode === 'manual'
-                ? 'bg-sky-600 text-white shadow-xs'
-                : 'text-slate-500 hover:text-white'
+                ? 'bg-zinc-950 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <Search className="w-3.5 h-3.5" />
@@ -740,19 +740,19 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
       {/* Mode 2: MANUAL FALLBACK — STRICT 2-STEP WORKFLOW */}
       {activeMode === 'manual' && !verificationResult && !verifying && (
         <div className="space-y-4">
-          <form onSubmit={handleFindBooking} className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-3">
+          <form onSubmit={handleFindBooking} className="p-4 bg-slate-50 border border-slate-300 rounded-xl space-y-3">
             <div className="flex items-center space-x-2">
-              <Search className="w-4 h-4 text-sky-700" />
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+              <Search className="w-4 h-4 text-slate-800" />
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900">
                 Manual Fallback: Booking Lookup
               </h4>
             </div>
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <p className="text-xs text-slate-600 leading-relaxed">
               Enter farmer's booking reference or booking ID. The system will look up and validate authority records before allowing arrival verification.
             </p>
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-slate-500">
+              <label className="text-[11px] font-bold text-slate-700">
                 Booking Reference:
               </label>
               <div className="flex gap-2">
@@ -763,14 +763,14 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
                     setManualCode(e.target.value);
                     setLookupError(null);
                   }}
-                  placeholder="e.g. KF-2026-0948 or UUID"
-                  className="flex-1 p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-mono text-slate-900 placeholder:text-slate-600 focus:outline-hidden focus:ring-2 focus:ring-sky-500"
+                  placeholder="e.g. KF-2026-4103, 4103, or vehicle number"
+                  className="flex-1 p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-slate-900"
                   required
                 />
                 <button
                   type="submit"
                   disabled={!manualCode.trim() || lookupLoading}
-                  className="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center space-x-1.5 shrink-0 cursor-pointer"
+                  className="px-5 py-2.5 bg-zinc-950 hover:bg-black disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center space-x-1.5 shrink-0 cursor-pointer"
                 >
                   {lookupLoading ? (
                     <>
@@ -788,29 +788,29 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
             </div>
 
             {lookupError && (
-              <div className="p-3 bg-rose-950/50 border border-rose-500/40 rounded-xl text-rose-200 text-xs flex items-center space-x-2">
-                <XCircle className="w-4 h-4 text-rose-400 shrink-0" />
-                <span>{lookupError}</span>
+              <div className="p-3 bg-rose-50 border border-rose-300 rounded-xl text-rose-800 text-xs flex items-center space-x-2">
+                <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                <span className="font-medium">{lookupError}</span>
               </div>
             )}
           </form>
 
           {/* Safe Booking Details Card (shown ONLY after backend lookup succeeds) */}
           {lookupData && (
-            <div className="p-5 bg-gradient-to-br from-slate-100 to-white border border-sky-500/40 rounded-xl space-y-4 shadow-lg">
+            <div className="p-5 bg-white border border-slate-300 rounded-xl space-y-4 shadow-md">
               <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                 <div className="flex items-center space-x-2">
-                  <UserCheck className="w-5 h-5 text-sky-700" />
-                  <span className="text-xs font-bold uppercase tracking-wider text-sky-300">
-                    Validated Booking Record
+                  <UserCheck className="w-5 h-5 text-emerald-700" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                    Validated Authority Booking Record
                   </span>
                 </div>
-                <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
+                <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${
                   lookupData.status === 'ARRIVED'
-                    ? 'bg-sky-100/80 text-sky-300 border-sky-600/50'
+                    ? 'bg-sky-50 text-sky-800 border-sky-300'
                     : lookupData.status === 'COMPLETED'
-                    ? 'bg-emerald-950/80 text-emerald-300 border-emerald-600/50'
-                    : 'bg-amber-950/80 text-amber-300 border-amber-600/50'
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                    : 'bg-amber-50 text-amber-900 border-amber-300'
                 }`}>
                   {lookupData.status}
                 </span>
@@ -818,35 +818,35 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-semibold block">Farmer Name</span>
-                  <span className="font-bold text-white text-sm">{lookupData.farmer_name || 'N/A'}</span>
-                  <span className="text-[11px] text-slate-500 block">{lookupData.village || ''}</span>
+                  <span className="text-[10px] text-slate-500 uppercase font-bold block">Farmer Name</span>
+                  <span className="font-bold text-slate-900 text-sm">{lookupData.farmer_name || 'N/A'}</span>
+                  <span className="text-[11px] text-slate-600 block">{lookupData.village || ''}</span>
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-semibold block">Booking Reference</span>
-                  <span className="font-mono font-bold text-sky-300">{lookupData.booking_reference}</span>
+                  <span className="text-[10px] text-slate-500 uppercase font-bold block">Booking Reference</span>
+                  <span className="font-mono font-extrabold text-slate-900">{lookupData.booking_reference}</span>
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-semibold block">Procurement Centre</span>
-                  <span className="font-semibold text-slate-800">{lookupData.centre_name}</span>
+                  <span className="text-[10px] text-slate-500 uppercase font-bold block">Procurement Centre</span>
+                  <span className="font-bold text-slate-900">{lookupData.centre_name}</span>
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-semibold block">Crop & Produce</span>
-                  <span className="font-semibold text-slate-800">{lookupData.crop_name}</span>
+                  <span className="text-[10px] text-slate-500 uppercase font-bold block">Crop & Produce</span>
+                  <span className="font-bold text-slate-900">{lookupData.crop_name}</span>
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-semibold block">Allocated Slot</span>
-                  <span className="font-mono text-slate-700">{lookupData.slot_date}</span>
-                  <span className="text-[10px] text-slate-400 block">{lookupData.slot_time}</span>
+                  <span className="text-[10px] text-slate-500 uppercase font-bold block">Allocated Slot</span>
+                  <span className="font-mono font-bold text-slate-900">{lookupData.slot_date}</span>
+                  <span className="text-[10px] text-slate-600 block">{lookupData.slot_time}</span>
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-semibold block">Estimated Quantity</span>
-                  <span className="font-mono font-bold text-emerald-400 text-sm">
+                  <span className="text-[10px] text-slate-500 uppercase font-bold block">Estimated Quantity</span>
+                  <span className="font-mono font-extrabold text-emerald-700 text-sm">
                     {lookupData.quantity ? (lookupData.quantity / 100).toFixed(0) : '0'} Quintals
                   </span>
                 </div>
@@ -854,7 +854,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
 
               {/* Verify Arrival Action — enabled ONLY if not already arrived/completed */}
               <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
-                <span className="text-[11px] text-slate-500">
+                <span className="text-[11px] text-slate-600">
                   {lookupData.status === 'ARRIVED'
                     ? '⚠️ Farmer already arrived and recorded in queue.'
                     : lookupData.status === 'COMPLETED'
@@ -866,7 +866,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
                   type="button"
                   onClick={handleConfirmManualArrival}
                   disabled={verifyingArrival || lookupData.status === 'ARRIVED' || lookupData.status === 'COMPLETED'}
-                  className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-40 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center space-x-2 cursor-pointer"
+                  className="px-5 py-2.5 bg-zinc-950 hover:bg-black disabled:opacity-40 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center space-x-2 cursor-pointer"
                 >
                   {verifyingArrival ? (
                     <>
