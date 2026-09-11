@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Search, UserPlus, Calendar, Package, Settings, Edit2, CheckCircle, XCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Calendar, Package, Settings, Edit2, CheckCircle, XCircle } from 'lucide-react';
 import { searchFarmers, getCrops, getCentreSlots, createManualBooking, updateSlotCapacity } from '../../services/api';
 interface CentreManagementProps {
   centreId: string;
@@ -369,6 +369,7 @@ export function CentreManagement({ centreId }: CentreManagementProps) {
     </div>
   );
 
+  return (
     <div className="bg-zinc-900/95 rounded-2xl border border-zinc-800 shadow-2xl p-6 text-zinc-100">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <h2 className="text-lg font-extrabold flex items-center text-white">
