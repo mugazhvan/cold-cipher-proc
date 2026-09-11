@@ -50,6 +50,8 @@ async def create_booking(db: AsyncSession, farmer_id: uuid.UUID, booking_in: Boo
     
     # 5. Increase booked quantity
     slot.booked_count += int(booking_in.quantity)
+    if slot.booked_count >= slot.capacity:
+        slot.status = SlotStatus.FULL
     db.add(slot)
     
     # 6. Commit
@@ -111,6 +113,8 @@ async def cancel_booking(db: AsyncSession, booking: Booking) -> Booking:
     
     if slot:
         slot.booked_count = max(0, slot.booked_count - int(booking.quantity))
+        if slot.status == SlotStatus.FULL and slot.booked_count < slot.capacity:
+            slot.status = SlotStatus.OPEN
         db.add(slot)
         
     booking.status = BookingStatus.CANCELLED

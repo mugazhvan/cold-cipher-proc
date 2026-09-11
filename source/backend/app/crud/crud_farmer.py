@@ -65,3 +65,16 @@ async def update_farmer_crop(db: AsyncSession, db_farmer_crop: FarmerCrop, updat
 async def delete_farmer_crop(db: AsyncSession, db_farmer_crop: FarmerCrop):
     await db.delete(db_farmer_crop)
     await db.commit()
+
+from app.models.users import User
+
+async def search_farmers(db: AsyncSession, phone_query: str) -> List[Farmer]:
+    stmt = (
+        select(Farmer)
+        .join(User, Farmer.user_id == User.id)
+        .where(User.phone_number.like(f"%{phone_query}%"))
+        .options(selectinload(Farmer.user))
+    )
+    result = await db.execute(stmt)
+    return result.scalars().all()
+

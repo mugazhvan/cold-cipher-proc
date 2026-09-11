@@ -33,6 +33,8 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
   const [vehicleNumber, setVehicleNumber] = useState('PB-10-DF-4819');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [recommendedSlots, setRecommendedSlots] = useState<any[]>([]);
+  const [allSlots, setAllSlots] = useState<any[]>([]);
+  const [bookingError, setBookingError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSlots = async () => {
@@ -45,18 +47,34 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
           preferred_date: slotDate
         };
         const token = localStorage.getItem('kisanflow_token');
-        const res = await axios.post(`${baseURL}/intelligence/recommend-slots`, payload, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {}
-        });
-        if (res.data && res.data.data && res.data.data.recommended_slots) {
-          setRecommendedSlots(res.data.data.recommended_slots);
-          if (res.data.data.recommended_slots.length > 0) {
-            const first = res.data.data.recommended_slots[0];
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+        // Fetch all slots
+        const slotsRes = await axios.get(`${baseURL}/centres/${selectedCentreId}/slots?date=${slotDate}`, { headers });
+        let fetchedAllSlots: any[] = [];
+        if (slotsRes.data?.data) {
+          fetchedAllSlots = slotsRes.data.data;
+          setAllSlots(fetchedAllSlots);
+        }
+
+        // Fetch recommended slots
+        const recRes = await axios.post(`${baseURL}/intelligence/recommend-slots`, payload, { headers });
+        if (recRes.data && recRes.data.data && recRes.data.data.recommended_slots) {
+          setRecommendedSlots(recRes.data.data.recommended_slots);
+          if (recRes.data.data.recommended_slots.length > 0) {
+            const first = recRes.data.data.recommended_slots[0];
             setSlotTime(`${first.start_time} - ${first.end_time}`);
+          } else {
+             const firstAvailable = fetchedAllSlots.find((s: any) => s.is_active && s.max_capacity - s.current_capacity >= estimatedQuintals * 100);
+             if (firstAvailable) {
+               setSlotTime(`${firstAvailable.start_time.substring(0,5)} - ${firstAvailable.end_time.substring(0,5)}`);
+             } else {
+               setSlotTime("");
+             }
           }
         }
       } catch (err) {
-        console.error("Failed to fetch recommended slots", err);
+        console.error("Failed to fetch slots", err);
       }
     };
     fetchSlots();
@@ -66,10 +84,33 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
   const selectedCentre = centres.find((c) => c.id === selectedCentreId) || centres[0];
   const estimatedPayout = Math.round(Number(estimatedQuintals) * selectedCrop.mspPerQuintal);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setBookingError(null);
     setIsSubmitting(true);
-    setTimeout(() => {
+    
+    try {
+      const baseURL = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+      const token = localStorage.getItem('kisanflow_token');
+      
+      const selectedSlot = allSlots.find((s: any) => `${s.start_time.substring(0,5)} - ${s.end_time.substring(0,5)}` === slotTime);
+      if (!selectedSlot) {
+        throw new Error("Invalid slot selected");
+      }
+
+      const payload = {
+        centre_id: selectedCentreId,
+        farmer_id: farmer.id || "00000000-0000-0000-0000-000000000000",
+        slot_id: selectedSlot.id,
+        crop_id: selectedCropId,
+        quantity_kg: estimatedQuintals * 100,
+        vehicle_number: vehicleNumber
+      };
+
+      await axios.post(`${baseURL}/bookings/`, payload, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+
       bookSlot({
         cropId: selectedCropId,
         estimatedQuintals: Number(estimatedQuintals),
@@ -79,9 +120,17 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
         vehicleType,
         vehicleNumber,
       });
+      
       setIsSubmitting(false);
       onSuccess();
-    }, 400);
+    } catch (err: any) {
+      setIsSubmitting(false);
+      if (err.response?.status === 409) {
+        setBookingError("Capacity Exceeded! Someone just booked the remaining space in this slot. Please choose another slot.");
+      } else {
+        setBookingError(err.response?.data?.detail || "Failed to book slot. Please try again.");
+      }
+    }
   };
 
   return (
@@ -203,7 +252,7 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
                       type="number"
                       id="estimated-qty-input"
                       min={5}
-                      max={250}
+                      max={1000}
                       value={estimatedQuintals}
                       onChange={(e) => setEstimatedQuintals(Number(e.target.value))}
                       className="w-24 px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-sm font-bold text-right font-mono text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
@@ -215,7 +264,7 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
                 <input
                   type="range"
                   min={5}
-                  max={150}
+                  max={Math.max(150, estimatedQuintals)}
                   step={1}
                   value={estimatedQuintals}
                   onChange={(e) => setEstimatedQuintals(Number(e.target.value))}
@@ -412,24 +461,44 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
                     <select
                       value={slotTime}
                       onChange={(e) => setSlotTime(e.target.value)}
-                      disabled={recommendedSlots.length === 0}
+                      disabled={allSlots.length === 0}
                       className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
                     >
-                      {recommendedSlots.length > 0 ? (
-                        recommendedSlots.map((slot: any) => (
-                          <option key={slot.slot_id} value={`${slot.start_time} - ${slot.end_time}`}>
-                            {slot.start_time} - {slot.end_time} ({slot.congestion_level})
-                          </option>
-                        ))
+                      {allSlots.length > 0 ? (
+                        allSlots.map((slot: any) => {
+                          const startTime = slot.start_time.substring(0,5);
+                          const endTime = slot.end_time.substring(0,5);
+                          const slotValue = `${startTime} - ${endTime}`;
+                          const isRecommended = recommendedSlots.some(rs => rs.slot_id === slot.id);
+                          const isClosed = !slot.is_active;
+                          const remaining = slot.max_capacity - slot.current_capacity;
+                          const isFull = remaining < estimatedQuintals * 100;
+                          
+                          let label = `${startTime} - ${endTime}`;
+                          if (isClosed) label += " (CLOSED)";
+                          else if (isFull) label += " (FULL)";
+                          else if (isRecommended) label += " (RECOMMENDED)";
+                          else label += " (AVAILABLE)";
+
+                          return (
+                            <option 
+                              key={slot.id} 
+                              value={slotValue}
+                              disabled={isClosed || isFull}
+                            >
+                              {label}
+                            </option>
+                          );
+                        })
                       ) : (
-                        <option value="">No suitable slots available</option>
+                        <option value="">No slots available for this date</option>
                       )}
                     </select>
                     <Clock className="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none" />
                   </div>
                   
                   {/* Why this slot? Section */}
-                  {recommendedSlots.length > 0 && (
+                  {recommendedSlots.length > 0 && slotTime && recommendedSlots.some((rs: any) => `${rs.start_time} - ${rs.end_time}` === slotTime) && (
                     <div className="mt-3 bg-emerald-50/50 border border-emerald-100 rounded-lg p-3">
                       <div className="text-[10px] uppercase font-bold text-emerald-800 mb-1.5 flex items-center space-x-1">
                         <Sparkles className="w-3 h-3" />
@@ -447,7 +516,7 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
                       </ul>
                     </div>
                   )}
-                  {recommendedSlots.length === 0 && (
+                  {allSlots.length > 0 && !allSlots.some((s: any) => s.is_active && (s.max_capacity - s.current_capacity >= estimatedQuintals * 100)) && (
                      <div className="mt-3 bg-red-50/50 border border-red-100 rounded-lg p-3">
                        <p className="text-xs text-red-700 font-medium">
                          The requested quantity exceeds the remaining capacity of all open slots on this date.
@@ -521,10 +590,17 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
                 </span>
               </div>
 
+              {/* Display Booking Error if any */}
+              {bookingError && (
+                <div className="bg-red-950/60 border border-red-800/50 rounded-xl p-3 text-xs text-red-200 flex items-start space-x-2 mb-4">
+                  <span>{bookingError}</span>
+                </div>
+              )}
+
               <button
                 type="submit"
                 id="submit-booking-btn"
-                disabled={isSubmitting || recommendedSlots.length === 0}
+                disabled={isSubmitting || !slotTime}
                 className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:from-slate-400 disabled:to-slate-500 text-slate-950 disabled:text-slate-200 font-extrabold text-sm rounded-xl transition shadow-md flex items-center justify-center space-x-2 cursor-pointer disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (

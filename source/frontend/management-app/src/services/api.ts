@@ -149,3 +149,68 @@ export async function verifyGateQR(qrData: string): Promise<QRVerificationResult
     message: typeof detail === 'string' ? detail : 'Server error during gate verification.',
   };
 }
+
+export async function searchFarmers(phoneQuery: string): Promise<any> {
+  const token = await getOperatorToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  try {
+    const res = await axios.get(`${BASE_URL}/farmers/search?phone_query=${phoneQuery}`, { headers });
+    return res.data;
+  } catch (error: any) {
+    return error.response?.data ?? { success: false, message: error.message };
+  }
+}
+
+export async function getCrops(): Promise<any> {
+  const token = await getOperatorToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  try {
+    const res = await axios.get(`${BASE_URL}/crops/`, { headers });
+    return res.data;
+  } catch (error: any) {
+    return error.response?.data ?? { success: false, message: error.message };
+  }
+}
+
+export async function getCentreSlots(centreId: string, date: string): Promise<any> {
+  const token = await getOperatorToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  try {
+    const res = await axios.get(`${BASE_URL}/centres/${centreId}/slots?date=${date}`, { headers });
+    return res.data;
+  } catch (error: any) {
+    return error.response?.data ?? { success: false, message: error.message };
+  }
+}
+
+export async function createManualBooking(centreId: string, farmerId: string, payload: any): Promise<any> {
+  const token = await getOperatorToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  try {
+    const res = await axios.post(`${BASE_URL}/centres/${centreId}/manual-booking?farmer_id=${farmerId}`, payload, { headers });
+    return res.data;
+  } catch (error: any) {
+    return error.response?.data ?? { success: false, message: error.message };
+  }
+}
+
+export async function updateSlotCapacity(slotId: string, payload: any): Promise<any> {
+  const token = await getOperatorToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  try {
+    const res = await axios.patch(`${BASE_URL}/slots/${slotId}`, payload, { headers });
+    return res.data;
+  } catch (error: any) {
+    return error.response?.data ?? { success: false, message: error.message };
+  }
+}

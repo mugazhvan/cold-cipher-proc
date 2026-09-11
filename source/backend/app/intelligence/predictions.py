@@ -48,8 +48,13 @@ async def predict_congestion(db: AsyncSession, centre_id: uuid.UUID, target_date
     )
     predicted_load = float(booking_result.scalar() or 0.0)
     
-    # Baseline capacity
-    DAILY_CAPACITY_KG = 50000.0
+    # Dynamic capacity based on slots created for the day
+    capacity_result = await db.execute(
+        select(func.sum(Slot.capacity))
+        .where(Slot.centre_id == centre_id)
+        .where(func.cast(Slot.slot_date, String) == str(target_date))
+    )
+    DAILY_CAPACITY_KG = float(capacity_result.scalar() or 50000.0)
     
     utilization = predicted_load / DAILY_CAPACITY_KG if DAILY_CAPACITY_KG > 0 else 0
     

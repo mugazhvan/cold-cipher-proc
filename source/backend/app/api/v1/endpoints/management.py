@@ -140,6 +140,44 @@ async def get_slots(
         "message": "Slots returned."
     }
 
+@router.patch("/slots/{slot_id}", response_model=StandardResponse)
+async def update_slot(
+    slot_id: uuid.UUID,
+    slot_in: SlotUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(RoleChecker([UserRole.CENTRE_MANAGER, UserRole.CENTRE_OPERATOR, UserRole.ADMIN]))
+) -> Any:
+    result = await db.execute(select(Slot).where(Slot.id == slot_id).with_for_update())
+    slot = result.scalars().first()
+    if not slot:
+        raise HTTPException(status_code=404, detail="Slot not found")
+        
+    await verify_centre_access(db, current_user, slot.centre_id)
+    
+    if slot_in.capacity is not None:
+        if slot_in.capacity < slot.booked_count:
+            raise HTTPException(status_code=400, detail="Capacity cannot be less than already booked count")
+        slot.capacity = slot_in.capacity
+        if slot.capacity > slot.booked_count and slot.status == "FULL":
+            slot.status = "OPEN"
+        elif slot.capacity == slot.booked_count:
+            slot.status = "FULL"
+            
+    if slot_in.status is not None:
+        slot.status = slot_in.status
+
+    db.add(slot)
+    await db.commit()
+    
+    res = await db.execute(select(Slot).where(Slot.id == slot.id).options(selectinload(Slot.crop)))
+    loaded_slot = res.scalars().first()
+    
+    return {
+        "success": True,
+        "data": SlotResponse.from_slot(loaded_slot).model_dump(),
+        "message": "Slot updated successfully."
+    }
+
 @router.patch("/slots/{slot_id}/toggle", response_model=StandardResponse)
 async def toggle_slot_status(
     slot_id: uuid.UUID,
@@ -543,4 +581,74 @@ async def dashboard_summary(
         "success": True,
         "data": stats,
         "message": "Dashboard stats returned."
+    }
+
+# ----------------- MANUAL BOOKING & CENTRE MANAGEMENT -----------------
+
+from app.crud import crud_farmer
+from app.schemas.farmer import FarmerResponse
+from app.schemas.booking import BookingCreate, BookingResponse
+from app.crud import crud_booking
+
+@router.get("/farmers/search", response_model=StandardResponse)
+async def search_farmers(
+    phone_query: str = Query(..., min_length=3),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(RoleChecker([UserRole.CENTRE_MANAGER, UserRole.CENTRE_OPERATOR, UserRole.ADMIN]))
+) -> Any:
+    farmers = await crud_farmer.search_farmers(db, phone_query)
+    
+    # We will need to map to FarmerResponse
+    data = []
+    for f in farmers:
+        f_dict = FarmerResponse.model_validate(f).model_dump()
+        # Include user details
+        if f.user:
+            f_dict["user"] = {
+                "id": str(f.user.id),
+                "phone_number": f.user.phone_number,
+                "full_name": f.user.full_name
+            }
+        data.append(f_dict)
+
+    return {
+        "success": True,
+        "data": data,
+        "message": "Farmers found."
+    }
+
+@router.post("/centres/{centre_id}/manual-booking", response_model=StandardResponse, status_code=201)
+async def manual_booking(
+    centre_id: uuid.UUID,
+    farmer_id: uuid.UUID,
+    booking_in: BookingCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(RoleChecker([UserRole.CENTRE_MANAGER, UserRole.CENTRE_OPERATOR, UserRole.ADMIN]))
+) -> Any:
+    await verify_centre_access(db, current_user, centre_id)
+    
+    # Verify farmer exists
+    farmer_res = await db.execute(select(crud_farmer.Farmer).where(crud_farmer.Farmer.id == farmer_id))
+    farmer = farmer_res.scalars().first()
+    if not farmer:
+        raise HTTPException(status_code=404, detail="Farmer not found")
+        
+    try:
+        # We pass farmer.id, but booking_in already has the booking info.
+        # crud_booking.create_booking checks for the slot.
+        booking = await crud_booking.create_booking(db, farmer_id=farmer.id, booking_in=booking_in)
+        # Verify it created for the correct centre. create_booking gets centre_id from slot.
+        # We should ensure the selected slot belongs to this centre.
+        slot_res = await db.execute(select(Slot).where(Slot.id == booking_in.slot_id))
+        slot = slot_res.scalars().first()
+        if slot.centre_id != centre_id:
+            raise HTTPException(status_code=400, detail="Slot does not belong to this centre")
+            
+    except HTTPException as e:
+        raise e
+        
+    return {
+        "success": True,
+        "data": BookingResponse.model_validate(booking).model_dump(),
+        "message": "Manual booking created successfully."
     }

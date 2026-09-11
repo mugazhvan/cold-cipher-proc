@@ -6,6 +6,7 @@ import { INITIAL_CENTRES, INITIAL_TOKENS } from '../../mockData';
 import { getOperatorToken } from '../../services/api';
 import { OperatorReceiptModal } from './OperatorReceiptModal';
 import { GateVerificationModal } from './GateVerificationModal';
+import { CentreManagement } from './CentreManagement';
 import {
   Building2,
   Truck,
@@ -357,7 +358,7 @@ export const OperatorConsole: React.FC = () => {
 
           {/* Filter Pills */}
           <div className="flex items-center space-x-1 bg-zinc-950 p-1 rounded-xl border border-zinc-800 text-xs">
-            {['ALL', 'QUEUED', 'ACTIVE', 'COMPLETED'].map((filter) => (
+            {['ALL', 'QUEUED', 'ACTIVE', 'COMPLETED', 'MANUAL BOOKING'].map((filter) => (
               <button
                 key={filter}
                 onClick={() => setActiveTabFilter(filter)}
@@ -374,7 +375,10 @@ export const OperatorConsole: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Orchestration Queue Table */}
+      {activeTabFilter === 'MANUAL BOOKING' ? (
+        <CentreManagement centreId={selectedCentreId} />
+      ) : (
+      /* Main Orchestration Queue Table */
       <div className="bg-zinc-900/95 rounded-2xl border border-zinc-800 shadow-2xl overflow-hidden">
         <div className="p-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-950/60">
           <div className="flex items-center space-x-2">
@@ -537,6 +541,7 @@ export const OperatorConsole: React.FC = () => {
           </table>
         </div>
       </div>
+      )}
 
       {/* Operator J-Form & Payment Receipt Modal */}
       {receiptToken && (
