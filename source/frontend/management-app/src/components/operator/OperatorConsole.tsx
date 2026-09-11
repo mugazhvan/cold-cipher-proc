@@ -67,7 +67,7 @@ export const OperatorConsole: React.FC = () => {
             village: b.farmer?.village || 'Local Village',
             cropId: b.crop_id || 'crop-wheat',
             cropName: b.crop?.name || 'Wheat (Kanak / Gehu)',
-            estimatedQuintals: b.quantity || 50,
+            estimatedQuintals: (b.quantity / 100) || 50,
             centreId: b.centre_id,
             centreName: b.centre?.name || 'Procurement Depot',
             slotDate: b.slot_date || new Date().toISOString().split('T')[0],
@@ -82,10 +82,10 @@ export const OperatorConsole: React.FC = () => {
             smsAlerts: [],
           }));
 
-          setTokens(prev => {
-            const combined = [...mappedTokens, ...prev.filter(it => !mappedTokens.some(mt => mt.id === it.id))];
-            return combined;
-          });
+          setTokens(mappedTokens);
+        } else {
+          // If live API works but returns empty list, don't show mocks.
+          setTokens([]);
         }
       } catch (bErr) {
         console.warn("Using default queue tokens", bErr);

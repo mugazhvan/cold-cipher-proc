@@ -91,7 +91,7 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
   const [selectedCentreId, setSelectedCentreId] = useState(
     centres.find((c) => c.isAiRecommended)?.id || centres[0].id
   );
-  const [slotDate, setSlotDate] = useState('2026-09-12');
+  const [slotDate, setSlotDate] = useState(new Date().toISOString().split('T')[0]);
   const [slotTime, setSlotTime] = useState('09:30 AM - 10:30 AM');
   const [vehicleType, setVehicleType] = useState<'Tractor Trolley' | 'Mini Truck' | 'Bullock Cart'>(
     'Tractor Trolley'
@@ -116,7 +116,7 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
         // Fetch all slots
-        const slotsRes = await axios.get(`${baseURL}/centres/${selectedCentreId}/slots?date=${slotDate}`, { headers, timeout: 2500 });
+        const slotsRes = await axios.get(`${baseURL}/centres/${selectedCentreId}/slots?date=${slotDate}`, { headers, timeout: 10000 });
         let fetchedAllSlots: any[] = [];
         if (slotsRes.data?.data && Array.isArray(slotsRes.data.data) && slotsRes.data.data.length > 0) {
           fetchedAllSlots = slotsRes.data.data;
@@ -126,7 +126,7 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
         }
 
         // Fetch recommended slots
-        const recRes = await axios.post(`${baseURL}/intelligence/recommend-slots`, payload, { headers, timeout: 2500 });
+        const recRes = await axios.post(`${baseURL}/intelligence/recommend-slots`, payload, { headers, timeout: 10000 });
         if (recRes.data?.data?.recommended_slots && recRes.data.data.recommended_slots.length > 0) {
           setRecommendedSlots(recRes.data.data.recommended_slots);
           const first = recRes.data.data.recommended_slots[0];
@@ -178,17 +178,21 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
           farmer_id: farmer.id || "00000000-0000-0000-0000-000000000000",
           slot_id: (selectedSlot?.id && !selectedSlot.id.startsWith('slot-')) ? selectedSlot.id : "00000000-0000-0000-0000-000000000001",
           crop_id: selectedCropId,
-          quantity_kg: estimatedQuintals * 100,
+          quantity: estimatedQuintals * 100,
           vehicle_number: vehicleNumber
         };
 
         await axios.post(`${baseURL}/bookings/`, payload, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
-          timeout: 2000
+          timeout: 10000
         });
       } catch (backendErr: any) {
         if (backendErr.response?.status === 409) {
           throw backendErr; // Explicit conflict from backend
+        }
+        if (selectedSlot?.id && !selectedSlot.id.startsWith('slot-')) {
+          console.error("Backend booking failed", backendErr);
+          throw backendErr;
         }
         console.warn("Backend booking offline or demo fallback, confirming via context", backendErr);
       }
