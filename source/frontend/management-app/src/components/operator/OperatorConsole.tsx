@@ -115,6 +115,10 @@ export const OperatorConsole: React.FC = () => {
             ? 'Bay 2 (Electronic Weighbridge)'
             : (mappedStatus === 'COMPLETED' ? 'Bay 1 (Unloading Platform)' : null);
 
+          const existing = storedTokens.find(st => st.tokenNumber === (b.booking_reference || b.id) || st.id === b.id);
+          const vNum = (b.vehicle_number || b.vehicleNumber || existing?.vehicleNumber || 'PB-10-DF-4819').toUpperCase();
+          const vType = (b.vehicle_type || b.vehicleType || existing?.vehicleType || 'Tractor Trolley') as any;
+
           return {
             id: b.id,
             tokenNumber: b.booking_reference || b.id.substring(0, 8).toUpperCase(),
@@ -128,8 +132,8 @@ export const OperatorConsole: React.FC = () => {
             centreName: b.centre_name || b.centre?.name || 'Procurement Depot',
             slotDate: b.slot_date || new Date().toISOString().split('T')[0],
             slotTime: b.slot_time || '09:00 AM - 10:00 AM',
-            vehicleType: 'Tractor Trolley',
-            vehicleNumber: 'PB-10-DF-4819',
+            vehicleType: vType,
+            vehicleNumber: vNum,
             status: mappedStatus,
             assignedBay: assignedBay,
             createdAt: b.created_at || new Date().toISOString(),
@@ -149,8 +153,14 @@ export const OperatorConsole: React.FC = () => {
           prev.forEach((t) => mergedMap.set(t.tokenNumber || t.id, t));
           apiTokens.forEach((t) => {
             const existing = mergedMap.get(t.tokenNumber || t.id);
-            if (!existing || existing.status === 'BOOKED') {
+            if (!existing) {
               mergedMap.set(t.tokenNumber || t.id, t);
+            } else if (existing.status === 'BOOKED') {
+              mergedMap.set(t.tokenNumber || t.id, {
+                ...t,
+                vehicleNumber: existing.vehicleNumber || t.vehicleNumber,
+                vehicleType: existing.vehicleType || t.vehicleType,
+              });
             }
           });
           const finalTokens = Array.from(mergedMap.values());
@@ -902,6 +912,20 @@ export const OperatorConsole: React.FC = () => {
               </button>
             </div>
 
+            {/* Vehicle & Farmer Identification Banner */}
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-4 flex items-center justify-between text-xs">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-500 block">Farmer & Token</span>
+                <span className="font-bold text-slate-900">{weighbridgeToken.farmerName} (#{weighbridgeToken.tokenNumber})</span>
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] uppercase font-bold text-slate-500 block">Vehicle Reg Plate</span>
+                <span className="font-mono font-black text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-300 inline-block">
+                  {weighbridgeToken.vehicleNumber} ({weighbridgeToken.vehicleType})
+                </span>
+              </div>
+            </div>
+
             <form onSubmit={handleFinalizeWeighment} className="space-y-4 text-xs">
               <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
                 <div className="flex justify-between items-center">
@@ -988,37 +1012,55 @@ export const OperatorConsole: React.FC = () => {
           const farmerName = result.data?.farmer_name || 'Mahendra Singh Dhoni';
           const targetCentreId = selectedCentreId || currentCentre?.id || 'centre-samrala';
 
+          // Look up if token already exists in tokens state or localStorage to preserve details
+          let storedList: TokenRecord[] = [];
+          try {
+            const raw = localStorage.getItem('kisanflow_tokens_v2') || localStorage.getItem('kisanflow_tokens_v1');
+            if (raw) storedList = JSON.parse(raw) || [];
+          } catch (e) {}
+
+          const existingToken = tokens.find(t => t.tokenNumber === verifiedTokenNumber || t.id === (result.data?.token_id || '')) ||
+                                storedList.find(t => t.tokenNumber === verifiedTokenNumber || t.id === (result.data?.token_id || ''));
+
+          const finalVehicleNumber = (
+            result.data?.vehicle_number ||
+            existingToken?.vehicleNumber ||
+            'PB-10-DF-4819'
+          ).trim().toUpperCase();
+
+          const finalVehicleType = (result.data?.vehicle_type || existingToken?.vehicleType || 'Tractor Trolley') as any;
+
           setQueueNotice({
             type: 'success',
-            message: `✅ Gate pass verified! ${farmerName} admitted to yard (Token #${result.data?.token_number || verifiedTokenNumber}).`
+            message: `✅ Gate pass verified! ${farmerName} (Vehicle ${finalVehicleNumber}) admitted to yard (Token #${result.data?.token_number || verifiedTokenNumber}).`
           });
 
           const newVerifiedToken: TokenRecord = {
-            id: result.data?.token_id || `token-${Date.now()}`,
+            id: result.data?.token_id || existingToken?.id || `token-${Date.now()}`,
             tokenNumber: verifiedTokenNumber,
-            farmerId: 'FARM-PB-2026-007',
+            farmerId: existingToken?.farmerId || 'FARM-PB-2026-007',
             farmerName: farmerName,
-            phone: '+91 97714 00007',
-            village: 'Samrala Agri Farm',
-            cropId: 'crop-wheat',
-            cropName: 'Wheat (Kanak / Gehu)',
-            estimatedQuintals: 45,
+            phone: existingToken?.phone || '+91 97714 00007',
+            village: existingToken?.village || 'Samrala Agri Farm',
+            cropId: existingToken?.cropId || 'crop-wheat',
+            cropName: existingToken?.cropName || 'Wheat (Kanak / Gehu)',
+            estimatedQuintals: existingToken?.estimatedQuintals || 45,
             centreId: targetCentreId,
             centreName: currentCentre?.name || 'Samrala Sub-Mandi Procurement Depot',
-            slotDate: new Date().toISOString().split('T')[0],
-            slotTime: '09:30 AM - 10:30 AM',
-            vehicleType: 'Tractor Trolley',
-            vehicleNumber: 'PB-10-DF-4819',
+            slotDate: existingToken?.slotDate || new Date().toISOString().split('T')[0],
+            slotTime: existingToken?.slotTime || '09:30 AM - 10:30 AM',
+            vehicleType: finalVehicleType,
+            vehicleNumber: finalVehicleNumber,
             status: 'GATE_VERIFIED',
-            assignedBay: 'Weighbridge Bay 2 (North)',
-            createdAt: new Date().toISOString(),
+            assignedBay: existingToken?.assignedBay || 'Weighbridge Bay 2 (North)',
+            createdAt: existingToken?.createdAt || new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            qrCodeValue: `KISANFLOW://TOKEN/${verifiedTokenNumber}/PB-10-DF-4819`,
+            qrCodeValue: `KISANFLOW://TOKEN/${verifiedTokenNumber}/${finalVehicleNumber}`,
             smsAlerts: [
               {
                 id: `sms-${Date.now()}`,
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                text: `KisanFlow: Gate 1 check completed. Vehicle PB-10-DF-4819 admitted to Holding Yard.`,
+                text: `KisanFlow: Gate 1 check completed. Vehicle ${finalVehicleNumber} admitted to Holding Yard.`,
                 type: 'GATE_ENTRY',
               }
             ],

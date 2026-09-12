@@ -274,6 +274,13 @@ export const KisanFlowProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setTokens((prev) => [newToken, ...prev]);
     setActiveTokenId(newToken.id);
 
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_TOKENS);
+      const existing: TokenRecord[] = raw ? JSON.parse(raw) : [];
+      const updated = [newToken, ...existing.filter(t => t.id !== newToken.id && t.tokenNumber !== newToken.tokenNumber)];
+      localStorage.setItem(STORAGE_KEY_TOKENS, JSON.stringify(updated));
+    } catch (e) {}
+
     // Fetch secure signed QR payload from backend for Milestone 1
     const isVercel = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
     const rawEnv = (import.meta as any).env?.VITE_API_BASE_URL;

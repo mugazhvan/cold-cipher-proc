@@ -276,6 +276,7 @@ export const OperatorReceiptModal: React.FC<OperatorReceiptModalProps> = ({
               <div>
                 <span className="text-slate-500 block text-[11px] font-semibold">Vehicle</span>
                 <strong className="text-slate-900 font-bold font-mono">{token.vehicleNumber}</strong>
+                <span className="text-[10px] text-slate-500 block">{token.vehicleType}</span>
               </div>
               <div>
                 <span className="text-slate-500 block text-[11px] font-semibold">Mandi Centre</span>

@@ -14,6 +14,7 @@ import {
   Video,
   UserCheck,
   FileCheck,
+  Truck,
 } from 'lucide-react';
 import {
   verifyGateQR,
@@ -49,6 +50,8 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [lookupData, setLookupData] = useState<any | null>(null);
+  const [manualVehicleNumber, setManualVehicleNumber] = useState('PB-10-DF-4819');
+  const [manualVehicleType, setManualVehicleType] = useState('Tractor Trolley');
   const [verifyingArrival, setVerifyingArrival] = useState(false);
 
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
@@ -273,6 +276,12 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
       const res = await lookupBooking(manualCode.trim());
       if (res?.success && res.data) {
         setLookupData(res.data);
+        if (res.data.vehicle_number) {
+          setManualVehicleNumber(res.data.vehicle_number.toUpperCase());
+        }
+        if (res.data.vehicle_type) {
+          setManualVehicleType(res.data.vehicle_type);
+        }
       } else {
         setLookupError(res?.detail || res?.message || 'No booking found with this reference.');
       }
@@ -288,8 +297,11 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
     setVerifyingArrival(true);
     setLookupError(null);
 
+    const effectiveVehicleNumber = (manualVehicleNumber || lookupData.vehicle_number || 'PB-10-DF-4819').trim().toUpperCase();
+    const effectiveVehicleType = manualVehicleType || lookupData.vehicle_type || 'Tractor Trolley';
+
     try {
-      const res = await verifyBookingArrival(lookupData.id);
+      const res = await verifyBookingArrival(lookupData.id, effectiveVehicleNumber, effectiveVehicleType);
       if (res?.success && res.data) {
         const vResult: QRVerificationResult = {
           success: true,
@@ -302,6 +314,8 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
             booking_id: lookupData.booking_reference,
             farmer_name: lookupData.farmer_name,
             centre_id: lookupData.centre_id,
+            vehicle_number: effectiveVehicleNumber,
+            vehicle_type: effectiveVehicleType,
           },
         };
         setVerificationResult(vResult);
@@ -324,6 +338,8 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
     setManualCode('');
     setLookupData(null);
     setLookupError(null);
+    setManualVehicleNumber('PB-10-DF-4819');
+    setManualVehicleType('Tractor Trolley');
     if (activeMode === 'camera') {
       startCameraScanner();
     }
@@ -414,7 +430,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
               </div>
 
               {verificationResult.data && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-emerald-800/50 text-xs">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-emerald-800/50 text-xs">
                   <div className="bg-emerald-900/40 p-2.5 rounded-lg">
                     <span className="text-[10px] uppercase text-emerald-400 font-semibold block">
                       Assigned Token #
@@ -425,17 +441,28 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
                   </div>
                   <div className="bg-emerald-900/40 p-2.5 rounded-lg">
                     <span className="text-[10px] uppercase text-emerald-400 font-semibold block">
+                      Vehicle & Plate
+                    </span>
+                    <span className="text-sm font-black font-mono text-white block truncate">
+                      {verificationResult.data.vehicle_number || 'PB-10-DF-4819'}
+                    </span>
+                    <span className="text-[10px] text-emerald-300 block truncate">
+                      {verificationResult.data.vehicle_type || 'Tractor Trolley'}
+                    </span>
+                  </div>
+                  <div className="bg-emerald-900/40 p-2.5 rounded-lg">
+                    <span className="text-[10px] uppercase text-emerald-400 font-semibold block">
                       Queue Status
                     </span>
                     <span className="text-sm font-bold font-mono text-emerald-300">
                       {verificationResult.data.status || 'WAITING'}
                     </span>
                   </div>
-                  <div className="bg-emerald-900/40 p-2.5 rounded-lg col-span-2 sm:col-span-1">
+                  <div className="bg-emerald-900/40 p-2.5 rounded-lg">
                     <span className="text-[10px] uppercase text-emerald-400 font-semibold block">
                       Booking Ref
                     </span>
-                    <span className="text-xs font-mono text-slate-800 truncate block">
+                    <span className="text-xs font-mono font-bold text-white truncate block">
                       {verificationResult.data.booking_id || 'Confirmed'}
                     </span>
                   </div>
@@ -849,6 +876,49 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
                   <span className="font-mono font-extrabold text-emerald-700 text-sm">
                     {lookupData.quantity ? (lookupData.quantity / 100).toFixed(0) : '0'} Quintals
                   </span>
+                </div>
+              </div>
+
+              {/* Ingress Vehicle Verification & Editable Plate # */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-900 flex items-center space-x-1.5">
+                    <Truck className="w-4 h-4 text-emerald-700 shrink-0" />
+                    <span>Ingress Vehicle Particulars</span>
+                  </span>
+                  <span className="text-[10px] font-medium text-slate-500">
+                    Verify / edit plate before yard admission
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <label className="text-[10px] text-slate-600 uppercase font-bold block mb-1">
+                      Vehicle License Plate #
+                    </label>
+                    <input
+                      type="text"
+                      value={manualVehicleNumber}
+                      onChange={(e) => setManualVehicleNumber(e.target.value.toUpperCase())}
+                      placeholder="e.g. PB-10-DF-4819"
+                      className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-mono font-extrabold text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-slate-900 uppercase"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-slate-600 uppercase font-bold block mb-1">
+                      Transport / Vehicle Type
+                    </label>
+                    <select
+                      value={manualVehicleType}
+                      onChange={(e) => setManualVehicleType(e.target.value)}
+                      className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-slate-900"
+                    >
+                      <option value="Tractor Trolley">Tractor Trolley</option>
+                      <option value="Mini Truck">Mini Truck</option>
+                      <option value="Bullock Cart">Bullock Cart</option>
+                      <option value="Commercial Truck">Commercial Truck</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 

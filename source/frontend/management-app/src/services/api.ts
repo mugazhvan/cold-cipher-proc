@@ -14,6 +14,8 @@ export interface QRVerificationResult {
     booking_id?: string;
     farmer_name?: string;
     centre_id?: string;
+    vehicle_number?: string;
+    vehicle_type?: string;
   };
 }
 
@@ -133,6 +135,17 @@ export function normalizeBookingReference(ref: string): string {
 export async function verifyGateQR(qrData: string): Promise<QRVerificationResult> {
   const rawInput = qrData.trim();
   let normalized = normalizeBookingReference(rawInput);
+  let qrExtractedVehicle: string | undefined;
+
+  if (rawInput.toUpperCase().startsWith('KISANFLOW://TOKEN/')) {
+    const parts = rawInput.split('/');
+    if (parts.length >= 4 && parts[3]?.trim()) {
+      normalized = normalizeBookingReference(parts[3].trim());
+    }
+    if (parts.length >= 5 && parts[4]?.trim()) {
+      qrExtractedVehicle = parts[4].trim().toUpperCase();
+    }
+  }
 
   if (rawInput.startsWith('kf-pass:v1:')) {
     const parsed = parseSignedQrData(rawInput);
@@ -168,7 +181,11 @@ export async function verifyGateQR(qrData: string): Promise<QRVerificationResult
       success: true,
       state: 'SUCCESS',
       message: data?.message || 'Farmer verified successfully. Admitted to yard.',
-      data: data?.data,
+      data: {
+        ...data?.data,
+        vehicle_number: qrExtractedVehicle || data?.data?.vehicle_number || 'PB-10-DF-4819',
+        vehicle_type: data?.data?.vehicle_type || 'Tractor Trolley',
+      },
     };
   }
 
@@ -187,6 +204,7 @@ export async function verifyGateQR(qrData: string): Promise<QRVerificationResult
 
         if (match) {
           match.status = 'GATE_VERIFIED';
+          if (qrExtractedVehicle) match.vehicleNumber = qrExtractedVehicle;
           match.updatedAt = new Date().toISOString();
           localStorage.setItem('kisanflow_tokens_v2', JSON.stringify(localTokens));
           return {
@@ -200,6 +218,8 @@ export async function verifyGateQR(qrData: string): Promise<QRVerificationResult
               booking_id: match.tokenNumber,
               farmer_name: match.farmerName,
               centre_id: match.centreId,
+              vehicle_number: qrExtractedVehicle || match.vehicleNumber || 'PB-10-DF-4819',
+              vehicle_type: match.vehicleType || 'Tractor Trolley',
             }
           };
         }
@@ -221,6 +241,8 @@ export async function verifyGateQR(qrData: string): Promise<QRVerificationResult
         booking_id: normalized,
         farmer_name: 'Mahendra Singh Dhoni',
         centre_id: 'centre-samrala',
+        vehicle_number: qrExtractedVehicle || 'PB-10-DF-4819',
+        vehicle_type: 'Tractor Trolley',
       }
     };
   }
@@ -330,6 +352,7 @@ export async function lookupBooking(reference: string): Promise<any> {
               slot_time: match.slotTime || '09:30 AM - 10:30 AM',
               quantity: (match.estimatedQuintals || 45) * 100,
               vehicle_number: match.vehicleNumber || 'PB-10-DF-4819',
+              vehicle_type: match.vehicleType || 'Tractor Trolley',
               status: match.status === 'GATE_VERIFIED' || match.status === 'ARRIVED' ? 'ARRIVED' : match.status || 'CONFIRMED',
             }
           };
@@ -358,6 +381,7 @@ export async function lookupBooking(reference: string): Promise<any> {
         slot_time: '09:30 AM - 10:30 AM',
         quantity: 4500,
         vehicle_number: 'PB-10-DF-4819',
+        vehicle_type: 'Tractor Trolley',
         status: 'CONFIRMED',
       }
     };
@@ -369,7 +393,11 @@ export async function lookupBooking(reference: string): Promise<any> {
   };
 }
 
-export async function verifyBookingArrival(bookingId: string): Promise<any> {
+export async function verifyBookingArrival(
+  bookingId: string,
+  customVehicleNumber?: string,
+  customVehicleType?: string
+): Promise<any> {
   const token = await getOperatorToken();
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -377,17 +405,25 @@ export async function verifyBookingArrival(bookingId: string): Promise<any> {
   try {
     const res = await axios.post(
       `${BASE_URL}/management/bookings/${bookingId}/verify-arrival`,
-      {},
+      { vehicle_number: customVehicleNumber },
       { headers, timeout: 3500 }
     );
     if (res.data?.success && res.data?.data) {
-      return res.data;
+      return {
+        ...res.data,
+        data: {
+          ...res.data.data,
+          vehicle_number: (customVehicleNumber || res.data.data.vehicle_number || 'PB-10-DF-4819').toUpperCase(),
+          vehicle_type: customVehicleType || res.data.data.vehicle_type || 'Tractor Trolley',
+        }
+      };
     }
   } catch (error: any) {
     console.warn('Backend verify arrival failed, applying client state update:', error?.message);
   }
 
   // Update local storage tokens
+  let matchedToken: any = null;
   try {
     const localTokensJson = localStorage.getItem('kisanflow_tokens_v2') || localStorage.getItem('kisanflow_tokens_v1');
     if (localTokensJson) {
@@ -395,7 +431,15 @@ export async function verifyBookingArrival(bookingId: string): Promise<any> {
       if (Array.isArray(localTokens)) {
         const updated = localTokens.map((t: any) => {
           if (t.id === bookingId || t.tokenNumber === bookingId || bookingId.includes(t.tokenNumber || '___')) {
-            return { ...t, status: 'GATE_VERIFIED', updatedAt: new Date().toISOString() };
+            matchedToken = t;
+            const finalVeh = (customVehicleNumber || t.vehicleNumber || 'PB-10-DF-4819').toUpperCase();
+            return {
+              ...t,
+              status: 'GATE_VERIFIED',
+              vehicleNumber: finalVeh,
+              vehicleType: customVehicleType || t.vehicleType || 'Tractor Trolley',
+              updatedAt: new Date().toISOString()
+            };
           }
           return t;
         });
@@ -406,15 +450,21 @@ export async function verifyBookingArrival(bookingId: string): Promise<any> {
 
   const digits = bookingId.replace(/\D/g, '');
   const tokenNum = digits.length >= 4 ? parseInt(digits.slice(-4), 10) : Math.floor(1000 + Math.random() * 9000);
+  const resolvedVehicle = (customVehicleNumber || matchedToken?.vehicleNumber || 'PB-10-DF-4819').toUpperCase();
+  const resolvedVehicleType = customVehicleType || matchedToken?.vehicleType || 'Tractor Trolley';
 
   return {
     success: true,
     message: 'Farmer arrival verified successfully. Admitted to holding yard.',
     data: {
-      token_id: `token-${Date.now()}`,
+      token_id: matchedToken?.id || `token-${Date.now()}`,
       token_number: tokenNum,
       status: 'ARRIVED',
-      booking_id: bookingId,
+      booking_id: matchedToken?.tokenNumber || bookingId,
+      farmer_name: matchedToken?.farmerName || 'Mahendra Singh Dhoni',
+      centre_id: matchedToken?.centreId || 'centre-samrala',
+      vehicle_number: resolvedVehicle,
+      vehicle_type: resolvedVehicleType,
     }
   };
 }
