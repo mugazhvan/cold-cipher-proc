@@ -15,6 +15,7 @@ import {
   UserCheck,
   FileCheck,
   Truck,
+  Wheat,
 } from 'lucide-react';
 import {
   verifyGateQR,
@@ -52,6 +53,8 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
   const [lookupData, setLookupData] = useState<any | null>(null);
   const [manualVehicleNumber, setManualVehicleNumber] = useState('PB-10-DF-4819');
   const [manualVehicleType, setManualVehicleType] = useState('Tractor Trolley');
+  const [manualCropName, setManualCropName] = useState('Wheat (Kanak / Gehu)');
+  const [manualEstimatedQuintals, setManualEstimatedQuintals] = useState<number>(45);
   const [verifyingArrival, setVerifyingArrival] = useState(false);
 
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
@@ -282,6 +285,14 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
         if (res.data.vehicle_type) {
           setManualVehicleType(res.data.vehicle_type);
         }
+        if (res.data.crop_name) {
+          setManualCropName(res.data.crop_name);
+        }
+        if (res.data.quantity) {
+          setManualEstimatedQuintals(Math.round(res.data.quantity / 100));
+        } else if (res.data.estimated_quintals) {
+          setManualEstimatedQuintals(res.data.estimated_quintals);
+        }
       } else {
         setLookupError(res?.detail || res?.message || 'No booking found with this reference.');
       }
@@ -299,9 +310,17 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
 
     const effectiveVehicleNumber = (manualVehicleNumber || lookupData.vehicle_number || 'PB-10-DF-4819').trim().toUpperCase();
     const effectiveVehicleType = manualVehicleType || lookupData.vehicle_type || 'Tractor Trolley';
+    const effectiveCropName = manualCropName || lookupData.crop_name || 'Wheat (Kanak / Gehu)';
+    const effectiveQuintals = Number(manualEstimatedQuintals) || (lookupData.quantity ? Math.round(lookupData.quantity / 100) : 45);
 
     try {
-      const res = await verifyBookingArrival(lookupData.id, effectiveVehicleNumber, effectiveVehicleType);
+      const res = await verifyBookingArrival(
+        lookupData.id,
+        effectiveVehicleNumber,
+        effectiveVehicleType,
+        effectiveCropName,
+        effectiveQuintals
+      );
       if (res?.success && res.data) {
         const vResult: QRVerificationResult = {
           success: true,
@@ -316,6 +335,10 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
             centre_id: lookupData.centre_id,
             vehicle_number: effectiveVehicleNumber,
             vehicle_type: effectiveVehicleType,
+            crop_id: lookupData.crop_id || 'crop-wheat',
+            crop_name: effectiveCropName,
+            quantity: effectiveQuintals * 100,
+            estimated_quintals: effectiveQuintals,
           },
         };
         setVerificationResult(vResult);
@@ -340,6 +363,8 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
     setLookupError(null);
     setManualVehicleNumber('PB-10-DF-4819');
     setManualVehicleType('Tractor Trolley');
+    setManualCropName('Wheat (Kanak / Gehu)');
+    setManualEstimatedQuintals(45);
     if (activeMode === 'camera') {
       startCameraScanner();
     }
@@ -430,43 +455,71 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
               </div>
 
               {verificationResult.data && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-emerald-800/50 text-xs">
-                  <div className="bg-emerald-900/40 p-2.5 rounded-lg">
-                    <span className="text-[10px] uppercase text-emerald-400 font-semibold block">
-                      Assigned Token #
-                    </span>
-                    <span className="text-lg font-black font-mono text-white">
-                      #{verificationResult.data.token_number || 'N/A'}
-                    </span>
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-emerald-800/50 text-xs">
+                    <div className="bg-emerald-900/40 p-2.5 rounded-lg">
+                      <span className="text-[10px] uppercase text-emerald-400 font-semibold block">
+                        Assigned Token #
+                      </span>
+                      <span className="text-lg font-black font-mono text-white">
+                        #{verificationResult.data.token_number || 'N/A'}
+                      </span>
+                    </div>
+                    <div className="bg-emerald-900/40 p-2.5 rounded-lg">
+                      <span className="text-[10px] uppercase text-emerald-400 font-semibold block">
+                        Vehicle & Plate
+                      </span>
+                      <span className="text-sm font-black font-mono text-white block truncate">
+                        {verificationResult.data.vehicle_number || 'PB-10-DF-4819'}
+                      </span>
+                      <span className="text-[10px] text-emerald-300 block truncate">
+                        {verificationResult.data.vehicle_type || 'Tractor Trolley'}
+                      </span>
+                    </div>
+                    <div className="bg-emerald-900/40 p-2.5 rounded-lg">
+                      <span className="text-[10px] uppercase text-emerald-400 font-semibold block">
+                        Queue Status
+                      </span>
+                      <span className="text-sm font-bold font-mono text-emerald-300">
+                        {verificationResult.data.status || 'WAITING'}
+                      </span>
+                    </div>
+                    <div className="bg-emerald-900/40 p-2.5 rounded-lg">
+                      <span className="text-[10px] uppercase text-emerald-400 font-semibold block">
+                        Booking Ref
+                      </span>
+                      <span className="text-xs font-mono font-bold text-white truncate block">
+                        {verificationResult.data.booking_id || 'Confirmed'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="bg-emerald-900/40 p-2.5 rounded-lg">
-                    <span className="text-[10px] uppercase text-emerald-400 font-semibold block">
-                      Vehicle & Plate
-                    </span>
-                    <span className="text-sm font-black font-mono text-white block truncate">
-                      {verificationResult.data.vehicle_number || 'PB-10-DF-4819'}
-                    </span>
-                    <span className="text-[10px] text-emerald-300 block truncate">
-                      {verificationResult.data.vehicle_type || 'Tractor Trolley'}
-                    </span>
+
+                  {/* Admitted Crop & Produce Summary Banner */}
+                  <div className="bg-emerald-900/50 p-2.5 rounded-lg flex items-center justify-between border border-emerald-700/50 text-xs">
+                    <div className="flex items-center space-x-2">
+                      <Wheat className="w-4 h-4 text-amber-300 shrink-0" />
+                      <div>
+                        <span className="text-[10px] uppercase text-emerald-400 font-semibold block">
+                          Admitted Crop & Commodity
+                        </span>
+                        <span className="text-xs font-bold text-white">
+                          {verificationResult.data.crop_name || 'Wheat (Kanak / Gehu)'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] uppercase text-emerald-400 font-semibold block">
+                        Estimated Produce
+                      </span>
+                      <span className="text-sm font-mono font-extrabold text-amber-300">
+                        {verificationResult.data.estimated_quintals || (verificationResult.data.quantity ? Math.round(verificationResult.data.quantity / 100) : 45)} Qtl
+                      </span>
+                      <span className="text-[10px] text-emerald-300/80 block">
+                        (~{Math.round((verificationResult.data.estimated_quintals || (verificationResult.data.quantity ? Math.round(verificationResult.data.quantity / 100) : 45)) * 2)} Bags)
+                      </span>
+                    </div>
                   </div>
-                  <div className="bg-emerald-900/40 p-2.5 rounded-lg">
-                    <span className="text-[10px] uppercase text-emerald-400 font-semibold block">
-                      Queue Status
-                    </span>
-                    <span className="text-sm font-bold font-mono text-emerald-300">
-                      {verificationResult.data.status || 'WAITING'}
-                    </span>
-                  </div>
-                  <div className="bg-emerald-900/40 p-2.5 rounded-lg">
-                    <span className="text-[10px] uppercase text-emerald-400 font-semibold block">
-                      Booking Ref
-                    </span>
-                    <span className="text-xs font-mono font-bold text-white truncate block">
-                      {verificationResult.data.booking_id || 'Confirmed'}
-                    </span>
-                  </div>
-                </div>
+                </>
               )}
 
               <div className="pt-2 flex items-center justify-between">
@@ -879,15 +932,15 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
                 </div>
               </div>
 
-              {/* Ingress Vehicle Verification & Editable Plate # */}
+              {/* Ingress Vehicle & Produce Verification & Editable Particulars */}
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-900 flex items-center space-x-1.5">
                     <Truck className="w-4 h-4 text-emerald-700 shrink-0" />
-                    <span>Ingress Vehicle Particulars</span>
+                    <span>Ingress Vehicle & Produce Particulars</span>
                   </span>
                   <span className="text-[10px] font-medium text-slate-500">
-                    Verify / edit plate before yard admission
+                    Verify / adjust vehicle & produce before admitting
                   </span>
                 </div>
 
@@ -918,6 +971,40 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onVerificationComplete }) 
                       <option value="Bullock Cart">Bullock Cart</option>
                       <option value="Commercial Truck">Commercial Truck</option>
                     </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-slate-600 uppercase font-bold block mb-1">
+                      Crop / Commodity
+                    </label>
+                    <select
+                      value={manualCropName}
+                      onChange={(e) => setManualCropName(e.target.value)}
+                      className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-slate-900"
+                    >
+                      <option value="Wheat (Kanak / Gehu)">🌾 Wheat (Kanak / Gehu) — MSP ₹2,275</option>
+                      <option value="Paddy Grade A (Dhan)">🌱 Paddy Grade A (Dhan) — MSP ₹2,320</option>
+                      <option value="Mustard / Rapeseed (Sarson)">🌼 Mustard / Sarson — MSP ₹5,650</option>
+                      <option value="Gram / Chickpea (Chana)">🫘 Gram / Chana — MSP ₹5,440</option>
+                      <option value="Soyabean (Yellow)">🌿 Soyabean (Yellow) — MSP ₹4,892</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-slate-600 uppercase font-bold block mb-1">
+                      Produce Weight (Quintals)
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="number"
+                        min={1}
+                        max={1000}
+                        value={manualEstimatedQuintals}
+                        onChange={(e) => setManualEstimatedQuintals(Number(e.target.value))}
+                        className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-mono font-extrabold text-emerald-800 focus:outline-hidden focus:ring-2 focus:ring-slate-900"
+                      />
+                      <span className="text-xs text-slate-500 font-semibold whitespace-nowrap">
+                        (~{Math.round(manualEstimatedQuintals * 2)} Bags)
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

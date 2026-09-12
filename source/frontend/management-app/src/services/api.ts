@@ -16,6 +16,10 @@ export interface QRVerificationResult {
     centre_id?: string;
     vehicle_number?: string;
     vehicle_type?: string;
+    crop_id?: string;
+    crop_name?: string;
+    quantity?: number;
+    estimated_quintals?: number;
   };
 }
 
@@ -220,6 +224,10 @@ export async function verifyGateQR(qrData: string): Promise<QRVerificationResult
               centre_id: match.centreId,
               vehicle_number: qrExtractedVehicle || match.vehicleNumber || 'PB-10-DF-4819',
               vehicle_type: match.vehicleType || 'Tractor Trolley',
+              crop_id: match.cropId || 'crop-wheat',
+              crop_name: match.cropName || 'Wheat (Kanak / Gehu)',
+              quantity: (match.estimatedQuintals || 45) * 100,
+              estimated_quintals: match.estimatedQuintals || 45,
             }
           };
         }
@@ -243,6 +251,10 @@ export async function verifyGateQR(qrData: string): Promise<QRVerificationResult
         centre_id: 'centre-samrala',
         vehicle_number: qrExtractedVehicle || 'PB-10-DF-4819',
         vehicle_type: 'Tractor Trolley',
+        crop_id: 'crop-wheat',
+        crop_name: 'Wheat (Kanak / Gehu)',
+        quantity: 4500,
+        estimated_quintals: 45,
       }
     };
   }
@@ -396,7 +408,9 @@ export async function lookupBooking(reference: string): Promise<any> {
 export async function verifyBookingArrival(
   bookingId: string,
   customVehicleNumber?: string,
-  customVehicleType?: string
+  customVehicleType?: string,
+  customCropName?: string,
+  customQuintals?: number
 ): Promise<any> {
   const token = await getOperatorToken();
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -415,6 +429,9 @@ export async function verifyBookingArrival(
           ...res.data.data,
           vehicle_number: (customVehicleNumber || res.data.data.vehicle_number || 'PB-10-DF-4819').toUpperCase(),
           vehicle_type: customVehicleType || res.data.data.vehicle_type || 'Tractor Trolley',
+          crop_name: customCropName || res.data.data.crop_name || 'Wheat (Kanak / Gehu)',
+          quantity: customQuintals ? customQuintals * 100 : (res.data.data.quantity || 4500),
+          estimated_quintals: customQuintals || (res.data.data.quantity ? res.data.data.quantity / 100 : 45),
         }
       };
     }
@@ -438,6 +455,8 @@ export async function verifyBookingArrival(
               status: 'GATE_VERIFIED',
               vehicleNumber: finalVeh,
               vehicleType: customVehicleType || t.vehicleType || 'Tractor Trolley',
+              cropName: customCropName || t.cropName || 'Wheat (Kanak / Gehu)',
+              estimatedQuintals: customQuintals || t.estimatedQuintals || 45,
               updatedAt: new Date().toISOString()
             };
           }
@@ -452,6 +471,8 @@ export async function verifyBookingArrival(
   const tokenNum = digits.length >= 4 ? parseInt(digits.slice(-4), 10) : Math.floor(1000 + Math.random() * 9000);
   const resolvedVehicle = (customVehicleNumber || matchedToken?.vehicleNumber || 'PB-10-DF-4819').toUpperCase();
   const resolvedVehicleType = customVehicleType || matchedToken?.vehicleType || 'Tractor Trolley';
+  const resolvedCrop = customCropName || matchedToken?.cropName || 'Wheat (Kanak / Gehu)';
+  const resolvedQuintals = customQuintals || matchedToken?.estimatedQuintals || 45;
 
   return {
     success: true,
@@ -465,6 +486,10 @@ export async function verifyBookingArrival(
       centre_id: matchedToken?.centreId || 'centre-samrala',
       vehicle_number: resolvedVehicle,
       vehicle_type: resolvedVehicleType,
+      crop_id: matchedToken?.cropId || 'crop-wheat',
+      crop_name: resolvedCrop,
+      quantity: resolvedQuintals * 100,
+      estimated_quintals: resolvedQuintals,
     }
   };
 }

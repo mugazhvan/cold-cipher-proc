@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { TokenRecord } from '../../types';
+import { CROPS_CATALOG } from '../../mockData';
 import {
   Printer,
   Download,
@@ -24,16 +25,23 @@ export const OperatorReceiptModal: React.FC<OperatorReceiptModalProps> = ({
 
   if (!isOpen) return null;
 
+  const cropMeta = CROPS_CATALOG.find(
+    (c) => c.id === token.cropId || c.name.toLowerCase() === (token.cropName || '').toLowerCase()
+  ) || CROPS_CATALOG[0];
+  const mspRate = token.paymentDetails?.mspRatePerQuintal || cropMeta.mspPerQuintal || 2275;
+  const netQuintals = token.paymentDetails?.netWeightQuintals || token.estimatedQuintals || 45.0;
+  const grossAmount = Math.round(netQuintals * mspRate);
+
   const payment = token.paymentDetails || {
-    grossWeightKg: 8420,
-    tareWeightKg: 3220,
-    netWeightQuintals: 52.0,
-    mspRatePerQuintal: 2275,
-    grossAmountRs: 118300,
+    grossWeightKg: Math.round(netQuintals * 100 + 3120),
+    tareWeightKg: 3120,
+    netWeightQuintals: netQuintals,
+    mspRatePerQuintal: mspRate,
+    grossAmountRs: grossAmount,
     qualityDeductionsRs: 0,
     mandiFeesRs: 0,
-    netPayableRs: 118300,
-    utrNumber: 'SIM-DBT-20260905-99812401',
+    netPayableRs: grossAmount,
+    utrNumber: 'SIM-DBT-20260912-99812401',
     paymentStatus: 'PAID_TO_BANK',
     paidAt: '09:35 AM',
     jFormNumber: 'JF-PB-SAM-2026-0814',
@@ -266,21 +274,35 @@ export const OperatorReceiptModal: React.FC<OperatorReceiptModalProps> = ({
                 <strong className="text-slate-900 font-bold font-mono">{token.tokenNumber}</strong>
               </div>
               <div>
-                <span className="text-slate-500 block text-[11px] font-semibold">Commodity</span>
-                <strong className="text-slate-900 font-bold">{token.cropName}</strong>
+                <span className="text-slate-500 block text-[11px] font-semibold">Commodity & Produce</span>
+                <div className="flex items-center space-x-1.5 mt-0.5">
+                  <span className="text-base" role="img" aria-label={token.cropName}>
+                    {cropMeta.icon}
+                  </span>
+                  <strong className="text-slate-900 font-bold">{token.cropName || cropMeta.name}</strong>
+                  <span className="text-[9px] bg-amber-50 text-amber-900 px-1.5 py-0.2 rounded font-bold border border-amber-200 uppercase">
+                    {cropMeta.category}
+                  </span>
+                </div>
               </div>
               <div>
-                <span className="text-slate-500 block text-[11px] font-semibold">Net Weight</span>
+                <span className="text-slate-500 block text-[11px] font-semibold">Net Certified Produce</span>
                 <strong className="text-slate-900 font-bold font-mono">{payment.netWeightQuintals} Qtl</strong>
+                <span className="text-[10px] text-slate-500 block">
+                  ~{Math.round((payment.netWeightQuintals * 100) / (cropMeta.standardBagWeightKg || 50))} Bags @ {cropMeta.standardBagWeightKg || 50}kg
+                </span>
               </div>
               <div>
-                <span className="text-slate-500 block text-[11px] font-semibold">Vehicle</span>
+                <span className="text-slate-500 block text-[11px] font-semibold">Vehicle Particulars</span>
                 <strong className="text-slate-900 font-bold font-mono">{token.vehicleNumber}</strong>
                 <span className="text-[10px] text-slate-500 block">{token.vehicleType}</span>
               </div>
               <div>
-                <span className="text-slate-500 block text-[11px] font-semibold">Mandi Centre</span>
-                <strong className="text-slate-900 font-bold truncate block">{token.centreName}</strong>
+                <span className="text-slate-500 block text-[11px] font-semibold">MSP Settlement Rate</span>
+                <strong className="text-emerald-800 font-extrabold font-mono text-sm block">
+                  ₹{payment.mspRatePerQuintal.toLocaleString('en-IN')} / Qtl
+                </strong>
+                <span className="text-[10px] text-slate-500 truncate block">{token.centreName}</span>
               </div>
             </div>
 

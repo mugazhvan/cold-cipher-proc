@@ -8,7 +8,7 @@ import {
   submitQualityInspectionApi,
   completeWeighbridgeAndPayoutApi,
 } from '../../services/api';
-import { INITIAL_CENTRES } from '../../mockData';
+import { INITIAL_CENTRES, CROPS_CATALOG } from '../../mockData';
 import { OperatorReceiptModal } from './OperatorReceiptModal';
 import { GateVerificationModal } from './GateVerificationModal';
 import { CentreManagement } from './CentreManagement';
@@ -24,6 +24,32 @@ import {
   FileText,
   QrCode,
 } from 'lucide-react';
+
+export const getCropInfo = (cropId?: string, cropName?: string) => {
+  if (cropId) {
+    const found = CROPS_CATALOG.find((c) => c.id === cropId);
+    if (found) return found;
+  }
+  if (cropName) {
+    const lower = cropName.toLowerCase();
+    const found = CROPS_CATALOG.find(
+      (c) =>
+        c.name.toLowerCase().includes(lower) ||
+        lower.includes(c.name.toLowerCase()) ||
+        (c.hindiName && lower.includes(c.hindiName.toLowerCase())) ||
+        (lower.includes('wheat') && c.id === 'crop-wheat') ||
+        (lower.includes('paddy') && c.id === 'crop-paddy-a') ||
+        (lower.includes('dhan') && c.id === 'crop-paddy-a') ||
+        (lower.includes('mustard') && c.id === 'crop-mustard') ||
+        (lower.includes('sarson') && c.id === 'crop-mustard') ||
+        (lower.includes('chana') && c.id === 'crop-chana') ||
+        (lower.includes('gram') && c.id === 'crop-chana') ||
+        (lower.includes('soya') && c.id === 'crop-soyabean')
+    );
+    if (found) return found;
+  }
+  return CROPS_CATALOG[0]; // fallback Wheat
+};
 
 export const OperatorConsole: React.FC = () => {
   const [tokens, setTokens] = useState<TokenRecord[]>(() => {
@@ -233,7 +259,12 @@ export const OperatorConsole: React.FC = () => {
 
   // Dynamic metrics computed from real token data
   const dynamicIntakeQtl = centreTokens.reduce((sum, t) => sum + (t.estimatedQuintals || 0), 0);
-  const dynamicMspPayoutCr = ((dynamicIntakeQtl * 2275) / 10000000).toFixed(2);
+  const dynamicMspPayoutCr = (
+    centreTokens.reduce((sum, t) => {
+      const crop = getCropInfo(t.cropId, t.cropName);
+      return sum + (t.estimatedQuintals || 0) * (crop.mspPerQuintal || 2275);
+    }, 0) / 10000000
+  ).toFixed(2);
   const dynamicAvgTurnaround = currentCentre?.avgWaitMinutes ? `${currentCentre.avgWaitMinutes} mins` : '18 mins';
   const dynamicActiveBays = currentCentre ? `${currentCentre.activeBays || 4} / ${currentCentre.activeBays || 4} Operational` : '4 / 4 Operational';
 
@@ -256,67 +287,64 @@ export const OperatorConsole: React.FC = () => {
 
     try {
       await callQueueTokenApi(tok.id, bayName);
-      setQueueNotice({
-        type: 'success',
-        message: `📢 Called ${tok.farmerName} (Token #${tok.tokenNumber}) to ${bayName}.`
-      });
-    } catch (e: any) {
-      setQueueNotice({
-        type: 'success',
-        message: `📢 Called ${tok.farmerName} (Token #${tok.tokenNumber}) to ${bayName}.`
-      });
-    } finally {
-      setActiveActionTokenId(null);
-      setTimeout(() => setQueueNotice(null), 4000);
+    } catch (err: any) {
+      console.warn('Bay assignment API notice, retained locally:', err?.message);
     }
+
+    setQueueNotice({
+      type: 'info',
+      message: `📢 Public Mandi PA Announcement: Token #${tok.tokenNumber} (${tok.farmerName}, ${tok.vehicleNumber}) please report to ${bayName}.`
+    });
+    setActiveActionTokenId(null);
+    setTimeout(() => setQueueNotice(null), 5000);
   };
 
-  const handleCallNextQueued = async (bayName = 'Weighbridge Bay 2 (Electronic)') => {
-    setIsCallingNext(true);
-    const nextInLine = centreTokens.find(
-      (tok) => tok.status === 'YARD_QUEUED' || tok.status === 'GATE_VERIFIED'
-    );
-    if (nextInLine) {
-      await handleCallTokenToBay(nextInLine, bayName);
-    } else {
+  const handleCallNextQueued = async () => {
+    const nextInQueue = centreTokens.find((t) => t.status === 'GATE_VERIFIED' || t.status === 'YARD_QUEUED');
+    if (!nextInQueue) {
       setQueueNotice({
-        type: 'info',
-        message: 'No vehicles currently waiting in the yard queue for this centre.'
+        type: 'warning',
+        message: 'No vehicles waiting in yard queue for Bay assignment.'
       });
-      setTimeout(() => setQueueNotice(null), 4000);
+      setTimeout(() => setQueueNotice(null), 3000);
+      return;
     }
+    setIsCallingNext(true);
+    await handleCallTokenToBay(nextInQueue);
     setIsCallingNext(false);
   };
 
   const handleOpenInspection = (tok: TokenRecord) => {
+    const cropMeta = getCropInfo(tok.cropId, tok.cropName);
     setInspectionToken(tok);
-    setMoisturePct(11.4);
+    setMoisturePct(Math.min(cropMeta.maxMoisturePct - 0.6, 11.4));
     setForeignMatterPct(0.3);
     setBrokenGrainPct(0.8);
+    setInspectorNotes(
+      `Clean luster, acceptable foreign matter and moisture within ${cropMeta.maxMoisturePct}% ${cropMeta.name} Fair Average Quality (FAQ) standard.`
+    );
   };
 
   const handleSubmitInspection = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inspectionToken) return;
 
-    const isPassed = moisturePct <= 14.0;
-    const grade = (moisturePct <= 12.0 ? 'FAQ_GRADE_A' : 'GRADE_B') as 'FAQ_GRADE_A' | 'GRADE_B';
-    const nextStatus = isPassed ? ('UNLOADING' as const) : ('REJECTED' as const);
+    const cropMeta = getCropInfo(inspectionToken.cropId, inspectionToken.cropName);
+    const isPassed = moisturePct <= cropMeta.maxMoisturePct && foreignMatterPct <= 1.5;
+    const grade = isPassed ? 'FAQ_GRADE_A' : 'BELOW_FAQ';
 
     const updated = tokens.map((t) =>
       t.id === inspectionToken.id
         ? {
             ...t,
-            status: nextStatus,
-            qualityReport: {
+            status: (isPassed ? 'UNLOADING' : 'REJECTED') as any,
+            assignedBay: isPassed ? 'Unloading Platform 3' : 'Holding Yard',
+            qualityCheck: {
               moisturePct,
               foreignMatterPct,
               brokenGrainPct,
               grade,
-              deductionsAppliedRs: 0,
-              passed: isPassed,
-              notes: inspectorNotes,
-              inspectorName: 'Er. R. K. Sharma (QCO-IV)',
+              certifiedBy: 'Er. R. K. Sharma (QC Officer)',
               inspectedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             },
             updatedAt: new Date().toISOString(),
@@ -349,7 +377,7 @@ export const OperatorConsole: React.FC = () => {
 
   const handleOpenWeighbridge = (tok: TokenRecord) => {
     setWeighbridgeToken(tok);
-    const approxGross = Math.round(tok.estimatedQuintals * 100 + 3120);
+    const approxGross = Math.round((tok.estimatedQuintals || 45) * 100 + 3120);
     setGrossWeightKg(approxGross);
     setTareWeightKg(3120);
   };
@@ -358,10 +386,13 @@ export const OperatorConsole: React.FC = () => {
     e.preventDefault();
     if (!weighbridgeToken) return;
 
+    const cropMeta = getCropInfo(weighbridgeToken.cropId, weighbridgeToken.cropName);
+    const mspRate = cropMeta.mspPerQuintal || 2275;
+
     const netWeightKg = Math.max(0, grossWeightKg - tareWeightKg);
     const netWeightQuintals = parseFloat((netWeightKg / 100).toFixed(2));
     const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const grossAmount = Math.round(netWeightQuintals * 2275);
+    const grossAmount = Math.round(netWeightQuintals * mspRate);
     const jFormNumber = `JF-PB-SAM-2026-${Math.floor(1000 + Math.random() * 9000)}`;
 
     const updated = tokens.map((t) =>
@@ -373,7 +404,7 @@ export const OperatorConsole: React.FC = () => {
               grossWeightKg,
               tareWeightKg,
               netWeightQuintals,
-              mspRatePerQuintal: 2275,
+              mspRatePerQuintal: mspRate,
               grossAmountRs: grossAmount,
               qualityDeductionsRs: 0,
               mandiFeesRs: 0,
@@ -398,7 +429,7 @@ export const OperatorConsole: React.FC = () => {
 
     setQueueNotice({
       type: 'success',
-      message: `✅ Weighment completed & DBT payment disbursed for ${weighbridgeToken.farmerName} (Net: ${netWeightKg} kg, ₹${grossAmount.toLocaleString('en-IN')}).`
+      message: `✅ Weighment completed & DBT payment disbursed for ${weighbridgeToken.farmerName} (${weighbridgeToken.cropName} - Net: ${netWeightKg} kg / ${netWeightQuintals} Qtl @ ₹${mspRate.toLocaleString('en-IN')}/Qtl = ₹${grossAmount.toLocaleString('en-IN')}).`
     });
     setWeighbridgeToken(null);
     setTimeout(() => setQueueNotice(null), 4000);
@@ -648,10 +679,40 @@ export const OperatorConsole: React.FC = () => {
                       </td>
 
                       <td className="p-3.5">
-                        <span className="font-bold text-slate-800">{tok.cropName}</span>
-                        <span className="block font-mono text-emerald-700 font-bold mt-0.5">
-                          {tok.estimatedQuintals} Quintals
-                        </span>
+                        {(() => {
+                          const cropMeta = getCropInfo(tok.cropId, tok.cropName);
+                          const bagCount = Math.round((tok.estimatedQuintals * 100) / (cropMeta.standardBagWeightKg || 50));
+                          return (
+                            <div className="space-y-1">
+                              <div className="flex items-center space-x-1.5">
+                                <span className="text-base" role="img" aria-label={tok.cropName}>
+                                  {cropMeta.icon || '🌾'}
+                                </span>
+                                <span className="font-bold text-slate-900 text-xs">
+                                  {tok.cropName || cropMeta.name}
+                                </span>
+                                <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded border ${
+                                  cropMeta.category === 'Rabi'
+                                    ? 'bg-amber-50 text-amber-900 border-amber-300'
+                                    : 'bg-emerald-50 text-emerald-900 border-emerald-300'
+                                }`}>
+                                  {cropMeta.category}
+                                </span>
+                              </div>
+                              <div className="flex items-center space-x-1.5 text-[11px]">
+                                <span className="font-mono text-emerald-800 font-extrabold bg-emerald-50/80 px-1.5 py-0.5 rounded border border-emerald-200">
+                                  {tok.estimatedQuintals} Qtl
+                                </span>
+                                <span className="text-slate-500 font-medium text-[10px]">
+                                  ~{bagCount} Bags
+                                </span>
+                                <span className="text-slate-600 font-mono font-bold bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 text-[10px]">
+                                  ₹{cropMeta.mspPerQuintal.toLocaleString('en-IN')}/Qtl
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </td>
 
                       <td className="p-3.5">
@@ -785,48 +846,78 @@ export const OperatorConsole: React.FC = () => {
               </button>
             </div>
 
-            <p className="text-xs text-slate-600 mb-4">
-              Testing vehicle{' '}
-              <strong className="text-slate-900 font-mono">{inspectionToken.vehicleNumber}</strong> (Token #
-              <span className="font-mono text-slate-900 font-bold">{inspectionToken.tokenNumber}</span>) for crop{' '}
-              <strong className="text-emerald-800">{inspectionToken.cropName}</strong>.
-            </p>
+            {/* Produce Commodity & Vehicle Banner */}
+            {(() => {
+              const cropMeta = getCropInfo(inspectionToken.cropId, inspectionToken.cropName);
+              return (
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-4 flex items-center justify-between text-xs">
+                  <div className="flex items-center space-x-2.5">
+                    <span className="text-2xl" role="img" aria-label={inspectionToken.cropName}>
+                      {cropMeta.icon}
+                    </span>
+                    <div>
+                      <div className="flex items-center space-x-1.5">
+                        <strong className="text-slate-900 font-bold text-xs">{inspectionToken.cropName}</strong>
+                        <span className="text-[9px] bg-amber-50 text-amber-900 px-1.5 py-0.2 rounded font-bold border border-amber-200 uppercase">
+                          {cropMeta.category}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        Farmer: {inspectionToken.farmerName} • Plate:{' '}
+                        <span className="font-mono font-bold text-slate-800">{inspectionToken.vehicleNumber}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] uppercase font-bold text-slate-500 block">Govt FAQ Standard</span>
+                    <span className="font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-xs inline-block">
+                      &le; {cropMeta.maxMoisturePct.toFixed(1)}% Max
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
 
             <form onSubmit={handleSubmitInspection} className="space-y-4 text-xs">
               {/* Moisture Meter Slider */}
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="font-bold text-slate-800">
-                    Grain Moisture Content Percentage (%)
-                  </label>
-                  <span
-                    className={`font-mono text-base font-extrabold px-2.5 py-0.5 rounded-lg border ${
-                      moisturePct <= 12.0
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                        : moisturePct <= 14.0
-                        ? 'bg-amber-50 text-amber-900 border-amber-300'
-                        : 'bg-rose-50 text-rose-800 border-rose-300'
-                    }`}
-                  >
-                    {moisturePct.toFixed(1)}%
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min={8.0}
-                  max={18.0}
-                  step={0.1}
-                  value={moisturePct}
-                  onChange={(e) => setMoisturePct(Number(e.target.value))}
-                  className="w-full accent-emerald-600 cursor-pointer"
-                />
-                <div className="flex justify-between text-[11px] text-slate-600 font-medium mt-1">
-                  <span>Dry (&lt; 10%)</span>
-                  <span className="font-bold text-emerald-700">Govt Std FAQ (&le; 12.0%)</span>
-                  <span className="text-amber-700">Deduction (12-14%)</span>
-                  <span className="text-rose-700">Rejection (&gt; 14%)</span>
-                </div>
-              </div>
+              {(() => {
+                const cropMeta = getCropInfo(inspectionToken.cropId, inspectionToken.cropName);
+                return (
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="font-bold text-slate-800">
+                        Grain Moisture Content Percentage (%)
+                      </label>
+                      <span
+                        className={`font-mono text-base font-extrabold px-2.5 py-0.5 rounded-lg border ${
+                          moisturePct <= cropMeta.maxMoisturePct
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                            : moisturePct <= cropMeta.maxMoisturePct + 2.0
+                            ? 'bg-amber-50 text-amber-900 border-amber-300'
+                            : 'bg-rose-50 text-rose-800 border-rose-300'
+                        }`}
+                      >
+                        {moisturePct.toFixed(1)}%
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={6.0}
+                      max={20.0}
+                      step={0.1}
+                      value={moisturePct}
+                      onChange={(e) => setMoisturePct(Number(e.target.value))}
+                      className="w-full accent-emerald-600 cursor-pointer"
+                    />
+                    <div className="flex justify-between text-[11px] text-slate-600 font-medium mt-1">
+                      <span>Dry (&lt; {Math.max(6, cropMeta.maxMoisturePct - 3)}%)</span>
+                      <span className="font-bold text-emerald-700">Govt Std FAQ (&le; {cropMeta.maxMoisturePct.toFixed(1)}%)</span>
+                      <span className="text-amber-700">Deduction ({cropMeta.maxMoisturePct.toFixed(0)}-{(cropMeta.maxMoisturePct + 2).toFixed(0)}%)</span>
+                      <span className="text-rose-700">Rejection (&gt; {(cropMeta.maxMoisturePct + 2).toFixed(0)}%)</span>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Foreign Matter & Broken Grain */}
               <div className="grid grid-cols-2 gap-3">
@@ -912,18 +1003,50 @@ export const OperatorConsole: React.FC = () => {
               </button>
             </div>
 
-            {/* Vehicle & Farmer Identification Banner */}
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-4 flex items-center justify-between text-xs">
-              <div>
-                <span className="text-[10px] uppercase font-bold text-slate-500 block">Farmer & Token</span>
-                <span className="font-bold text-slate-900">{weighbridgeToken.farmerName} (#{weighbridgeToken.tokenNumber})</span>
+            {/* Vehicle & Farmer & Crop Identification Banner */}
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-4 text-xs space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Farmer & Token</span>
+                  <span className="font-bold text-slate-900">{weighbridgeToken.farmerName} (#{weighbridgeToken.tokenNumber})</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Vehicle Reg Plate</span>
+                  <span className="font-mono font-black text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-300 inline-block">
+                    {weighbridgeToken.vehicleNumber} ({weighbridgeToken.vehicleType})
+                  </span>
+                </div>
               </div>
-              <div className="text-right">
-                <span className="text-[10px] uppercase font-bold text-slate-500 block">Vehicle Reg Plate</span>
-                <span className="font-mono font-black text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-300 inline-block">
-                  {weighbridgeToken.vehicleNumber} ({weighbridgeToken.vehicleType})
-                </span>
-              </div>
+
+              {/* Crop & Produce Details */}
+              {(() => {
+                const cropMeta = getCropInfo(weighbridgeToken.cropId, weighbridgeToken.cropName);
+                const estBags = Math.round(((weighbridgeToken.estimatedQuintals || 45) * 100) / (cropMeta.standardBagWeightKg || 50));
+                return (
+                  <div className="flex items-center justify-between border-t border-slate-200/80 pt-2 bg-amber-50/50 -mx-3 -mb-3 px-3 py-2 rounded-b-xl">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xl" role="img" aria-label={weighbridgeToken.cropName}>
+                        {cropMeta.icon}
+                      </span>
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-amber-900/70 block">Produce Commodity</span>
+                        <div className="flex items-center space-x-1.5">
+                          <span className="font-bold text-slate-900">{weighbridgeToken.cropName}</span>
+                          <span className="text-[9px] bg-amber-100 text-amber-900 px-1.5 py-0.2 rounded font-bold border border-amber-300 uppercase">
+                            {cropMeta.category}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] uppercase font-bold text-slate-500 block">Est. Ingress</span>
+                      <span className="font-mono font-bold text-emerald-800">
+                        {weighbridgeToken.estimatedQuintals} Qtl (~{estBags} Bags)
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             <form onSubmit={handleFinalizeWeighment} className="space-y-4 text-xs">
@@ -958,30 +1081,32 @@ export const OperatorConsole: React.FC = () => {
               </div>
 
               {/* Settlement calculation */}
-              <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl text-slate-900 space-y-1.5">
-                <div className="flex justify-between text-slate-700">
-                  <span>Guaranteed MSP Rate:</span>
-                  <span className="font-mono font-bold text-slate-900">₹2,275 / qtl</span>
-                </div>
-                <div className="flex justify-between text-slate-700">
-                  <span>Total Gross MSP Amount:</span>
-                  <span className="font-mono font-bold text-slate-900">
-                    ₹
-                    {Math.round(
-                      ((grossWeightKg - tareWeightKg) / 100) * 2275
-                    ).toLocaleString('en-IN')}
-                  </span>
-                </div>
-                <div className="flex justify-between border-t border-emerald-200 pt-1.5 font-bold">
-                  <span className="text-emerald-900">Direct Bank Transfer (DBT):</span>
-                  <span className="font-mono text-emerald-800 text-sm font-extrabold">
-                    ₹
-                    {Math.round(
-                      ((grossWeightKg - tareWeightKg) / 100) * 2275
-                    ).toLocaleString('en-IN')}
-                  </span>
-                </div>
-              </div>
+              {(() => {
+                const cropMeta = getCropInfo(weighbridgeToken.cropId, weighbridgeToken.cropName);
+                const mspRate = cropMeta.mspPerQuintal || 2275;
+                const netQtl = Math.max(0, (grossWeightKg - tareWeightKg) / 100);
+                const totalMspAmount = Math.round(netQtl * mspRate);
+                return (
+                  <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl text-slate-900 space-y-1.5">
+                    <div className="flex justify-between text-slate-700">
+                      <span>Guaranteed MSP Rate ({cropMeta.name.split(' ')[0]}):</span>
+                      <span className="font-mono font-bold text-slate-900">₹{mspRate.toLocaleString('en-IN')} / qtl</span>
+                    </div>
+                    <div className="flex justify-between text-slate-700">
+                      <span>Total Gross MSP Amount:</span>
+                      <span className="font-mono font-bold text-slate-900">
+                        ₹{totalMspAmount.toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-t border-emerald-200 pt-1.5 font-bold">
+                      <span className="text-emerald-900">Direct Benefit Transfer (DBT):</span>
+                      <span className="font-mono text-emerald-800 text-sm font-extrabold">
+                        ₹{totalMspAmount.toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div className="pt-2 flex items-center justify-end space-x-2">
                 <button
@@ -1030,9 +1155,23 @@ export const OperatorConsole: React.FC = () => {
 
           const finalVehicleType = (result.data?.vehicle_type || existingToken?.vehicleType || 'Tractor Trolley') as any;
 
+          const finalCropName = (
+            result.data?.crop_name ||
+            existingToken?.cropName ||
+            'Wheat (Kanak / Gehu)'
+          );
+          const resolvedCropMeta = getCropInfo(result.data?.crop_id || existingToken?.cropId, finalCropName);
+          const finalCropId = result.data?.crop_id || existingToken?.cropId || resolvedCropMeta.id;
+          const finalQuintals = Number(
+            result.data?.estimated_quintals ||
+            result.data?.quantity ||
+            existingToken?.estimatedQuintals ||
+            45
+          );
+
           setQueueNotice({
             type: 'success',
-            message: `✅ Gate pass verified! ${farmerName} (Vehicle ${finalVehicleNumber}) admitted to yard (Token #${result.data?.token_number || verifiedTokenNumber}).`
+            message: `✅ Gate pass verified! ${farmerName} (Vehicle ${finalVehicleNumber}, ${finalCropName} ${finalQuintals} Qtl) admitted to yard (Token #${result.data?.token_number || verifiedTokenNumber}).`
           });
 
           const newVerifiedToken: TokenRecord = {
@@ -1042,9 +1181,9 @@ export const OperatorConsole: React.FC = () => {
             farmerName: farmerName,
             phone: existingToken?.phone || '+91 97714 00007',
             village: existingToken?.village || 'Samrala Agri Farm',
-            cropId: existingToken?.cropId || 'crop-wheat',
-            cropName: existingToken?.cropName || 'Wheat (Kanak / Gehu)',
-            estimatedQuintals: existingToken?.estimatedQuintals || 45,
+            cropId: finalCropId,
+            cropName: finalCropName,
+            estimatedQuintals: finalQuintals,
             centreId: targetCentreId,
             centreName: currentCentre?.name || 'Samrala Sub-Mandi Procurement Depot',
             slotDate: existingToken?.slotDate || new Date().toISOString().split('T')[0],
@@ -1060,7 +1199,7 @@ export const OperatorConsole: React.FC = () => {
               {
                 id: `sms-${Date.now()}`,
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                text: `KisanFlow: Gate 1 check completed. Vehicle ${finalVehicleNumber} admitted to Holding Yard.`,
+                text: `KisanFlow: Gate 1 check completed. Vehicle ${finalVehicleNumber} carrying ${finalQuintals} Qtl ${finalCropName} admitted to Holding Yard.`,
                 type: 'GATE_ENTRY',
               }
             ],
