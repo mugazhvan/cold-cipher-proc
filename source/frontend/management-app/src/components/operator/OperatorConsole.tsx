@@ -38,6 +38,7 @@ export const OperatorConsole: React.FC = () => {
   const [isGateScannerOpen, setIsGateScannerOpen] = useState(false);
 
   const loadBookings = async (centreIdToUse?: string) => {
+    let activeCentre = centreIdToUse || selectedCentreId;
 
     // Read existing local storage tokens
     let storedTokens: TokenRecord[] = [];
@@ -48,6 +49,16 @@ export const OperatorConsole: React.FC = () => {
       }
     } catch (e) {}
 
+    // Ensure state already has these stored tokens immediately
+    if (storedTokens.length > 0) {
+      setTokens((prev) => {
+        const mergedMap = new Map<string, TokenRecord>();
+        storedTokens.forEach((t) => mergedMap.set(t.tokenNumber || t.id, t));
+        prev.forEach((t) => mergedMap.set(t.tokenNumber || t.id, t));
+        return Array.from(mergedMap.values());
+      });
+    }
+
     try {
       const rawEnv = (import.meta as any).env?.VITE_API_BASE_URL;
       const baseURL = rawEnv || 'http://localhost:8000/api/v1';
@@ -55,12 +66,9 @@ export const OperatorConsole: React.FC = () => {
       if (!token) {
         // Fallback gracefully without locking the console
         setCentres(INITIAL_CENTRES);
-        if (storedTokens.length > 0) setTokens(storedTokens);
         return;
       }
       const headers = { Authorization: `Bearer ${token}` };
-
-      let activeCentre = centreIdToUse || selectedCentreId;
 
       // Step 1: Fetch real centres from PostgreSQL
       let mappedCentres = INITIAL_CENTRES;
@@ -132,32 +140,31 @@ export const OperatorConsole: React.FC = () => {
         });
 
         // Merge API tokens with local tokens so newly admitted tokens are never lost
-        const mergedMap = new Map<string, TokenRecord>();
-        storedTokens.forEach((t) => mergedMap.set(t.tokenNumber || t.id, t));
-        apiTokens.forEach((t) => {
-          const existing = mergedMap.get(t.tokenNumber || t.id);
-          if (existing && (existing.status === 'GATE_VERIFIED' || existing.status === 'WEIGHBRIDGE_IN' || existing.status === 'UNLOADING' || existing.status === 'COMPLETED')) {
-            mergedMap.set(t.tokenNumber || t.id, { ...t, ...existing });
-          } else {
-            mergedMap.set(t.tokenNumber || t.id, t);
-          }
+        setTokens((prev) => {
+          const mergedMap = new Map<string, TokenRecord>();
+          try {
+            const freshRaw = localStorage.getItem('kisanflow_tokens_v2');
+            if (freshRaw) (JSON.parse(freshRaw) || []).forEach((t: TokenRecord) => mergedMap.set(t.tokenNumber || t.id, t));
+          } catch (e) {}
+          prev.forEach((t) => mergedMap.set(t.tokenNumber || t.id, t));
+          apiTokens.forEach((t) => {
+            const existing = mergedMap.get(t.tokenNumber || t.id);
+            if (!existing || existing.status === 'BOOKED') {
+              mergedMap.set(t.tokenNumber || t.id, t);
+            }
+          });
+          const finalTokens = Array.from(mergedMap.values());
+          try {
+            localStorage.setItem('kisanflow_tokens_v2', JSON.stringify(finalTokens));
+          } catch (e) {}
+          return finalTokens;
         });
-
-        const finalTokens = Array.from(mergedMap.values());
-        setTokens(finalTokens);
-        try {
-          localStorage.setItem('kisanflow_tokens_v2', JSON.stringify(finalTokens));
-        } catch (e) {}
       } catch (bErr: any) {
         console.warn('Failed to load bookings from API, retaining stored tokens:', bErr?.message);
-        if (storedTokens.length > 0) {
-          setTokens(storedTokens);
-        }
       }
     } catch (err: any) {
       console.warn('Backend connection notice, running in verified client mode:', err?.message);
       setCentres(INITIAL_CENTRES);
-      if (storedTokens.length > 0) setTokens(storedTokens);
     }
   };
 
@@ -1017,19 +1024,20 @@ export const OperatorConsole: React.FC = () => {
             ],
           };
 
-          // Optimistically update tokens state and storage
+          // 1. Immediately persist to localStorage synchronously
+          try {
+            const raw = localStorage.getItem('kisanflow_tokens_v2') || localStorage.getItem('kisanflow_tokens_v1');
+            const existingList: TokenRecord[] = raw ? JSON.parse(raw) : [];
+            const filtered = existingList.filter(t => t.tokenNumber !== verifiedTokenNumber && t.id !== newVerifiedToken.id);
+            const updated = [newVerifiedToken, ...filtered];
+            localStorage.setItem('kisanflow_tokens_v2', JSON.stringify(updated));
+          } catch (e) {}
+
+          // 2. Immediately update state
           setTokens((prev) => {
             const filtered = prev.filter(t => t.tokenNumber !== verifiedTokenNumber && t.id !== newVerifiedToken.id);
-            const updated = [newVerifiedToken, ...filtered];
-            try {
-              localStorage.setItem('kisanflow_tokens_v2', JSON.stringify(updated));
-            } catch (e) {}
-            return updated;
+            return [newVerifiedToken, ...filtered];
           });
-
-          try {
-            await loadBookings(selectedCentreId);
-          } catch (e) {}
 
           setTimeout(() => setQueueNotice(null), 5000);
         }}
