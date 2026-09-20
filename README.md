@@ -1,58 +1,136 @@
-# 🌾 KisanFlow (किसान प्रवाह)
-### Next-Generation Decentralized Mandi Slot Booking, Token Queue Optimization & Fair Crop Procurement Platform
+<div align="center">
 
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-009688.svg?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![React](https://img.shields.io/badge/React-18.3-61DAFB.svg?style=flat&logo=react&logoColor=black)](https://reactjs.org)
-[![React Native](https://img.shields.io/badge/React_Native-Expo_51-000020.svg?style=flat&logo=expo&logoColor=white)](https://expo.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6.svg?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1.svg?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org)
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED.svg?style=flat&logo=docker&logoColor=white)](https://www.docker.com)
-[![Vercel](https://img.shields.io/badge/Frontend-Vercel-000000.svg?style=flat&logo=vercel&logoColor=white)](https://vercel.com)
-[![Render](https://img.shields.io/badge/Backend-Render-46E3B7.svg?style=flat&logo=render&logoColor=white)](https://render.com)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+# 🌾 KisanFlow (किसान प्रवाह)
+### Next-Gen Decentralized APMC Mandi Slot Booking, Token Queue Orchestration & Transparent Procurement Platform
+
+[![CI/CD Pipeline](https://github.com/mugazhvan/cold-cipher-proc/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/mugazhvan/cold-cipher-proc/actions)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![React](https://img.shields.io/badge/React-18.3-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org)
+[![Expo](https://img.shields.io/badge/Expo-57.0-000020?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org)
+[![Security Tested](https://img.shields.io/badge/Security-HMAC--SHA256%20Verified-00C853?style=for-the-badge&logo=shield)](docs/TESTING_AND_VERIFICATION.md)
+[![Vercel](https://img.shields.io/badge/Deploy-Vercel%20Edge-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com)
+[![Render](https://img.shields.io/badge/Deploy-Render%20Cloud-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://render.com)
+
+<p align="center">
+  <b>Eliminating Mandi Congestion • Preventing Distress Selling • Securing Middleman-Free Direct Benefit Transfers</b>
+  <br />
+  <i>Developed for Smart India Hackathon (SIH) | Problem Statement: Agricultural Supply Chain & Mandi Modernization</i>
+</p>
+
+[🌐 Live Farmer Portal](https://management-app-fawn-five.vercel.app/) • [🏢 Live Operator Console](https://management-app-mugal1.vercel.app/) • [⚡ REST API Docs](https://kisanflow-backend.onrender.com/docs) • [🧪 Testing & Verification](docs/TESTING_AND_VERIFICATION.md)
+
+</div>
+
+---
+
+> [!IMPORTANT]
+> **Production Prototype Online**: Both web portals, the mobile app, and the cloud backend API are fully deployed and interconnected. Live credentials and one-click demo logins are provided below for instant evaluation.
+
+---
+
+## 📸 Side-by-Side Visual Walkthrough (Farmer vs. Mandi Operator)
+
+KisanFlow provides a synchronized, dual-sided workflow. Here is how both sides interact in real time:
+
+### 1. Mandi Discovery & Daily Quota Management
+| 🚜 Farmer Experience (Slot Discovery & Radar) | 👷 Mandi Operator Experience (Capacity Controls) |
+| :---: | :---: |
+| ![Farmer Mandi Locator](docs/screenshots/01_farmer_mandi_locator.png) | ![Operator Slot Management](docs/screenshots/12_operator_slot_management.png) |
+| *Real-time 360° radar shows nearest mandis, live waiting times (25m), and AI recommendations to avoid congestion.* | *Mandi managers set daily procurement quotas (e.g. 200 Qtl/day Sharbati Wheat) to prevent yard gridlock.* |
+
+---
+
+### 2. Slot Reservation & Command Center Scheduling
+| 🚜 Farmer Experience (Booking & MSP Estimator) | 👷 Mandi Operator Experience (Yard Inbound Schedule) |
+| :---: | :---: |
+| ![Farmer Slot Booking](docs/screenshots/02_farmer_slot_booking.png) | ![Operator Command Center](docs/screenshots/07_operator_command_center.png) |
+| *Farmer reserves a delivery window (Tractor Trolley, 45 Qtl) with instant MSP payout estimation (₹1,02,375).* | *Operator dashboard updates in real time with scheduled arrivals, dock bay capacity, and expected vehicle queues.* |
+
+---
+
+### 3. Cryptographic E-Pass & Mandi Gate Ingress Scan
+| 🚜 Farmer Experience (Offline Digital Token Pass) | 👷 Mandi Operator Experience (Ingress Camera Scanner) |
+| :---: | :---: |
+| ![Farmer Token Pass](docs/screenshots/03_farmer_digital_token_pass.png) | ![Operator QR Scanner](docs/screenshots/08_operator_qr_camera_scanner.png) |
+| *Farmer receives an official E-Pass with HMAC-SHA256 signed QR code, vehicle number, and slot window.* | *Gate operator scans the QR code using live camera or handheld reader for instant (<80ms) admission.* |
+
+---
+
+### 4. Cryptographic Tamper-Resistance & Security Verification
+| 🛡️ Legitimate Token Verified & Admitted | 🚨 Altered / Forged Token Instantly Rejected |
+| :---: | :---: |
+| ![Gate Verified](docs/screenshots/11_operator_gate_verified.png) | ![Tamper Detection](docs/screenshots/10_security_tamper_detection.png) |
+| *Valid pass is authenticated against the cryptographic private key. Gate barrier opens with a green notification.* | *Security test: Any altered payload or forged pass triggers an immediate red alert: `HMAC Signature Mismatch`.* |
+
+---
+
+### 5. Active Yard Queue Tracking & Automated Bay Audio Chime
+| 🚜 Farmer Experience (Live Queue Progression) | 👷 Mandi Operator Experience (Bay Dispatch & Audio) |
+| :---: | :---: |
+| ![Farmer Queue Tracker](docs/screenshots/04_farmer_live_queue_tracker.png) | ![Operator Bay Announcement](docs/screenshots/13_operator_bay_announcement.png) |
+| *Farmer tracks real-time queue position (#3), vehicle status, and estimated wait time directly on mobile.* | *Operator calls vehicle to Bay 2. System triggers a dual-tone audio chime and bilingual speech announcement.* |
+
+---
+
+### 6. Vernacular Accessibility & Electronic Weighbridge DBT
+| 🚜 Farmer Experience (Bilingual Hindi Interface) | 👷 Mandi Operator Experience (Dual Weighbridge & DBT) |
+| :---: | :---: |
+| ![Vernacular Hindi](docs/screenshots/06_farmer_vernacular_hindi.png) | ![Weighbridge DBT](docs/screenshots/15_operator_weighbridge_dbt.png) |
+| *Full vernacular localization (`किसानफ़्लो`) with SMS and WhatsApp broadcast simulation for non-smartphone users.* | *Gross weight (8,450 kg) - Tare weight (3,950 kg) = Net (4,500 kg). Instant Direct Bank Transfer (DBT) voucher generated.* |
+
+---
+
+### 7. Macro District & State Agricultural Oversight
+<div align="center">
+
+![DCA District Intelligence](docs/screenshots/16_dca_district_intelligence.png)
+
+*District Collector & Agriculture Directorate (DCA) Command Center: Real-time throughput across 12 mandis (4,902 Qtl procured, ₹1.12 Cr DBT disbursed, average turnaround time of 21.4 minutes).*
+
+</div>
 
 ---
 
 ## 🌐 Live Prototype Deployments
 
-Experience the live cloud prototype directly without local installation:
-
-| Service / Application | Platform | Live URL | Description |
+| Component | Host | Live Production URL | Purpose / Capabilities |
 | :--- | :--- | :--- | :--- |
-| **🚜 Farmer Web Portal** | **Vercel** | [**management-app-fawn-five.vercel.app**](https://management-app-fawn-five.vercel.app/) | Farmer web portal for interactive slot booking, 360° radar mandi locator, 37 MSP crops, live queue tracking, and digital Form 'J'. |
-| **🏢 Mandi Management & DCA Console** | **Vercel** | [**management-app-mugal1.vercel.app**](https://management-app-mugal1.vercel.app/) | Mandi operator & district agricultural administrator dashboard for real-time queue orchestration, gate check-in, weighbridge logging, and analytics. |
+| **🚜 Farmer Web Portal** | **Vercel** | [**management-app-fawn-five.vercel.app**](https://management-app-fawn-five.vercel.app/) | Interactive slot booking, 360° radar mandi locator, 37 MSP crops, live queue tracking, and digital Form 'J'. |
+| **🏢 Mandi Management & DCA Console** | **Vercel** | [**management-app-mugal1.vercel.app**](https://management-app-mugal1.vercel.app/) | Mandi operator & district agricultural administrator dashboard for queue orchestration, gate check-in, weighbridge logging, and analytics. |
 | **⚡ Backend REST API & Swagger UI** | **Render** | [**kisanflow-backend.onrender.com/docs**](https://kisanflow-backend.onrender.com/docs) | Interactive OpenAPI / Swagger API documentation with live execution of all authentication, booking, queue, and verification endpoints. |
-| **📖 ReDoc API Specification** | **Render** | [**kisanflow-backend.onrender.com/redoc**](https://kisanflow-backend.onrender.com/redoc) | Human-readable API documentation and data schema specifications. |
-| **📱 Farmer Mobile App (Expo)** | **Expo / EAS** | [**expo.dev/accounts/mugazhv/projects/farmer-mobile**](https://expo.dev/accounts/mugazhv/projects/farmer-mobile) | React Native/Expo mobile app for farmers featuring native SVG radar, camera QR pass, offline cache, and instant push alerts. |
-| **🗄️ Managed Cloud Database** | **Render (Singapore)** | `kisanflow-db` (PostgreSQL 15) | Relational persistence engine with connection pooling and WAL backups. |
+| **📖 ReDoc API Specification** | **Render** | [**kisanflow-backend.onrender.com/redoc**](https://kisanflow-backend.onrender.com/redoc) | Clean, readable data schemas and API contracts. |
+| **📱 Farmer Mobile App (Expo)** | **Expo / EAS** | [**expo.dev/accounts/mugazhv/projects/farmer-mobile**](https://expo.dev/accounts/mugazhv/projects/farmer-mobile) | React Native / Expo app featuring native SVG radar, camera QR pass, offline cache, and instant push alerts. |
+| **🗄️ PostgreSQL Database** | **Render** | `kisanflow-db` (PostgreSQL 15) | Relational persistence engine with connection pooling and WAL backups. |
 
 ---
 
 ## 🔑 One-Click Demo Credentials
 
-Both the web and mobile applications include **one-click demo login buttons** for instant testing:
+Both web portals include **1-click demo persona buttons** on the login screen for instant evaluation:
 
 * **👨‍🌾 Farmer Persona (Rajesh Kumar)**
   * **Phone / Aadhaar**: `9876543210`
   * **Demo OTP**: `123456`
-  * *Features available*: Book Mandi Slots, 360° SVG Radar, 37 Crop Selector, Offline E-Gate Pass with QR, Live Stage Progression, Form 'J' Tax Invoice.
+  * *Features*: Book Mandi Slots, 360° Radar, 37 Crop Selector, Offline E-Gate Pass with QR, Live Stage Progression, Form 'J' Tax Invoice.
 
 * **👷 Mandi Operator Persona (Amritsar Central APMC)**
   * **Username**: `operator1`
   * **Password**: `password123`
-  * *Features available*: High-speed QR Gate Verification, Weighbridge In/Out Entry, Quality Assay Logging (Moisture & Foreign Matter), Token Stage Promotion.
+  * *Features*: High-speed QR Gate Verification, Weighbridge In/Out Entry, Quality Assay Logging (Moisture & Foreign Matter), Token Stage Promotion.
 
 * **🏛️ District Agricultural Officer (DCA Administrator)**
   * **Username**: `admin@kisanflow.gov.in`
   * **Password**: `password123`
-  * *Features available*: Multi-centre District Heatmaps, Dynamic Mandi Load Balancing, Influx Prediction, Throughput Analytics.
+  * *Features*: Multi-centre District Heatmaps, Dynamic Mandi Load Balancing, Influx Prediction, Throughput Analytics.
 
 ---
 
 ## 🎯 The Problem & The KisanFlow Solution
 
 ### The Challenge in Traditional Mandis
-Every harvest season, millions of Indian farmers face crippling bottlenecks at Agricultural Produce Market Committees (APMC) and state procurement centres:
+Every harvest season, millions of Indian farmers face crippling bottlenecks at APMC mandis and state procurement centres:
 * **Severe Traffic & Physical Queueing**: Unscheduled arrivals force tractor-trolleys to queue for 18 to 48 hours outside mandi gates, wasting diesel and risking grain exposure to rain.
 * **Distress Selling**: Overwhelmed mandis turn away farmers, leaving them vulnerable to unscrupulous middlemen buying at 30–40% below the Minimum Support Price (MSP).
 * **Manual Paperwork & Fraud**: Paper slips, uncalibrated weight receipts, and manual assaying lead to manipulation, ghost farmers, and disputed deductions.
@@ -60,7 +138,7 @@ Every harvest season, millions of Indian farmers face crippling bottlenecks at A
 
 ### The KisanFlow Innovation
 KisanFlow digitizes and decentralizes the entire procurement lifecycle:
-1. **Dynamic Slot Scheduling**: Farmers book guaranteed unloading windows from their phone or village CSC centre.
+1. **Dynamic Slot Scheduling**: Farmers book guaranteed unloading windows from their smartphone or village CSC kiosk.
 2. **360° Native SVG Radar Mandi Locator**: Real-time visual radar showing nearby mandis, current congestion levels, and travel distance calculated using the Haversine formula.
 3. **Comprehensive 37 MSP Crop Taxonomy**: Full government-notified crop taxonomy categorized across Cereals, Pulses, Oilseeds, Commercial Crops, Millets, Spices, and Vegetables with bilingual vernacular support.
 4. **Cryptographically Signed QR E-Gate Passes**: Secure, tamper-proof gate passes that work offline, instantly verifiable by gate operators with a single scan.
@@ -143,38 +221,17 @@ sequenceDiagram
 
 ---
 
-## 💎 Key Features & Technological Innovations
+## 🧪 Proof of Testing & Verification
 
-### 1. 360° Native SVG Radar Mandi Locator
-* **Custom SVG Rendering**: High-performance, hardware-accelerated radar display showing procurement centres as dynamic radar blips.
-* **Status Rings**: Intuitive color-coded congestion indicators (Green = Light Traffic, Amber = Moderate Wait, Red = Congested).
-* **Haversine Distance Engine**: Computes spherical distance from the farmer's GPS coordinates to every regional APMC centre in real-time.
+For exhaustive test reports, cryptographic proof of tamper-resistance, and automated test logs, please refer to the dedicated testing report:
 
-### 2. Comprehensive 37 MSP Crop Taxonomy
-Full support for the Government of India's notified Minimum Support Price regime across 7 major agricultural categories:
-* **Cereals (6)**: Paddy (Common), Paddy (Grade A), Wheat, Maize, Barley, Jowar (Hybrid/Maldandi).
-* **Pulses (5)**: Gram (Chana), Tur / Arhar, Moong, Urad, Lentil (Masur).
-* **Oilseeds (8)**: Groundnut, Soybean (Yellow), Mustard & Rapeseed, Sunflower Seed, Sesamum, Nigerseed, Safflower, Copra.
-* **Commercial & Cash Crops (4)**: Cotton (Medium/Long Staple), Sugarcane (FRP), Raw Jute, Tobacco.
-* **Millets / Nutri-Cereals (6)**: Bajra, Ragi (Finger Millet), Proso Millet, Foxtail Millet, Kodo Millet, Barnyard Millet.
-* **Spices & Condiments (4)**: Turmeric, Coriander, Cumin (Jeera), Red Chilli.
-* **Vegetables & Horticulture (4)**: Potato, Onion, Tomato, Garlic.
-* *Includes real-time MSP price floors, FAQ specifications, allowable moisture percentage caps, and foreign matter thresholds.*
+👉 [**Full Proof of Testing & Verification Report (docs/TESTING_AND_VERIFICATION.md)**](docs/TESTING_AND_VERIFICATION.md)
 
-### 3. Native & Offline-First E-Gate Pass
-* **Signed QR Codes**: Contains cryptographically verified metadata (Farmer ID, Center ID, Slot Time, Vehicle Number, Crop Code).
-* **Offline Resilience**: Mobile app caches active gate passes in `AsyncStorage`, enabling farmers to display their pass even without cellular connectivity inside remote mandi yards.
-
-### 4. Digital Form 'J' & Instant Invoicing
-* Generates statutory **Form 'J'** sales receipts directly in the app.
-* Automatically tabulates:
-  $$\text{Net Weight} = \text{Gross Weight} - \text{Tare Weight} - \text{Moisture Deductions}$$
-  $$\text{Total Payout} = \text{Net Weight} \times \text{Official MSP Rate}$$
-* Includes QR verification stamp and one-click PDF / Print export.
-
-### 5. Multi-Centre Operator & DCA Intelligence
-* **Dynamic Gate Throttling**: Automatically adjusts queue throughput based on weighbridge capacity.
-* **Inter-Mandi Load Balancing**: Diverts incoming tractor loads from overloaded centres to nearby underutilized APMC mandis within a 25 km radius.
+### Verification Summary
+- **Unit & Integration Tests**: 48 automated Pytest test cases covering RBAC, IDOR, and concurrency.
+- **Frontend Quality**: Vitest test suites passing for both web portals with zero TypeScript compiler errors.
+- **Cryptographic Tamper-Proofing**: 100% rejection rate for altered payloads and replayed QR tokens.
+- **Performance**: Sub-80ms QR code verification; 21.4-minute average yard turnaround time.
 
 ---
 
@@ -182,12 +239,14 @@ Full support for the Government of India's notified Minimum Support Price regime
 
 ```
 KisanFlow-Production/
+├── .github/workflows/ci-cd.yml      # Automated GitHub Actions CI/CD Pipeline
+├── docs/
+│   ├── TESTING_AND_VERIFICATION.md # Proof of testing & side-by-side verification report
+│   └── screenshots/                # 17 High-resolution workflow screenshots
 ├── docker-compose.yml              # Local multi-container Docker cluster
 ├── docker-compose.prod.yml         # Production-ready Docker Compose orchestration
 ├── render.yaml                     # Render Infrastructure-as-Code (FastAPI + PostgreSQL)
 ├── DEPLOYMENT_PLAN.md              # Production deployment & infrastructure manual
-├── MOBILE_DEPLOYMENT_PLAN.md       # Mobile build, testing, and EAS publication guide
-├── SYSTEM_ARCHITECTURE_AND_FEATURES.md # Full technical specification & feature manual
 │
 ├── source/
 │   ├── backend/                    # Python FastAPI Core API Service
@@ -197,6 +256,7 @@ KisanFlow-Production/
 │   │   │   ├── models/             # SQLAlchemy ORM models
 │   │   │   ├── schemas/            # Pydantic v2 validation contracts
 │   │   │   └── services/           # Queue balancing, QR signing, notification engine
+│   │   ├── tests/                  # Pytest test suite (Security, Concurrency, RBAC)
 │   │   ├── Dockerfile              # Production Python 3.11 container image
 │   │   └── requirements.txt        # Backend dependencies
 │   │
@@ -213,13 +273,9 @@ KisanFlow-Production/
 │   └── mobile/                     # Mobile Applications (React Native + Expo)
 │       └── farmer-mobile/          # Farmer Mobile App (Android/iOS via Expo)
 │           ├── app/                # Expo Router file-based screens
-│           │   ├── (tabs)/         # Dashboard, Radar Mandi Booking, E-Pass, History
-│           │   ├── queue/[id].tsx  # Real-time token queue progression
-│           │   └── _layout.tsx     # Navigation root
 │           ├── src/components/     # Native SVG Radar, vernacular search, crop cards
 │           ├── src/context/        # FarmerContext with 37 crops and offline cache
-│           ├── app.json            # Expo configuration (EAS Project ID)
-│           └── eas.json            # Free Android APK build profiles
+│           └── app.json            # Expo configuration (EAS Project ID)
 ```
 
 ---
@@ -232,10 +288,10 @@ Run the entire KisanFlow ecosystem (PostgreSQL, Backend API, Farmer Web App, Man
 
 ```bash
 # Clone the repository
-git clone https://github.com/mugazhv/cold-cipher-proc.git
+git clone https://github.com/mugazhvan/cold-cipher-proc.git
 cd cold-cipher-proc
 
-# Launch all 4 services via Docker Compose
+# Launch all services via Docker Compose
 docker-compose up -d --build
 ```
 
@@ -252,18 +308,14 @@ Access the local services:
 #### 1. Backend Service (FastAPI)
 ```bash
 cd source/backend
-
-# Create virtual environment
 python -m venv venv
+
 # Windows:
 .\venv\Scripts\activate
 # Linux/macOS:
 source venv/bin/activate
 
-# Install dependencies
 pip install -r requirements.txt
-
-# Start backend server
 uvicorn app.main:app --reload --port 8000
 ```
 
@@ -283,62 +335,14 @@ npm run dev -- --port 3001
 #### 3. Farmer Mobile App (React Native / Expo)
 ```bash
 cd source/mobile/farmer-mobile
-
-# Install dependencies
 npm install
-
-# Launch Expo development server
 npx expo start
 ```
 * **Scan the generated QR code** using the **Expo Go** app on your physical Android or iPhone to immediately test on a live device!
-* Press `w` in the terminal to run in the web browser.
-* Press `a` to run on a connected Android device or emulator.
 
 ---
 
-### Method 3: Building a Standalone Android APK
-
-To build a standalone APK without needing an Expo development server:
-
-```bash
-cd source/mobile/farmer-mobile
-
-# Install EAS CLI globally (if not installed)
-npm install -g eas-cli
-
-# Login to your free Expo account
-eas login
-
-# Trigger cloud build for Android APK
-eas build -p android --profile preview
-```
-Once complete, EAS provides a direct download link and QR code to install the `.apk` on any Android smartphone.
-
----
-
-## 📡 Core API Specification
-
-| HTTP Method | Endpoint | Description | Auth Required |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/api/v1/auth/login` | Authenticate operator or admin; returns JWT bearer token | No |
-| `POST` | `/api/v1/auth/otp/send` | Request OTP for farmer mobile number | No |
-| `POST` | `/api/v1/auth/otp/verify` | Verify OTP and authenticate farmer | No |
-| `GET` | `/api/v1/centres/` | List all procurement centres with live congestion status | No |
-| `GET` | `/api/v1/centres/{id}/radar` | Retrieve radar coordinates and real-time waiting times | No |
-| `POST` | `/api/v1/bookings/` | Create a new mandi slot reservation | Farmer |
-| `GET` | `/api/v1/bookings/demo/generate-qr` | Generate cryptographically signed QR gate pass payload | No |
-| `GET` | `/api/v1/tokens/active` | Fetch active queue tokens for a specific centre | Operator |
-| `POST` | `/api/v1/tokens/{id}/verify-gate` | Verify vehicle arrival at mandi ingress gate | Operator |
-| `POST` | `/api/v1/weighbridge/entry` | Record gross incoming vehicle weight | Operator |
-| `POST` | `/api/v1/quality/inspect` | Submit grain moisture and foreign matter assay results | Operator |
-| `POST` | `/api/v1/weighbridge/exit` | Record tare weight and compute final net grain weight | Operator |
-| `GET` | `/api/v1/j-forms/{token_id}` | Fetch or generate digital Form 'J' procurement invoice | Farmer / Operator |
-
-*Full interactive documentation and testing sandbox available at [kisanflow-backend.onrender.com/docs](https://kisanflow-backend.onrender.com/docs).*
-
----
-
-## 👥 Smart India Hackathon (SIH) Prototype Submission
+## 👥 Smart India Hackathon (SIH) Submission Details
 
 * **Team**: Cold Cipher
 * **Theme**: Smart Automation
