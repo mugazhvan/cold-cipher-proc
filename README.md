@@ -340,8 +340,8 @@ Once complete, EAS provides a direct download link and QR code to install the `.
 
 ## 👥 Smart India Hackathon (SIH) Prototype Submission
 
-* **Team**: Cold Cipher Proc
-* **Theme**: Agriculture, Food Tech & Rural Development
+* **Team**: Cold Cipher
+* **Theme**: Smart Automation
 * **Solution Track**: Next-Gen APMC Mandi Queue Optimization, Slot Booking & MSP Procurement Transparency
 * **Target Beneficiaries**: Smallholder Farmers, Mandi Samiti Operators, State Civil Supplies Corporations (FCI, HAFED, Markfed, PUNSUP).
 
