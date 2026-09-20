@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -22,6 +22,7 @@ import {
   Sparkles,
   ShieldCheck,
   ArrowRight,
+  Search,
 } from 'lucide-react-native';
 
 const SLOTS_WINDOWS = [
@@ -30,6 +31,17 @@ const SLOTS_WINDOWS = [
   { id: 'slot-3', range: '02:00 PM - 03:30 PM', capacity: 500, booked: 210, isRec: false },
   { id: 'slot-4', range: '04:00 PM - 05:30 PM', capacity: 500, booked: 90, isRec: false },
 ];
+
+const CROP_CATEGORIES = [
+  { key: 'ALL', label: 'All Crops' },
+  { key: 'Cereals', label: '🌾 Cereals' },
+  { key: 'Millets', label: '🥣 Shree Anna' },
+  { key: 'Pulses', label: '🫘 Pulses (Dal)' },
+  { key: 'Oilseeds', label: '🌼 Oilseeds' },
+  { key: 'Commercial', label: '☁️ Commercial' },
+  { key: 'Spices', label: '🌶️ Spices' },
+  { key: 'Vegetables', label: '🥔 Vegetables' },
+] as const;
 
 export default function BookSlotScreen() {
   const router = useRouter();
@@ -44,6 +56,8 @@ export default function BookSlotScreen() {
   } = useFarmer();
 
   const [selectedCropId, setSelectedCropId] = useState(crops[0].id);
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  const [cropSearch, setCropSearch] = useState<string>('');
   const [estimatedQuintals, setEstimatedQuintals] = useState<number>(45);
   const [vehicleType, setVehicleType] = useState<string>(activeVehicleType);
   const [vehicleNumber, setVehicleNumber] = useState<string>('PB-10-DF-4819');
@@ -52,6 +66,20 @@ export default function BookSlotScreen() {
       centres.find((c) => c.isAiRecommended)?.id ||
       centres[0].id
   );
+
+  // Filter crops by category and search keyword
+  const filteredCrops = useMemo(() => {
+    return crops.filter((crop) => {
+      const matchesCat = selectedCategory === 'ALL' || crop.category === selectedCategory;
+      const q = cropSearch.trim().toLowerCase();
+      const matchesSearch =
+        !q ||
+        crop.name.toLowerCase().includes(q) ||
+        crop.hindiName.toLowerCase().includes(q) ||
+        crop.punjabiName.toLowerCase().includes(q);
+      return matchesCat && matchesSearch;
+    });
+  }, [crops, selectedCategory, cropSearch]);
 
   // Sync if pre-selected from Radar
   useEffect(() => {
@@ -124,31 +152,88 @@ export default function BookSlotScreen() {
           <Text style={styles.stepTitle}>Crop & Produce Estimation</Text>
         </View>
 
-        {/* Horizontal Crop Cards */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cropScroll}>
-          {crops.map((crop) => {
-            const isSelected = crop.id === selectedCropId;
+        {/* Crop Search Bar */}
+        <View style={styles.cropSearchRow}>
+          <Search size={14} color="#94A3B8" style={{ marginRight: 6 }} />
+          <TextInput
+            style={styles.cropSearchInput}
+            placeholder="Search 35+ crops (Wheat, Kanak, Sarson, Moong...)"
+            placeholderTextColor="#64748B"
+            value={cropSearch}
+            onChangeText={setCropSearch}
+          />
+          {cropSearch.length > 0 && (
+            <TouchableOpacity onPress={() => setCropSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Text style={styles.cropSearchClear}>✕</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Horizontal Category Filter Pills */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll}>
+          {CROP_CATEGORIES.map((cat) => {
+            const isCatActive = selectedCategory === cat.key;
             return (
               <TouchableOpacity
-                key={crop.id}
-                style={[styles.cropCard, isSelected && styles.cropCardActive]}
-                onPress={() => setSelectedCropId(crop.id)}
+                key={cat.key}
+                style={[styles.catChip, isCatActive && styles.catChipActive]}
+                onPress={() => setSelectedCategory(cat.key)}
               >
-                <Text style={styles.cropIcon}>{crop.icon}</Text>
-                <Text style={[styles.cropName, isSelected && styles.cropNameActive]}>
-                  {crop.name.split(' ')[0]}
+                <Text style={[styles.catChipText, isCatActive && styles.catChipTextActive]}>
+                  {cat.label}
                 </Text>
-                <Text style={styles.cropMsp}>₹{crop.mspPerQuintal}/qtl</Text>
-                <Text style={styles.cropMoisture}>Max {crop.maxMoisturePct}% H₂O</Text>
-                {isSelected && (
-                  <View style={styles.cropCheckDot}>
-                    <CheckCircle2 size={12} color="#10B981" />
-                  </View>
-                )}
               </TouchableOpacity>
             );
           })}
         </ScrollView>
+
+        {/* Horizontal Crop Cards */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cropScroll}>
+          {filteredCrops.length === 0 ? (
+            <View style={styles.noCropBox}>
+              <Text style={styles.noCropText}>No matching crop found for "{cropSearch}".</Text>
+            </View>
+          ) : (
+            filteredCrops.map((crop) => {
+              const isSelected = crop.id === selectedCropId;
+              return (
+                <TouchableOpacity
+                  key={crop.id}
+                  style={[styles.cropCard, isSelected && styles.cropCardActive]}
+                  onPress={() => setSelectedCropId(crop.id)}
+                >
+                  <Text style={styles.cropIcon}>{crop.icon}</Text>
+                  <Text style={[styles.cropName, isSelected && styles.cropNameActive]} numberOfLines={2}>
+                    {crop.name}
+                  </Text>
+                  <Text style={styles.cropVernacular} numberOfLines={1}>
+                    {crop.hindiName}
+                  </Text>
+                  <Text style={styles.cropMsp}>₹{crop.mspPerQuintal}/qtl</Text>
+                  <Text style={styles.cropMoisture}>Max {crop.maxMoisturePct}% H₂O</Text>
+                  {isSelected && (
+                    <View style={styles.cropCheckDot}>
+                      <CheckCircle2 size={12} color="#10B981" />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })
+          )}
+        </ScrollView>
+
+        {/* Selected Crop Spotlight Banner */}
+        <View style={styles.selectedCropBanner}>
+          <Text style={styles.selectedCropBannerIcon}>{selectedCrop.icon}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.selectedCropBannerTitle}>
+              {selectedCrop.name}
+            </Text>
+            <Text style={styles.selectedCropBannerSub}>
+              {selectedCrop.hindiName} • {selectedCrop.punjabiName} | MSP ₹{selectedCrop.mspPerQuintal}/qtl | Max {selectedCrop.maxMoisturePct}% H₂O
+            </Text>
+          </View>
+        </View>
 
         {/* Quantity Input & Stepper */}
         <View style={styles.quantityBox}>
@@ -432,8 +517,57 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#FFFFFF',
   },
+  cropSearchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0F172A',
+    borderWidth: 1,
+    borderColor: '#334155',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 8,
+  },
+  cropSearchInput: {
+    flex: 1,
+    color: '#FFFFFF',
+    fontSize: 12,
+    paddingVertical: 2,
+  },
+  cropSearchClear: {
+    color: '#94A3B8',
+    fontSize: 12,
+    fontWeight: '700',
+    paddingHorizontal: 4,
+  },
+  catScroll: {
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  catChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    backgroundColor: '#0F172A',
+    borderWidth: 1,
+    borderColor: '#334155',
+    marginRight: 6,
+  },
+  catChipActive: {
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    borderColor: '#10B981',
+  },
+  catChipText: {
+    fontSize: 11,
+    color: '#94A3B8',
+    fontWeight: '600',
+  },
+  catChipTextActive: {
+    color: '#34D399',
+    fontWeight: '800',
+  },
   cropScroll: {
-    marginBottom: 14,
+    marginBottom: 10,
   },
   cropCard: {
     backgroundColor: '#0F172A',
@@ -474,10 +608,51 @@ const styles = StyleSheet.create({
     color: '#64748B',
     marginTop: 2,
   },
+  cropVernacular: {
+    fontSize: 9,
+    color: '#94A3B8',
+    marginTop: 2,
+    textAlign: 'center',
+  },
   cropCheckDot: {
     position: 'absolute',
     top: 6,
     right: 6,
+  },
+  noCropBox: {
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 260,
+  },
+  noCropText: {
+    color: '#94A3B8',
+    fontSize: 12,
+    fontStyle: 'italic',
+  },
+  selectedCropBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.3)',
+    borderRadius: 12,
+    padding: 10,
+    marginBottom: 12,
+    gap: 10,
+  },
+  selectedCropBannerIcon: {
+    fontSize: 22,
+  },
+  selectedCropBannerTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#A7F3D0',
+  },
+  selectedCropBannerSub: {
+    fontSize: 10,
+    color: '#94A3B8',
+    marginTop: 2,
   },
   quantityBox: {
     backgroundColor: '#0F172A',

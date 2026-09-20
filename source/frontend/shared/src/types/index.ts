@@ -61,7 +61,7 @@ export interface CropInfo {
   name: string;
   hindiName: string;
   punjabiName: string;
-  category: 'Rabi' | 'Kharif';
+  category: 'Rabi' | 'Kharif' | 'Zaid' | 'Commercial' | 'Spices' | 'Horticulture';
   mspPerQuintal: number;
   maxMoisturePct: number;
   standardBagWeightKg: number;
