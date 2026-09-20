@@ -16,7 +16,9 @@
 <p align="center">
   <b>Eliminating Mandi Congestion • Preventing Distress Selling • Securing Middleman-Free Direct Benefit Transfers</b>
   <br />
-  <i>Developed for Smart India Hackathon (SIH) | Problem Statement: Agricultural Supply Chain & Mandi Modernization</i>
+  <i>Developed for Smart India Hackathon (SIH) | Problem Statement: Farmers often face long waiting time , lack of information regarding procurement schedules, and uncertainty about procurement status 
+![Uploading image.png…]()
+</i>
 </p>
 
 [🌐 Live Farmer Portal](https://management-app-fawn-five.vercel.app/) • [🏢 Live Operator Console](https://management-app-mugal1.vercel.app/) • [⚡ REST API Docs](https://kisanflow-backend.onrender.com/docs) • [🧪 Testing & Verification](docs/TESTING_AND_VERIFICATION.md)
