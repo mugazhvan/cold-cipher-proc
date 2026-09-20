@@ -61,7 +61,11 @@ graph TD
     
     E --> E1[TypeScript Compiler Verification]
     
-    C1 & C2 & D1 & D2 & E1 --> F[Quality Gate: Verified & Approved]
+    C1 --> F[Quality Gate: Verified and Approved]
+    C2 --> F
+    D1 --> F
+    D2 --> F
+    E1 --> F
 ```
 
 ### Automated Test Matrix

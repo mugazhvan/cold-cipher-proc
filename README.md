@@ -204,19 +204,19 @@ sequenceDiagram
     participant Gate as 🚧 Mandi Ingress Gate
     participant Scale as ⚖️ Weighbridge
     participant Lab as 🔬 Quality Lab
-    participant Payout as 💰 DBT / Bank
+    participant Payout as 💰 DBT Bank
 
-    Farmer->>App: 1. Selects Crop & Books Guaranteed Slot
+    Farmer->>App: 1. Selects Crop and Books Guaranteed Slot
     App-->>Farmer: Generates Signed QR E-Gate Pass (Status: BOOKED)
-    Farmer->>Gate: 2. Arrives at Mandi; Presents QR Pass
-    Gate->>Gate: Scans QR; Verifies Authenticity (Status: ARRIVED)
+    Farmer->>Gate: 2. Arrives at Mandi, Presents QR Pass
+    Gate->>Gate: Scans QR and Verifies Authenticity (Status: ARRIVED)
     Gate->>Scale: 3. Vehicle drives onto Weighbridge (Gross Weight)
     Scale-->>App: Logs Gross Weight (Status: WEIGHBRIDGE_IN)
-    Scale->>Lab: 4. Unloads produce & assays moisture/foreign matter
-    Lab-->>App: Logs Quality Grade & Allowable Deductions (Status: QUALITY_CHECK)
-    Lab->>Scale: 5. Empty vehicle weighs tare weight; Net weight computed
+    Scale->>Lab: 4. Unloads produce and assays moisture/quality
+    Lab-->>App: Logs Quality Grade and Deductions (Status: QUALITY_CHECK)
+    Lab->>Scale: 5. Empty vehicle weighs tare weight, Net weight computed
     Scale-->>Payout: Approves procurement voucher (Status: COMPLETED)
-    Payout-->>Farmer: Instant Digital Form 'J' issued + DBT Transfer initiated!
+    Payout-->>Farmer: Instant Digital Form J issued and DBT Transfer initiated
 ```
 
 ---
