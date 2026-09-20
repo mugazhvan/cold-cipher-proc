@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
+import { FarmerProvider } from '../src/context/FarmerContext';
 import { View, ActivityIndicator } from 'react-native';
 
 function RootLayoutNav() {
@@ -25,7 +26,7 @@ function RootLayoutNav() {
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#208AEF" />
+        <ActivityIndicator size="large" color="#10B981" />
       </View>
     );
   }
@@ -41,7 +42,9 @@ function RootLayoutNav() {
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <RootLayoutNav />
+      <FarmerProvider>
+        <RootLayoutNav />
+      </FarmerProvider>
     </AuthProvider>
   );
 }
