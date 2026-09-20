@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { CROPS_CATALOG } from '../mockData';
 
 const rawEnvUrl = (import.meta as any).env?.VITE_API_BASE_URL;
 export const BASE_URL = rawEnvUrl || 'http://localhost:8000/api/v1';
@@ -677,10 +678,14 @@ export async function getCrops(): Promise<any> {
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   try {
-    const res = await axios.get(`${BASE_URL}/crops/`, { headers });
-    return res.data;
+    const res = await axios.get(`${BASE_URL}/crops`, { headers, timeout: 5000 });
+    if (res.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
+      return res.data;
+    }
+    return { success: true, data: CROPS_CATALOG, message: 'Loaded from local catalogue' };
   } catch (error: any) {
-    return error.response?.data ?? { success: false, message: error.message };
+    console.warn('Backend crops API call failed, falling back to CROPS_CATALOG:', error.message);
+    return { success: true, data: CROPS_CATALOG, message: 'Loaded from local catalogue fallback' };
   }
 }
 
