@@ -22,7 +22,7 @@
       "package": "com.kisanflow.farmer"
     },
     "web": {
-      "output": "static",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
@@ -37,8 +37,7 @@
       ]
     ],
     "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+      "typedRoutes": false
     },
     "extra": {
       "router": {},
