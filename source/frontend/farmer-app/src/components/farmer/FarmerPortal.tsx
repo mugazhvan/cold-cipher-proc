@@ -27,6 +27,7 @@ import {
 export const FarmerPortal: React.FC = () => {
   const [activeItem, setActiveItem] = useState('dashboard');
   const [isPassModalOpen, setIsPassModalOpen] = useState(false);
+  const [selectedCentreForBooking, setSelectedCentreForBooking] = useState<string | undefined>(undefined);
   const {
     farmer,
     crops,
@@ -257,10 +258,22 @@ export const FarmerPortal: React.FC = () => {
         );
 
       case 'find-centre':
-        return <NearbyMandiBoard onSelectCentreToBook={() => setActiveItem('recommended-slots')} />;
+        return (
+          <NearbyMandiBoard
+            onSelectCentreToBook={(centreId) => {
+              setSelectedCentreForBooking(centreId);
+              setActiveItem('recommended-slots');
+            }}
+          />
+        );
 
       case 'recommended-slots':
-        return <SlotBooking onSuccess={() => setActiveItem('live-queue')} />;
+        return (
+          <SlotBooking
+            initialCentreId={selectedCentreForBooking}
+            onSuccess={() => setActiveItem('live-queue')}
+          />
+        );
 
       case 'my-bookings':
         return (

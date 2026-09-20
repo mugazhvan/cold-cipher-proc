@@ -97,11 +97,18 @@ const formatDateChip = (dateStr: string) => {
   }
 };
 
+import {
+  calculateHaversineDistance,
+  getUserGeolocation,
+  GeoLocationCoords
+} from '../../utils/geoUtils';
+
 interface SlotBookingProps {
   onSuccess: () => void;
+  initialCentreId?: string;
 }
 
-export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
+export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess, initialCentreId }) => {
   const { farmer, crops, centres, bookSlot, language } = useKisanFlow();
   const t = TRANSLATIONS[language];
 
@@ -112,8 +119,19 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
   const [selectedCropId, setSelectedCropId] = useState(crops[0]?.id || 'crop-wheat');
   const [estimatedQuintals, setEstimatedQuintals] = useState<number>(45);
   const [selectedCentreId, setSelectedCentreId] = useState(
-    centres.find((c) => c.isAiRecommended)?.id || centres[0]?.id || 'centre-samrala'
+    initialCentreId || centres.find((c) => c.isAiRecommended)?.id || centres[0]?.id || 'centre-samrala'
   );
+  const [userLocation, setUserLocation] = useState<GeoLocationCoords | null>(null);
+
+  useEffect(() => {
+    getUserGeolocation().then((loc) => setUserLocation(loc));
+  }, []);
+
+  useEffect(() => {
+    if (initialCentreId) {
+      setSelectedCentreId(initialCentreId);
+    }
+  }, [initialCentreId]);
   const [slotDate, setSlotDate] = useState(todayStr);
   const [slotTime, setSlotTime] = useState('09:30 AM - 10:30 AM');
   const [selectedSlotId, setSelectedSlotId] = useState<string>('slot-morning-1');
@@ -549,6 +567,16 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
               <div className="space-y-3">
                 {centres.map((centre) => {
                   const isSelected = centre.id === selectedCentreId;
+                  const liveDistance =
+                    userLocation && centre.latitude && centre.longitude
+                      ? calculateHaversineDistance(
+                          userLocation.latitude,
+                          userLocation.longitude,
+                          centre.latitude,
+                          centre.longitude
+                        )
+                      : centre.distanceKm;
+
                   return (
                     <div
                       key={centre.id}
@@ -574,11 +602,26 @@ export const SlotBooking: React.FC<SlotBookingProps> = ({ onSuccess }) => {
                                   {t.aiRecommendedBadge}
                                 </span>
                               )}
+                              {isSelected && (
+                                <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                  Selected
+                                </span>
+                              )}
                             </div>
-                            <p className="text-xs text-slate-500 mt-0.5">
-                              Distance: <strong>{centre.distanceKm} km</strong> from your village •
-                              Active Weighbridges: {centre.activeBays}
-                            </p>
+                            <div className="text-xs text-slate-500 mt-0.5 flex flex-wrap items-center gap-1.5">
+                              <span>Distance: <strong className="text-slate-800">{liveDistance} km</strong></span>
+                              {userLocation?.source === 'GPS_LIVE' ? (
+                                <span className="inline-flex items-center space-x-1 text-[10px] bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.5 rounded border border-emerald-200">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                                  <span>Live GPS</span>
+                                </span>
+                              ) : (
+                                <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
+                                  Village Hub
+                                </span>
+                              )}
+                              <span>• Active Weighbridges: {centre.activeBays}</span>
+                            </div>
                             {centre.recommendedReason && (
                               <p className="text-[11px] text-emerald-700 mt-1 font-medium flex items-center space-x-1">
                                 <span>⚡ {centre.recommendedReason}</span>

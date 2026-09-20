@@ -74,7 +74,12 @@ export interface ProcurementCentre {
   code: string;
   district: string;
   state: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
   distanceKm: number;
+  transitMinutes?: number;
+  googleMapsUrl?: string;
   currentQueueCount: number;
   avgWaitMinutes: number;
   yardCapacityPercent: number;
