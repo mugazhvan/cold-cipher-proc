@@ -30,8 +30,7 @@
 | [08 Research Papers](08_RESEARCH_PAPERS.md) | Academic and domain evidence |
 | [09 Full Bibliography](09_FULL_BIBLIOGRAPHY.md) | Complete references |
 | [10 Unsupported Claims](10_UNSUPPORTED_CLAIMS.md) | What we explicitly do NOT claim |
-| [11 Judge Defense](11_JUDGE_DEFENSE.md) | Technical Q&A preparation |
-| [12 Slide 6](12_SLIDE_6_RESEARCH_REFERENCES.md) | References specifically for Slide 6 |
+
 
 ### System Overview
 
