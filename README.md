@@ -21,7 +21,7 @@
 </i>
 </p>
 
-[🌐 Live Farmer Portal](https://management-app-fawn-five.vercel.app/) • [🏢 Live Operator Console](https://management-app-mugal1.vercel.app/) • [⚡ REST API Docs](https://kisanflow-backend.onrender.com/docs) • [🧪 Testing & Verification](docs/TESTING_AND_VERIFICATION.md)
+[🌐 Live Farmer Portal](https://management-app-fawn-five.vercel.app/) • [🏢 Live Operator Console](https://management-app-mugal1.vercel.app/) • [⚡ REST API Docs](https://kisanflow-backend.onrender.com/docs) • [🧪 Testing & Verification](docs/TESTING_AND_VERIFICATION.md) • [📊 Research & Provenance Audit](sih_audit_reports/01_SOURCE_AUDIT.md)
 
 </div>
 
@@ -237,6 +237,22 @@ For exhaustive test reports, cryptographic proof of tamper-resistance, and autom
 
 ---
 
+## 📊 Complete Research & Provenance Audit
+
+For the Smart India Hackathon (SIH26032), we have conducted a rigorous, fully transparent source and provenance audit of the entire codebase and its domain claims.
+
+👉 [**View the Master Research, Provenance & Technical Audit (sih_audit_reports/01_SOURCE_AUDIT.md)**](sih_audit_reports/01_SOURCE_AUDIT.md)
+
+### Audit Highlights:
+- **[Claim vs Source Matrix](sih_audit_reports/02_CLAIM_SOURCE_MATRIX.md)**: Proof of every pitch claim matched to the codebase.
+- **[Security Audit](sih_audit_reports/07_SECURITY_AUDIT.md)**: Mathematical proof of Zero-Overbooking (PostgreSQL row-locks) and Cryptographic E-Passes (HMAC-SHA256).
+- **[Pricing & Cost Audit](sih_audit_reports/05_PRICING_COST_AUDIT.md)**: Cloud hosting feasibility at zero-cost.
+- **[Existing System Comparison](sih_audit_reports/04_EXISTING_SYSTEM_COMPARISON.md)**: How KisanFlow differentiates from e-NAM and e-Kharid.
+- **[Technical Stack References](sih_audit_reports/06_TECH_STACK_REFERENCES.md)**: Verified FOSS stack (React, FastAPI, PostgreSQL).
+- **[Research & Domain Evidence](sih_audit_reports/08_RESEARCH_PAPERS.md)**: Justification of the congestion bottleneck via official CCS NIAM reports.
+
+---
+
 ## 📁 Repository Directory Structure
 
 ```
@@ -346,10 +362,30 @@ npx expo start
 
 ## 👥 Smart India Hackathon (SIH) Submission Details
 
-* **Team**: Cold Cipher
-* **Theme**: Smart Automation
-* **Solution Track**: Next-Gen APMC Mandi Queue Optimization, Slot Booking & MSP Procurement Transparency
-* **Target Beneficiaries**: Smallholder Farmers, Mandi Samiti Operators, State Civil Supplies Corporations (FCI, HAFED, Markfed, PUNSUP).
+<div align="center">
+
+| **Team Name** | **Cold Cipher** |
+| :--- | :--- |
+| **Theme** | Smart Automation |
+| **Solution Track** | Next-Gen APMC Mandi Queue Optimization, Slot Booking & MSP Procurement Transparency |
+| **Target Beneficiaries** | Smallholder Farmers, Mandi Samiti Operators, State Civil Supplies Corporations (FCI, HAFED, Markfed, PUNSUP). |
+
+### 👨‍💻 Meet the Team
+
+<table>
+  <tr>
+    <td align="center"><b>👑 Shanmugazhvan G</b><br><i>Team Leader</i></td>
+    <td align="center"><b>✨ Khushi Vasani</b><br><i>Member</i></td>
+    <td align="center"><b>🚀 Aradhya Maurya</b><br><i>Member</i></td>
+  </tr>
+  <tr>
+    <td align="center"><b>💻 Bhuvan M</b><br><i>Member</i></td>
+    <td align="center"><b>🧠 Arunit Das</b><br><i>Member</i></td>
+    <td align="center"><b>🎨 Thanirika K</b><br><i>Member</i></td>
+  </tr>
+</table>
+
+</div>
 
 ---
 

@@ -514,10 +514,10 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
                 onChange={(e) => setSelectedCrop(e.target.value)}
                 className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-slate-900 cursor-pointer"
               >
-                <option value="">Select Crop</option>
-                {crops.map((crop: any) => (
-                  <option key={crop.id} value={crop.id}>{crop.name}</option>
-                ))}
+                  <option value="">Select Crop</option>
+                  {(crops && crops.length > 0 ? crops : CROPS_CATALOG).map((crop: any) => (
+                    <option key={crop.id} value={crop.id}>{crop.name}</option>
+                  ))}
               </select>
             </div>
             <div>
@@ -809,7 +809,7 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
                   className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 font-semibold cursor-pointer focus:ring-2 focus:ring-slate-900 focus:outline-hidden"
                   required
                 >
-                  {crops.map((c) => (
+                  {(crops && crops.length > 0 ? crops : CROPS_CATALOG).map((c) => (
                     <option key={c.id} value={c.id} className="text-slate-900 py-1">
                       {c.name} {c.category ? `• ${c.category}` : ''}
                     </option>
@@ -915,7 +915,7 @@ export function CentreManagement({ centreId, initialTab = 'management' }: Centre
                   className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 font-semibold cursor-pointer focus:ring-2 focus:ring-slate-900 focus:outline-hidden"
                   required
                 >
-                  {crops.map((c) => (
+                  {(crops && crops.length > 0 ? crops : CROPS_CATALOG).map((c) => (
                     <option key={c.id} value={c.id} className="text-slate-900 py-1">
                       {c.name} {c.category ? `• ${c.category}` : ''}
                     </option>
