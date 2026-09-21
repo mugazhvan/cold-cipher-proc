@@ -135,14 +135,15 @@ The stack reflects the exact technologies running in the current repository depl
 
 ---
 
-## Documentation Index
+## 📚 Documentation Index
 
-Explore the comprehensive audit of the KisanFlow platform:
+Explore the comprehensive research, audits, and plans for the KisanFlow platform:
 
 * **[Demo Links & QR Codes](docs/public/DEMO_LINKS.md)** — Quick access for presentations.
-* **[Source Audit](docs/research/SOURCE_AUDIT.md)** — Verification of external platforms (e-NAM, PFMS) that influenced our design.
-* **[All References](docs/research/ALL_REFERENCES.md)** — Exhaustive list of technical, academic, and government links.
-* **[Cost Audit](docs/research/COST_AUDIT.md)** — Projected operational costs for our cloud infrastructure.
+* **[Research & Provenance](docs/RESEARCH.md)** — Foundational research on APMC bottlenecks and e-NAM integration.
+* **[Reports](docs/REPORTS.md)** — QA, performance profiling, and end-to-end system testing results.
+* **[Audits](docs/AUDITS.md)** — Consolidated security, compliance, source, cost, and accessibility audits.
 * **[Implementation Status](docs/IMPLEMENTATION_STATUS.md)** — A strict accounting of what is built vs. simulated.
 * **[Limitations](docs/LIMITATIONS.md)** — Responsible disclosure of prototype constraints.
-* **[Future Scope](docs/FUTURE_SCOPE.md)** — Where the platform goes next.
+* **[Future Plan](docs/FUTURE_PLAN.md)** — Strategic technical expansions and real-world deployment phases.
+
