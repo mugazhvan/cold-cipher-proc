@@ -8,6 +8,9 @@ export default defineConfig({
     port: 3001,
     host: true
   },
+  resolve: {
+    preserveSymlinks: true,
+  },
   test: {
     globals: true,
     environment: 'jsdom',
