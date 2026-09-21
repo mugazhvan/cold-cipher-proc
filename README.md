@@ -21,7 +21,7 @@
 </i>
 </p>
 
-[🌐 Live Farmer Portal](https://management-app-fawn-five.vercel.app/) • [🏢 Live Operator Console](https://management-app-mugal1.vercel.app/) • [⚡ REST API Docs](https://kisanflow-backend.onrender.com/docs) • [🧪 Testing & Verification](docs/TESTING_AND_VERIFICATION.md) • [📊 Research & Provenance Audit](sih_audit_reports/01_SOURCE_AUDIT.md)
+[🌐 Live Farmer Portal](https://management-app-fawn-five.vercel.app/) • [🏢 Live Operator Console](https://management-app-alpha-six.vercel.app) • [⚡ REST API Docs](https://kisanflow-backend.onrender.com/docs) • [🧪 Testing & Verification](docs/TESTING_AND_VERIFICATION.md) • [📊 Research & Provenance Audit](sih_audit_reports/01_SOURCE_AUDIT.md)
 
 </div>
 
@@ -100,7 +100,7 @@ KisanFlow provides a synchronized, dual-sided workflow. Here is how both sides i
 | Component | Host | Live Production URL | Purpose / Capabilities |
 | :--- | :--- | :--- | :--- |
 | **🚜 Farmer Web Portal** | **Vercel** | [**management-app-fawn-five.vercel.app**](https://management-app-fawn-five.vercel.app/) | Interactive slot booking, 360° radar mandi locator, 37 MSP crops, live queue tracking, and digital Form 'J'. |
-| **🏢 Mandi Management & DCA Console** | **Vercel** | [**management-app-mugal1.vercel.app**](https://management-app-mugal1.vercel.app/) | Mandi operator & district agricultural administrator dashboard for queue orchestration, gate check-in, weighbridge logging, and analytics. |
+| **🏢 Mandi Management & DCA Console** | **Vercel** | [**management-app-mugal1.vercel.app**](https://management-app-alpha-six.vercel.app) | Mandi operator & district agricultural administrator dashboard for queue orchestration, gate check-in, weighbridge logging, and analytics. |
 | **⚡ Backend REST API & Swagger UI** | **Render** | [**kisanflow-backend.onrender.com/docs**](https://kisanflow-backend.onrender.com/docs) | Interactive OpenAPI / Swagger API documentation with live execution of all authentication, booking, queue, and verification endpoints. |
 | **📖 ReDoc API Specification** | **Render** | [**kisanflow-backend.onrender.com/redoc**](https://kisanflow-backend.onrender.com/redoc) | Clean, readable data schemas and API contracts. |
 | **📱 Farmer Mobile App (Expo)** | **Expo / EAS** | [**expo.dev/accounts/mugazhv/projects/farmer-mobile**](https://expo.dev/accounts/mugazhv/projects/farmer-mobile) | React Native / Expo app featuring native SVG radar, camera QR pass, offline cache, and instant push alerts. |
