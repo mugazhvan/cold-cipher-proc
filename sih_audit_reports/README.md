@@ -1,27 +1,27 @@
-﻿# 🌾 KisanFlow
+# ?? KisanFlow
 ## Research, Provenance & Technical Audit
 
-> **SIH 2026 · Problem Statement SIH26032 · Cold Cipher**
+> **SIH 2026 � Problem Statement SIH26032 � Cold Cipher**
 
 ### Audit at a Glance
 
 | Area | Status |
 |---|---|
-| Domain Research | ✅ Verified |
-| Core Booking Workflow | ✅ Implemented |
-| Queue Management | ✅ Implemented |
-| QR Verification | ✅ Implemented |
-| Concurrent Booking Protection | 🧪 Tested |
-| Wait-Time Logic | ⚠️ Deterministic Heuristic |
-| PFMS / UIDAI | ⚠️ Simulation / Future |
-| AI / ML | ❌ Not Implemented |
+| Domain Research | ? Verified |
+| Core Booking Workflow | ? Implemented |
+| Queue Management | ? Implemented |
+| QR Verification | ? Implemented |
+| Concurrent Booking Protection | ?? Tested |
+| Wait-Time Logic | ?? Deterministic Heuristic |
+| PFMS / UIDAI | ?? Simulation / Future |
+| AI / ML | ? Not Implemented |
 
 ### Documentation Architecture
 
 | Document | What a Judge Finds |
 |---|---|
 | [01 Source Audit](01_SOURCE_AUDIT.md) | Complete external source register |
-| [02 Claim Matrix](02_CLAIM_SOURCE_MATRIX.md) | Claim → evidence → safe wording |
+| [02 Claim Matrix](02_CLAIM_SOURCE_MATRIX.md) | Claim ? evidence ? safe wording |
 | [03 Implementation Provenance](03_IMPLEMENTATION_PROVENANCE.md) | What the code actually implements |
 | [04 Existing Systems](04_EXISTING_SYSTEM_COMPARISON.md) | e-NAM/e-Kharid comparison |
 | [05 Cost Audit](05_PRICING_COST_AUDIT.md) | Hosting and deployment feasibility |
@@ -48,10 +48,10 @@ flowchart LR
 
 ---
 **Quick Links**
-- [🌐 Farmer Portal](https://management-app-fawn-five.vercel.app/)
-- [🏢 Operator Console](https://management-app-mugal1.vercel.app/)
-- [⚡ Swagger API](https://kisanflow-backend.onrender.com/docs)
-- [📖 ReDoc](https://kisanflow-backend.onrender.com/redoc)
-- [📱 Expo App](https://expo.dev/accounts/mugazhv/projects/farmer-mobile)
-- [💻 GitHub Repository](https://github.com/mugazhvan/cold-cipher-proc)
+- [?? Farmer Portal](https://management-app-fawn-five.vercel.app/)
+- [?? Operator Console](https://management-app-mugal1.vercel.app/)
+- [? Swagger API](https://kisanflow-backend.onrender.com/docs)
+- [?? ReDoc](https://kisanflow-backend.onrender.com/redoc)
+- [?? Expo App](https://expo.dev/accounts/mugazhv/projects/farmer-mobile)
+- [?? GitHub Repository](https://github.com/mugazhvan/cold-cipher-proc)
 
