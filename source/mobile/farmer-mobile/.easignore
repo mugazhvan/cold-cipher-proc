@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Expo / build artifacts
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+*.tsbuildinfo
+
+# Native folders (managed workflow - EAS Prebuild generates them)
+/ios
+/android
+
+# Native build / keys
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Env files
+.env*.local
+
+# System & logs
+.DS_Store
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
