@@ -47,7 +47,7 @@ export const CROPS_CATALOG: CropInfo[] = [
     hindiName: 'धान सामान्य (परमल)',
     punjabiName: 'ਝੋਨਾ ਆਮ (ਪਰਮਲ)',
     category: 'Kharif',
-    mspPerQuintal: 2203,
+    mspPerQuintal: 2300,
     maxMoisturePct: 17.0,
     standardBagWeightKg: 50,
     icon: '🌱',
