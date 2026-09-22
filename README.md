@@ -173,7 +173,7 @@ graph TD;
 | :--- | :--- | :--- |
 | **Farmer App** | [management-app-fawn-five.vercel.app](https://management-app-fawn-five.vercel.app/) | Portal for slot booking and queue visibility. |
 | **Operator App** | [management-app-alpha-six.vercel.app](https://management-app-alpha-six.vercel.app/) | Command center for mandi administration and gate entry. |
-| **Backend API** | [kisanflow-backend.onrender.com/docs](https://kisanflow-backend.onrender.com/docs) | Interactive Swagger UI API Documentation. |
+| **Backend API** | [kisanflow-backend.onrender.com/api/v1/docs](https://kisanflow-backend.onrender.com/api/v1/docs) | Interactive Swagger UI API Documentation. |
 
 **Demo Credentials:**
 - Operator: `operator1` / `password123`
@@ -285,7 +285,7 @@ The platform is designed to scale horizontally:
 <div align="center">
   <a href="https://management-app-fawn-five.vercel.app/">[Live Farmer App]</a> • 
   <a href="https://management-app-alpha-six.vercel.app/">[Live Operator App]</a> • 
-  <a href="https://kisanflow-backend.onrender.com/docs">[API Documentation]</a> • 
+  <a href="https://kisanflow-backend.onrender.com/api/v1/docs">[API Documentation]</a> • 
   <a href="https://github.com/mugazhvan/cold-cipher-proc">[Source Code]</a> • 
   <a href="./sih_audit_reports">[Research & Audits]</a>
 </div>

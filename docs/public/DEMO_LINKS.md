@@ -6,8 +6,8 @@ This document contains all official public URLs for testing, evaluating, and vie
 |---|---|---|---|
 | **Farmer App** | Farmer-facing workflow (Slot booking, radar, tracking) | [management-app-fawn-five.vercel.app](https://management-app-fawn-five.vercel.app/) | Live |
 | **Management App** | Procurement-centre operator & DCA workflow | [management-app-mugal1.vercel.app](https://management-app-mugal1.vercel.app/) | Live |
-| **Backend API** | Swagger UI for exploring live REST endpoints | [kisanflow-backend.onrender.com/docs](https://kisanflow-backend.onrender.com/docs) | Live |
-| **ReDoc API** | Alternative readable API specification | [kisanflow-backend.onrender.com/redoc](https://kisanflow-backend.onrender.com/redoc) | Live |
+| **Backend API** | Swagger UI for exploring live REST endpoints | [kisanflow-backend.onrender.com/api/v1/docs](https://kisanflow-backend.onrender.com/api/v1/docs) | Live |
+| **ReDoc API** | Alternative readable API specification | [kisanflow-backend.onrender.com/api/v1/redoc](https://kisanflow-backend.onrender.com/api/v1/redoc) | Live |
 | **GitHub** | Full source code repository | [github.com/mugazhvan/cold-cipher-proc](https://github.com/mugazhvan/cold-cipher-proc) | Public |
 | **Farmer Mobile**| Expo Go deployment of the mobile application | [expo.dev/accounts/mugazhv/projects/farmer-mobile](https://expo.dev/accounts/mugazhv/projects/farmer-mobile) | Live |
 
