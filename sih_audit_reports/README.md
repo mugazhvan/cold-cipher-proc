@@ -26,9 +26,9 @@ Every claim made in our presentation is traceable back to verified evidence with
 | **Limitations & Future** | See prototype constraints | [11_LIMITATIONS_AND_FUTURE](./11_LIMITATIONS_AND_FUTURE) |
 | **Judge Guide** | Evaluate quickly | [12_JUDGE_SUPPORT](./12_JUDGE_SUPPORT) |
 
-## Quick Start for Evaluators
+## Quick Start
 
-If you are a Smart India Hackathon Judge, please start directly with the **[Judge Quick Start](00_EXECUTIVE_OVERVIEW/JUDGE_QUICK_START.md)** document. It contains verified links to our live applications and source code.
+To quickly explore the project and its capabilities, please start directly with the **[Project Quick Start](00_EXECUTIVE_OVERVIEW/PROJECT_QUICK_START.md)** document. It contains verified links to our live applications and source code.
 
 > [!IMPORTANT]
 > **Non-Negotiable Evidence Rule:** All claims, numbers, and features mentioned in this repository are strictly categorized. If a feature is planned but not yet implemented, it is clearly marked as `🟡 DESIGN / PLANNED` or `🔴 NOT VERIFIED`. Fully verified code capabilities are marked `🟢 IMPLEMENTED`.

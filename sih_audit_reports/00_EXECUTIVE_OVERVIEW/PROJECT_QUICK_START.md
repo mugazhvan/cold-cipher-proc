@@ -1,7 +1,7 @@
-# Judge Quick Start
+# Project Quick Start
 
 ## Overview
-This document covers the judge quick start for KisanFlow (Team 151660). 
+This document covers the quick start for KisanFlow (Team 151660). 
 All claims within this document map directly to evidence in the codebase or project architecture.
 
 ## What We Built
