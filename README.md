@@ -1,293 +1,394 @@
 <div align="center">
-  
-  # COLD CIPHER
-  **A digital procurement coordination platform designed to improve visibility, scheduling, and coordination between farmers and procurement centres.**
+
+  # 🌾 COLD CIPHER &mdash; KISANFLOW
+  ### Digital Procurement Coordination & Inbound Yard Logistics Platform
+
+  <p align="center">
+    <em>Eliminating agricultural procurement gridlock, uncertainty, and physical queue delays for Indian farmers.</em>
+  </p>
 
   <br />
 
-  <img src="https://img.shields.io/badge/SIH_2026-Team_151660-blue?style=for-the-badge" alt="SIH Badge"/>
-  <img src="https://img.shields.io/badge/Status-Active_Prototype-success?style=for-the-badge&logo=github" alt="Status Badge"/>
-  <img src="https://img.shields.io/badge/Deployment-Vercel_%7C_Render-black?style=for-the-badge&logo=vercel" alt="Deployment Badge"/>
+  <!-- Primary Metadata Badges -->
+  <a href="https://github.com/mugazhvan/cold-cipher-proc"><img src="https://img.shields.io/badge/SIH_2026-Team_151660-2563EB?style=for-the-badge&logo=target&logoColor=white" alt="SIH 2026 Badge"/></a>
+  <a href="https://github.com/mugazhvan/cold-cipher-proc"><img src="https://img.shields.io/badge/Problem_ID-SIH26032-7C3AED?style=for-the-badge&logo=hashnode&logoColor=white" alt="Problem Statement ID"/></a>
+  <a href="https://github.com/mugazhvan/cold-cipher-proc"><img src="https://img.shields.io/badge/Prototype_Status-Active_Live-059669?style=for-the-badge&logo=statuspage&logoColor=white" alt="Status Badge"/></a>
+  <a href="https://github.com/mugazhvan/cold-cipher-proc"><img src="https://img.shields.io/badge/Architecture-Cloud_Native-0F172A?style=for-the-badge&logo=render&logoColor=white" alt="Cloud Native"/></a>
 
   <br />
-  <strong>Problem Statement ID: SIH26032</strong>
-  <br />
   <br />
 
-  <a href="https://management-app-fawn-five.vercel.app/" target="_blank"><strong>[Live Farmer App]</strong></a> &nbsp;|&nbsp; 
-  <a href="https://management-app-alpha-six.vercel.app/" target="_blank"><strong>[Live Operator App]</strong></a> &nbsp;|&nbsp; 
-  <a href="https://github.com/mugazhvan/cold-cipher-proc" target="_blank"><strong>[GitHub Repository]</strong></a> &nbsp;|&nbsp; 
-  <a href="./sih_audit_reports" target="_blank"><strong>[Research & Audit Reports]</strong></a>
+  <!-- Action Buttons -->
+  <p align="center">
+    <a href="https://management-app-fawn-five.vercel.app/" target="_blank">
+      <img src="https://img.shields.io/badge/🌾_Launch-Farmer_Portal-15803D?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Farmer App Button"/>
+    </a>
+    &nbsp;
+    <a href="https://management-app-alpha-six.vercel.app/" target="_blank">
+      <img src="https://img.shields.io/badge/👮_Launch-Operator_Console-1D4ED8?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Operator App Button"/>
+    </a>
+    &nbsp;
+    <a href="https://kisanflow-backend.onrender.com/api/v1/docs" target="_blank">
+      <img src="https://img.shields.io/badge/⚡_Explore-Swagger_API-0D9488?style=for-the-badge&logo=fastapi&logoColor=white" alt="Swagger API Button"/>
+    </a>
+    &nbsp;
+    <a href="./sih_audit_reports" target="_blank">
+      <img src="https://img.shields.io/badge/📑_Open-Evidence_Hub-4F46E5?style=for-the-badge&logo=gitbook&logoColor=white" alt="Evidence Hub Button"/>
+    </a>
+  </p>
+
 </div>
 
 <br />
 
-## 1. PROJECT SNAPSHOT
+---
 
-- **Problem:** Unpredictable procurement schedules leading to physical mandi queues, wasted fuel, and crop exposure.
-- **Solution:** A unified digital scheduling and live queue tracking platform.
-- **Target Users:** Farmers (Suppliers) and Mandi Operators (Procurement Admin).
-- **Core Objective:** Eradicate physical inbound uncertainty by granting deterministic arrival windows and digital queue visibility.
-- **Current Implementation Status:** **🟢 Live Prototype** (Web applications and Backend API deployed and functional).
+## 📌 1. Project Snapshot
+
+<table width="100%">
+  <tr>
+    <td width="25%"><strong>🎯 Problem Focus</strong></td>
+    <td>Unpredictable procurement schedules leading to massive physical APMC queues, diesel waste, and crop exposure.</td>
+  </tr>
+  <tr>
+    <td><strong>💡 Solution</strong></td>
+    <td>A unified digital scheduling, slot-booking, cryptographic token entry, and real-time mandi yard progression platform.</td>
+  </tr>
+  <tr>
+    <td><strong>👥 Target Users</strong></td>
+    <td><strong>Farmers</strong> (Schedules & Queue Tracking) &bull; <strong>Mandi Operators</strong> (Yard Ingress, Assaying, Weighbridge).</td>
+  </tr>
+  <tr>
+    <td><strong>🚀 Core Objective</strong></td>
+    <td>Transform chaotic physical arrivals into guaranteed deterministic arrival windows with live queue transparency.</td>
+  </tr>
+  <tr>
+    <td><strong>🚦 Prototype Status</strong></td>
+    <td><code>🟢 Fully Functional Web Applications & Cloud REST API</code> <em>(Mobile Android builds currently out of public demo scope)</em>.</td>
+  </tr>
+</table>
+
+<br />
 
 ---
 
-## 2. THE PROBLEM
+## 🔍 2. The Problem Statement
 
-Every harvest season, farmers face crippling bottlenecks at APMC mandis and state procurement centres:
+During harvest seasons, agricultural procurement centers and APMC mandis experience acute congestion:
 
-1. **Uncertainty & Gridlock:** Farmers travel to procurement centres without knowing the current inbound capacity, resulting in massive, unregulated queues outside mandi gates.
-2. **Resource Waste:** Waiting in lines for days burns unnecessary diesel and exposes harvested crops to weather degradation.
-3. **Information Asymmetry:** Farmers lack real-time visibility into the procurement process, and operators lack visibility into inbound logistics.
-
-**The Gap:** Existing platforms focus heavily on trading and payments (e.g., e-NAM) but neglect the physical inbound logistics and scheduling coordination needed *before* the crops can be weighed and assayed.
-
----
-
-## 3. OUR SOLUTION
-
-KisanFlow acts as the missing inbound logistics layer. We digitize the physical flow of procurement into a transparent, coordinated digital workflow:
-
-<div align="center">
-  <code>Farmer</code> <br>
-  ↓ <br>
-  <code>Registration & Verification</code> <br>
-  ↓ <br>
-  <code>Slot Booking & Quota Allocation</code> <br>
-  ↓ <br>
-  <code>Arrival at Procurement Centre</code> <br>
-  ↓ <br>
-  <code>Gate QR Verification & Queue Entry</code> <br>
-  ↓ <br>
-  <code>Live Queue Visibility (Assaying & Weighbridge)</code> <br>
-  ↓ <br>
-  <code>Digital Status Logging</code> <br>
-  ↓ <br>
-  <code>Operator Management & Dashboard</code>
-</div>
-
----
-
-## 4. KEY FEATURES
-
-| Feature | Description | Status |
-| :--- | :--- | :--- |
-| **Farmer Registration** | Secure OTP-based authentication for farmers. | 🟢 Implemented |
-| **Slot Booking** | Date and time slot reservations based on daily mandi capacity. | 🟢 Implemented |
-| **QR Verification** | Cryptographically signed HMAC-SHA256 E-Passes for gate verification. | 🟢 Implemented |
-| **Queue Visibility** | Live status tracking (In-Yard, Assaying, Weighbridge). | 🟢 Implemented |
-| **Centre Capacity Management**| Admins can configure maximum daily tonnages and slot limits. | 🟢 Implemented |
-| **Operator Dashboard** | High-level analytics and throughput monitoring for DCA. | 🟢 Implemented |
-| **Procurement Records** | Digital tracking of moisture, grade, and weight logs. | 🟢 Implemented |
-| **SMS/Push Notifications** | Automated alerts for slot progression. | 🔴 Not Implemented |
-| **Live DBT Visibility** | Tracking of financial payouts and bank transfers. | 🔴 Simulated (Out of scope) |
-
----
-
-## 5. SYSTEM ARCHITECTURE
-
-KisanFlow utilizes a decoupled, modern cloud architecture with a centralized backend source of truth.
-
-```mermaid
-graph TD;
-    subgraph Client Applications
-      F[👨‍🌾 Farmer App<br/>React/Vite]
-      O[👮‍♂️ Operator App<br/>React/Vite]
-    end
-
-    subgraph CDN & Edge
-      V[Vercel CDN]
-    end
-    
-    subgraph Cloud Infrastructure
-      API[REST API<br/>FastAPI / Python]
-      AUTH[Auth & JWT Service]
-      Q[Queue & State Engine]
-      DB[(PostgreSQL 15)]
-    end
-    
-    F -->|HTTPS| V
-    O -->|HTTPS| V
-    V -->|API Requests| API
-    
-    API --> AUTH
-    API --> Q
-    API --> DB
-    
-    style F fill:#4CAF50,stroke:#388E3C,stroke-width:2px,color:#fff
-    style O fill:#2196F3,stroke:#1976D2,stroke-width:2px,color:#fff
-    style V fill:#000000,stroke:#333,stroke-width:2px,color:#fff
-    style API fill:#009688,stroke:#00796B,stroke-width:2px,color:#fff
-    style DB fill:#336791,stroke:#2C3E50,stroke-width:2px,color:#fff
+```
+[ 🚜 Farmers Arrive Unannounced ] ➔ [ 🛑 Physical Bottleneck at Gate ] ➔ [ ⏳ Multi-Day Lineups & Fuel Waste ] ➔ [ 📉 Crop Spoilage ]
 ```
 
+- **Schedule Blindspots:** Farmers arrive without knowing center capacity, leading to miles of tractor trailers waiting on highways.
+- **Resource Depletion:** Farmers spend days idling in lines, spending excess diesel and missing subsequent farm operations.
+- **Asymmetric Information:** Lack of visibility into weighbridge and moisture assaying queues creates confusion and administrative delays.
+
+> [!NOTE]
+> **The Logistics Gap:** While platforms like e-NAM solve commodity trading and bidding, **KisanFlow solves the physical inbound yard logistics and arrival coordination** that happens before trading can take place.
+
+<br />
+
 ---
 
-## 6. USER FLOWS
+## ⚡ 3. Our Solution & Workflow
 
-<details>
-<summary><strong>👨‍🌾 Farmer Flow</strong></summary>
+KisanFlow introduces a synchronous coordination protocol between the farmer and the mandi gate:
 
-1. **Authentication:** Login via phone number / OTP.
-2. **Discovery:** View active procurement centres and capacity.
-3. **Booking:** Request a procurement slot for a specific crop/tonnage.
-4. **Pass Generation:** Receive a tamper-proof QR code E-Pass.
-5. **Arrival:** Present QR code at the mandi gate.
-6. **Queue Tracking:** Monitor live progression through Assaying and Weighing via the app dashboard.
+```mermaid
+flowchart TD
+    classDef farmer fill:#ECFDF5,stroke:#059669,stroke-width:2px,color:#065F46;
+    classDef mandi fill:#EFF6FF,stroke:#2563EB,stroke-width:2px,color:#1E40AF;
+    classDef system fill:#F5F3FF,stroke:#7C3AED,stroke-width:2px,color:#5B21B6;
+
+    A[👨‍🌾 Farmer Authentication]:::farmer --> B[📅 Smart Slot Booking]:::farmer
+    B --> C[🎟️ Cryptographic E-Pass Issued]:::system
+    C --> D[🚜 Mandi Gate Arrival]:::farmer
+    D --> E[📷 QR Code Gate Scan]:::mandi
+    E --> F[🚦 Live In-Yard Queue Queueing]:::system
+    F --> G[🔬 Assaying & Moisture Check]:::mandi
+    G --> H[⚖️ Weighbridge Gross/Tare Logging]:::mandi
+    H --> I[📄 Digital J-Form Record Generated]:::system
+```
+
+<br />
+
+---
+
+## ✨ 4. Key Platform Features
+
+<table>
+  <thead>
+    <tr>
+      <th width="30%">Module / Capability</th>
+      <th>Technical Specification & Operational Purpose</th>
+      <th width="18%">Verification</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>🔐 Farmer Authentication</strong></td>
+      <td>Lightweight OTP-based session management designed for low-friction farmer login.</td>
+      <td><code>🟢 IMPLEMENTED</code></td>
+    </tr>
+    <tr>
+      <td><strong>📅 Dynamic Slot Booking</strong></td>
+      <td>Calculates available mandi quota by crop tonnage and prevents over-allocation.</td>
+      <td><code>🟢 IMPLEMENTED</code></td>
+    </tr>
+    <tr>
+      <td><strong>🎟️ Cryptographic E-Pass (QR)</strong></td>
+      <td>Generates offline-verifiable <code>HMAC-SHA256</code> signed tokens to prevent queue forgery.</td>
+      <td><code>🟢 IMPLEMENTED</code></td>
+    </tr>
+    <tr>
+      <td><strong>🚦 Live Queue Tracker</strong></td>
+      <td>Real-time state progression engine (<code>Booked</code> ➔ <code>In-Yard</code> ➔ <code>Assaying</code> ➔ <code>Weighed</code>).</td>
+      <td><code>🟢 IMPLEMENTED</code></td>
+    </tr>
+    <tr>
+      <td><strong>⚙️ Mandi Capacity Engine</strong></td>
+      <td>Allows administrators to set dynamic daily throughput limits and gate processing speeds.</td>
+      <td><code>🟢 IMPLEMENTED</code></td>
+    </tr>
+    <tr>
+      <td><strong>📊 District Command Console</strong></td>
+      <td>Aggregated visibility for District Collectors / Mandi Board into procurement volume.</td>
+      <td><code>🟢 IMPLEMENTED</code></td>
+    </tr>
+    <tr>
+      <td><strong>📑 Digital Procurement Records</strong></td>
+      <td>Automated digital record generation for moisture parameters, dockage, and weight.</td>
+      <td><code>🟢 IMPLEMENTED</code></td>
+    </tr>
+    <tr>
+      <td><strong>📲 SMS & IVR Alerts</strong></td>
+      <td>Automated push notifications for slot arrival reminders.</td>
+      <td><code>🟡 PLANNED</code></td>
+    </tr>
+    <tr>
+      <td><strong>💳 Live DBT Bank Settlement</strong></td>
+      <td>End-to-end PFMS direct benefit bank disbursement integration.</td>
+      <td><code>🟡 SIMULATED</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<br />
+
+---
+
+## 🏛️ 5. System Architecture
+
+```mermaid
+graph TB
+    subgraph Clients[" 💻 Presentation Layer (Vercel Edge CDN) "]
+        FA["🌾 Farmer Portal<br/><code>React 18 / Vite / TypeScript</code>"]
+        MA["👮 Operator Console<br/><code>React 18 / Vite / Tailwind</code>"]
+    end
+
+    subgraph BackendServices[" ⚙️ Application & Logic Layer (Render Cloud) "]
+        API["⚡ FastAPI REST Engine<br/><code>Python 3.10+ / Asyncio / Uvicorn</code>"]
+        AUTH["🔐 OAuth2 & JWT Auth"]
+        SEC["🛡️ HMAC-SHA256 Token Verifier"]
+        QUEUE["🚦 State Machine & Queue Manager"]
+    end
+
+    subgraph DataStorage[" 🗄️ Persistence & Database Layer "]
+        DB[("🐘 PostgreSQL 15 Engine<br/>Relational & Spatial Models")]
+    end
+
+    FA -->|"HTTPS / REST"| API
+    MA -->|"HTTPS / REST"| API
+    API --> AUTH
+    API --> SEC
+    API --> QUEUE
+    AUTH & SEC & QUEUE --> DB
+
+    style FA fill:#22c55e,stroke:#15803d,stroke-width:2px,color:#ffffff
+    style MA fill:#3b82f6,stroke:#1d4ed8,stroke-width:2px,color:#ffffff
+    style API fill:#0d9488,stroke:#0f766e,stroke-width:2px,color:#ffffff
+    style DB fill:#334155,stroke:#1e293b,stroke-width:2px,color:#ffffff
+```
+
+<br />
+
+---
+
+## 🔄 6. Detailed User Workflows
+
+<details open>
+<summary><strong>👨‍🌾 Farmer Journey &bull; Click to expand/collapse</strong></summary>
+
+<br />
+
+```
+[1. Login] ➔ [2. Select Mandi & Crop] ➔ [3. Book Time Slot] ➔ [4. Save QR E-Pass] ➔ [5. Arrive & Track Yard Queue]
+```
+
+1. **Authentication:** Fast mobile number entry with session persistence.
+2. **Radar & Center Discovery:** View nearest procurement centers with live quota status.
+3. **Slot Reservation:** Choose an open arrival window suited to transport availability.
+4. **Pass Generation:** Instant digital E-Pass generated with QR code.
+5. **Real-Time Tracking:** Check live vehicle queue status from the tractor seat while approaching.
 
 </details>
 
-<details>
-<summary><strong>👮‍♂️ Operator Flow</strong></summary>
+<details open>
+<summary><strong>👮‍♂️ Mandi Operator & DCA Journey &bull; Click to expand/collapse</strong></summary>
 
-1. **Authentication:** Secure login for Mandi Operators.
-2. **Dashboard:** View incoming daily scheduled bookings.
-3. **Verification:** Scan farmer QR codes at the gate to admit vehicles to the yard.
-4. **Queue Management:** Advance farmer statuses (In-Yard → Assaying → Weighbridge).
-5. **Logging:** Input final weight and moisture readings to complete procurement.
+<br />
+
+```
+[1. Operator Login] ➔ [2. Gate Ingress Scan] ➔ [3. Queue Transition] ➔ [4. Record Moisture/Weight] ➔ [5. Finalize Procurement]
+```
+
+1. **Gate Ingress:** Scan incoming farmer QR codes to validate arrival against daily capacity.
+2. **Yard Routing:** Admitted vehicles move into active queue status automatically.
+3. **Quality & Assay:** Log moisture percentage and quality grade.
+4. **Weighbridge Operation:** Record gross and tare vehicle weights.
+5. **Procurement Finalization:** Generate signed digital receipt and release vehicle.
 
 </details>
 
+<br />
+
 ---
 
-## 7. TECH STACK
+## 💻 7. Technology Stack
 
-| Layer | Technology | Purpose |
+<p align="center">
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" />
+  <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" />
+  <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" />
+  <br />
+  <img src="https://img.shields.io/badge/Python_3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
+  <img src="https://img.shields.io/badge/PostgreSQL_15-316192?style=for-the-badge&logo=postgresql&logoColor=white" />
+  <img src="https://img.shields.io/badge/Pytest-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white" />
+</p>
+
+| Component | Technology | Specification & Role |
 | :--- | :--- | :--- |
-| **Frontend** | React 18, Vite, Tailwind CSS | High-performance, responsive Single Page Applications (SPA). |
-| **Language** | TypeScript (Frontend), Python 3.10+ (Backend) | Type-safe, scalable development. |
-| **Backend API** | FastAPI, Uvicorn, SQLAlchemy (Async) | High-concurrency REST API serving mobile and web clients. |
-| **Database** | PostgreSQL 15 | Relational integrity and geographic data configurations. |
-| **Security** | OAuth2, JWT, Bcrypt, HMAC-SHA256 | Authentication, password hashing, and tamper-proof QR generation. |
-| **Testing** | Pytest, HTTPX | Integrated unit testing, concurrency validation, and state-machine tests. |
-| **Deployment** | Vercel, Render | CDN hosting for frontends and managed cloud for the backend. |
+| **Frontend Framework** | `React 18 (Vite SPA)` | Client-side reactive UI with modular component hierarchy. |
+| **Styling & Icons** | `Tailwind CSS` + `Lucide React` | High-contrast, mobile-first accessible interface. |
+| **Backend Framework** | `FastAPI` + `SQLAlchemy Async` | Asynchronous, non-blocking REST endpoints with OpenAPI specs. |
+| **Database Engine** | `PostgreSQL 15` | Relational consistency, foreign key constraints, and spatial indexes. |
+| **Cryptographic Layer**| `HMAC-SHA256` + `JWT (Bcrypt)` | Tamper-proof token serialization and secure credential storage. |
+| **Testing Framework** | `Pytest` + `HTTPX` | Rigorous state machine, concurrency, and RBAC integration test suite. |
+| **Deployment Edge** | `Vercel` (Frontends) + `Render` (API) | Globally distributed CDN edge with continuous integration. |
+
+<br />
 
 ---
 
-## 8. LIVE DEMO
-
-> [!IMPORTANT]
-> The KisanFlow web applications are live and fully operational. Note: Mobile Android deployment is currently not verified and excluded from this evaluation scope.
-
-| Application | URL | Description |
-| :--- | :--- | :--- |
-| **Farmer App** | [management-app-fawn-five.vercel.app](https://management-app-fawn-five.vercel.app/) | Portal for slot booking and queue visibility. |
-| **Operator App** | [management-app-alpha-six.vercel.app](https://management-app-alpha-six.vercel.app/) | Command center for mandi administration and gate entry. |
-| **Backend API** | [kisanflow-backend.onrender.com/api/v1/docs](https://kisanflow-backend.onrender.com/api/v1/docs) | Interactive Swagger UI API Documentation. |
-
-**Demo Credentials:**
-- Operator: `operator1` / `password123`
-- Admin: `admin@kisanflow.gov.in` / `password123`
-
----
-
-## 9. RESEARCH & AUDIT
-
-All claims within this repository are strictly verified and documented. For comprehensive SIH 2026 evaluation, please visit our Evidence Hub:
-
-👉 **[Research & Audit Reports (`sih_audit_reports`)](https://github.com/mugazhvan/cold-cipher-proc/tree/main/sih_audit_reports)**
-
-| Document | Purpose | Link |
-| :--- | :--- | :--- |
-| **Project Quick Start** | Rapid 2-minute overview for evaluators. | [Link](sih_audit_reports/00_EXECUTIVE_OVERVIEW/PROJECT_QUICK_START.md) |
-| **Evidence Index** | Traces claims directly to codebase source files. | [Link](sih_audit_reports/00_EXECUTIVE_OVERVIEW/EVIDENCE_INDEX.md) |
-| **System Architecture** | Detailed technical breakdown of backend services. | [Link](sih_audit_reports/03_TECHNICAL_ARCHITECTURE/SYSTEM_ARCHITECTURE.md) |
-| **Security Audit** | Deep dive into RBAC, IDOR prevention, and Cryptography. | [Link](sih_audit_reports/04_SECURITY_AND_PRIVACY/SECURITY_AUDIT.md) |
-| **Research Baseline** | Foundational research and APMC problem analysis. | [Link](sih_audit_reports/01_PROBLEM_AND_RESEARCH/RESEARCH_BASELINE.md) |
-
----
-
-## 10. RESEARCH REFERENCES
-
-| Source | Why We Used It | Evidence / Application |
-| :--- | :--- | :--- |
-| **e-NAM Integration Specs** | To understand existing APMC software boundaries. | Architecture boundary definitions. |
-| **Mandi Board Reports** | To analyze peak season throughput bottlenecks. | Capacity management logic in DB. |
-| **FastAPI Documentation** | For high-concurrency async endpoint design. | Core backend framework selection. |
-
----
-
-## 11. VALIDATION / TESTING
-
-We have extensively validated the system's core capabilities via automated integration tests (`source/backend/tests`).
-
-| Validation Area | Evidence | Status |
-| :--- | :--- | :--- |
-| **State Machine Integrity** | `test_state_machine.py` | 🟢 Passing (Prevents invalid queue jumps) |
-| **Concurrency & Race Conditions** | `test_concurrency.py` | 🟢 Passing (Prevents double-booking slots) |
-| **Security (RBAC & IDOR)** | `test_rbac_idor.py` | 🟢 Passing (Farmers cannot access other bookings) |
-| **Stress Loading** | `test_m10_stress.py` | 🟢 Passing (Simulated load testing) |
-
----
-
-## 12. SECURITY & PRIVACY
-
-KisanFlow implements robust security mechanisms verified by our test suite:
-
-- **Authentication:** OAuth2 Password Bearer flow utilizing stateless JWTs (JSON Web Tokens).
-- **Access Control:** Strict Role-Based Access Control (RBAC) separating Farmers, Operators, and Admins.
-- **Data Privacy:** Passwords are mathematically hashed via `Bcrypt`.
-- **Anti-Tampering:** E-Pass QR codes embed HMAC-SHA256 cryptographic signatures to prevent digital forgery at the gate.
-
-> *Note: No secrets, `.env` values, or private credentials are included in this repository. The database runs securely in the Render cloud.*
-
----
-
-## 13. SCALABILITY
-
-The platform is designed to scale horizontally:
-
-- **Stateless Backend:** FastAPI and JWTs allow the API to scale across multiple workers without sticky sessions.
-- **Configurable Entities:** The database model natively supports multiple procurement centres, crops, and dynamic daily quotas, allowing nationwide progressive deployment without architectural changes.
-- **Edge Deployment:** Frontend applications are deployed to Vercel's global CDN, ensuring rapid load times regardless of rural geographic locations.
-
----
-
-## 14. LIMITATIONS
-
-### Current Limitations
-- **Government API Integration:** Real-world connectivity to e-NAM databases and PFMS (Direct Benefit Transfer) is currently simulated as third-party environments are inaccessible.
-- **Offline Reliability:** While QR codes work offline for entry, the operator application requires a stable internet connection to advance the queue state.
-- **Mobile Deployment:** Native Android/iOS builds are not currently stabilized for public download in this repository version.
-
----
-
-## 15. FUTURE SCOPE
-
-| Implemented | Planned / Future |
-| :--- | :--- |
-| Role-based Dashboards | AI/ML harvest forecasting |
-| Live Queue Tracking | Multi-lingual voice accessibility (IVR) |
-| Cryptographic QR Booking | Deep e-NAM database synchronization |
-| Centralized Capacity Rules | Automated SMS/WhatsApp notifications |
-
----
-
-## 16. PROJECT EVIDENCE
-
-- **Source Code:** [GitHub Repository](https://github.com/mugazhvan/cold-cipher-proc)
-- **Live Farmer App:** [Vercel Deployment](https://management-app-fawn-five.vercel.app/)
-- **Live Operator App:** [Vercel Deployment](https://management-app-alpha-six.vercel.app/)
-- **Technical Reports:** [sih_audit_reports directory](./sih_audit_reports)
-
----
-
-## 17. TEAM
-
-**Team Name:** Cold Cipher  
-**Team ID:** 151660  
-**Hackathon:** Smart India Hackathon 2026  
-
----
-
-## 18. QUICK LINKS
+## 🌐 8. Live Demonstration & Portals
 
 <div align="center">
-  <a href="https://management-app-fawn-five.vercel.app/">[Live Farmer App]</a> • 
-  <a href="https://management-app-alpha-six.vercel.app/">[Live Operator App]</a> • 
-  <a href="https://kisanflow-backend.onrender.com/api/v1/docs">[API Documentation]</a> • 
-  <a href="https://github.com/mugazhvan/cold-cipher-proc">[Source Code]</a> • 
-  <a href="./sih_audit_reports">[Research & Audits]</a>
+
+| Application | Live URL | Access Credentials |
+| :--- | :--- | :--- |
+| 🌾 **Farmer Portal** | [**management-app-fawn-five.vercel.app**](https://management-app-fawn-five.vercel.app/) | *Open Access / Phone Demo* |
+| 👮 **Operator Console** | [**management-app-alpha-six.vercel.app**](https://management-app-alpha-six.vercel.app/) | `operator1` / `password123` |
+| 🛡️ **DCA Admin Dashboard**| [**management-app-alpha-six.vercel.app**](https://management-app-alpha-six.vercel.app/) | `admin@kisanflow.gov.in` / `password123` |
+| ⚡ **Swagger API Docs** | [**kisanflow-backend.onrender.com/api/v1/docs**](https://kisanflow-backend.onrender.com/api/v1/docs) | *Public Interactive OpenAPI* |
+
+</div>
+
+<br />
+
+---
+
+## 📑 9. Research, Audits & Evaluation Evidence Hub
+
+All claims, architectural patterns, and validation benchmarks are rigorously tracked inside our public documentation hub:
+
+<p align="center">
+  <a href="./sih_audit_reports">
+    <img src="https://img.shields.io/badge/📂_EXPLORE_THE_FULL_EVIDENCE_REPOSITORY-sih__audit__reports-4F46E5?style=for-the-badge&logo=gitbook&logoColor=white" alt="Evidence Hub Banner"/>
+  </a>
+</p>
+
+| Evidence Report | Subject & Focus Area | Direct Link |
+| :--- | :--- | :---: |
+| 🚀 **Project Quick Start** | Rapid 2-minute architectural and operational briefing. | [**Read Document**](sih_audit_reports/00_EXECUTIVE_OVERVIEW/PROJECT_QUICK_START.md) |
+| 🔍 **Master Evidence Index** | Direct traceability mapping between features and source code lines. | [**Read Document**](sih_audit_reports/00_EXECUTIVE_OVERVIEW/EVIDENCE_INDEX.md) |
+| 🏛️ **System Architecture** | Comprehensive technical deep dive into backend modules and schemas. | [**Read Document**](sih_audit_reports/03_TECHNICAL_ARCHITECTURE/SYSTEM_ARCHITECTURE.md) |
+| 🛡️ **Security Audit** | Formal review of RBAC, IDOR vulnerability tests, and crypto passes. | [**Read Document**](sih_audit_reports/04_SECURITY_AND_PRIVACY/SECURITY_AUDIT.md) |
+| 📊 **Impact Analysis** | Quantified reduction of diesel waste and procurement bottlenecks. | [**Read Document**](sih_audit_reports/08_IMPACT/IMPACT_ANALYSIS.md) |
+| ⚠️ **Current Limitations** | Transparent accounting of prototype boundaries vs. production goals. | [**Read Document**](sih_audit_reports/11_LIMITATIONS_AND_FUTURE/CURRENT_LIMITATIONS.md) |
+
+<br />
+
+---
+
+## 🧪 10. Automated Validation & Test Suite
+
+The platform logic is enforced by automated test suites in `source/backend/tests`:
+
+```
+source/backend/tests/
+ ├── test_state_machine.py    # Prevents invalid queue jumps and out-of-order transitions
+ ├── test_concurrency.py      # Verifies atomic slot quota reservations under race conditions
+ ├── test_rbac_idor.py        # Proves strict role isolation between Farmers, Operators & DCA
+ └── test_m10_stress.py       # Validates high-volume request handling under burst loads
+```
+
+| Validation Category | Test Suite File | Result | Verified Capability |
+| :--- | :--- | :---: | :--- |
+| **State Transitions** | `test_state_machine.py` | 🟢 `PASSED` | Enforces single-direction vehicle progression. |
+| **Concurrency Locks** | `test_concurrency.py` | 🟢 `PASSED` | Prevents overbooking beyond daily mandi quota. |
+| **Security & RBAC** | `test_rbac_idor.py` | 🟢 `PASSED` | Proves farmers cannot inspect or tamper other bookings. |
+| **Burst Capacity** | `test_m10_stress.py` | 🟢 `PASSED` | Validates async throughput under simulated mandi peak. |
+
+<br />
+
+---
+
+## 🔒 11. Security, Privacy & Integrity
+
+- **Role-Based Access Control (RBAC):** Strict JWT separation ensures farmers cannot access operator or admin routes.
+- **Cryptographic Anti-Tamper E-Passes:** QR payloads are signed with `HMAC-SHA256` keys, preventing fake token generation.
+- **Zero Credentials Exposure:** Zero API secrets or credentials committed in version control; environment variables injected dynamically.
+- **Password Protection:** Operator and administrative credentials secured with `Bcrypt` multi-round hashing.
+
+<br />
+
+---
+
+## 📈 12. Scalability Architecture
+
+- **Stateless Services:** The FastAPI backend is completely stateless, enabling horizontal scaling across worker nodes.
+- **Hierarchical Tenancy:** The data model natively structures Mandis by State, District, Center, and Gate, supporting seamless nationwide rollout.
+- **Edge Content Delivery:** Static frontend assets are served via Vercel's global CDN, ensuring millisecond response times even over rural mobile connections.
+
+<br />
+
+---
+
+## ⚠️ 13. Current Limitations
+
+1. **Government Sync:** Direct sync with live e-NAM and PFMS state databases is currently architectural and simulated.
+2. **Offline Mode:** The operator app requires active internet connectivity to mutate queue records in the centralized database.
+3. **Mobile Builds:** Android Expo native APK builds are currently undergoing build toolchain stabilization and are excluded from this evaluation demo.
+
+<br />
+
+---
+
+## 👥 14. Team & Hackathon Information
+
+<div align="center">
+
+| Project Identity | Details |
+| :--- | :--- |
+| **Team Name** | **Cold Cipher** |
+| **Team ID** | **151660** |
+| **Hackathon** | **Smart India Hackathon 2026** |
+| **Problem Statement ID** | **SIH26032** |
+| **Repository** | [`github.com/mugazhvan/cold-cipher-proc`](https://github.com/mugazhvan/cold-cipher-proc) |
+
 </div>
 
 <br />
@@ -295,5 +396,22 @@ The platform is designed to scale horizontally:
 ---
 
 <div align="center">
-  <small>Cold Cipher • Smart India Hackathon 2026 • Team 151660</small>
+
+  ### 🔗 Quick Navigation
+
+  [![Farmer App](https://img.shields.io/badge/🌾_Farmer_App-Visit-15803D?style=for-the-badge)](https://management-app-fawn-five.vercel.app/)
+  &nbsp;
+  [![Operator App](https://img.shields.io/badge/👮_Operator_App-Launch-1D4ED8?style=for-the-badge)](https://management-app-alpha-six.vercel.app/)
+  &nbsp;
+  [![API Docs](https://img.shields.io/badge/⚡_Swagger_Docs-Explore-0D9488?style=for-the-badge)](https://kisanflow-backend.onrender.com/api/v1/docs)
+  &nbsp;
+  [![Evidence Hub](https://img.shields.io/badge/📑_Evidence_Hub-Inspect-4F46E5?style=for-the-badge)](./sih_audit_reports)
+  &nbsp;
+  [![GitHub Repo](https://img.shields.io/badge/💻_Source_Code-GitHub-0F172A?style=for-the-badge&logo=github)](https://github.com/mugazhvan/cold-cipher-proc)
+
+  <br />
+  <br />
+
+  <sub>Cold Cipher &bull; Smart India Hackathon 2026 &bull; Team ID: 151660 &bull; Problem Statement: SIH26032</sub>
+
 </div>
