@@ -1,0 +1,24 @@
+name: Render Backend Keep-Alive
+
+on:
+  schedule:
+    # Runs every 10 minutes to prevent Render free-tier from sleeping (15 min inactivity timeout)
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping-backend:
+    name: 💓 Ping KisanFlow Render Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Backend Health Endpoint
+        run: |
+          echo "Sending keep-alive ping to Render backend..."
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 "https://kisanflow-backend.onrender.com/api/v1/health")
+          echo "HTTP Response Status Code: $RESPONSE"
+          if [ "$RESPONSE" -eq 200 ]; then
+            echo "✅ Render backend is ACTIVE and healthy."
+          else
+            echo "⚠️ Unexpected status code: $RESPONSE. Retrying ping to root..."
+            curl -s "https://kisanflow-backend.onrender.com/"
+          fi
