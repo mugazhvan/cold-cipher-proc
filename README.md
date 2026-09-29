@@ -105,7 +105,7 @@ flowchart TD
     B --> C[🎟️ Cryptographic E-Pass Issued]:::system
     C --> D[🚜 Mandi Gate Arrival]:::farmer
     D --> E[📷 QR Code Gate Scan]:::mandi
-    E --> F[🚦 Live In-Yard Queue Queueing]:::system
+    E --> F[🚦 Live In-Yard Queue]:::system
     F --> G[🔬 Assaying & Moisture Check]:::mandi
     G --> H[⚖️ Weighbridge Gross/Tare Logging]:::mandi
     H --> I[📄 Digital J-Form Record Generated]:::system
