@@ -24,7 +24,6 @@ Every claim made in our presentation is traceable back to verified evidence with
 | **References** | Verify research | [09_RESEARCH_REFERENCES](./09_RESEARCH_REFERENCES) |
 | **Product Evidence** | Access live systems | [10_PRODUCT_EVIDENCE](./10_PRODUCT_EVIDENCE) |
 | **Limitations & Future** | See prototype constraints | [11_LIMITATIONS_AND_FUTURE](./11_LIMITATIONS_AND_FUTURE) |
-| **Judge Guide** | Evaluate quickly | [12_JUDGE_SUPPORT](./12_JUDGE_SUPPORT) |
 
 ## Quick Start
 
