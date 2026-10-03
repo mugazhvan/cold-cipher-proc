@@ -2,7 +2,7 @@
 
 This matrix precisely classifies major project features into categories based on the actual codebase forensics: **IMPLEMENTED**, **SIMULATED**, **PROPOSED**, and **RESEARCHED**.
 
-| Feature | Status | Code Evidence | Safe Presentation Wording |
+| Feature | Status | Code Evidence | Wording |
 | :--- | :--- | :--- | :--- |
 | **Farmer Registration & Login** | ✅ IMPLEMENTED | `POST /api/v1/auth/login` | "Farmers can securely register and log in via phone-based authentication." |
 | **Slot Booking & Discovery** | ✅ IMPLEMENTED | `POST /api/v1/bookings` | "Farmers can discover active mandis and book guaranteed delivery slots." |
